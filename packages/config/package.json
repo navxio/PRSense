@@ -1,0 +1,28 @@
+{
+  "name": "@prsense/config",
+  "version": "0.0.1",
+  "description": "config package for prsense",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "author": "Navdeep Saini",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.27.0",
+  "dependencies": {
+    "zod": "^4.3.5"
+  }
+}
