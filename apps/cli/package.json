@@ -2,9 +2,15 @@
   "name": "@prsense/cli",
   "version": "0.0.1",
   "description": "Command line interface to PRSense",
-  "main": "index.js",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "prsense": "./dist/index.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b",
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
   },
   "keywords": [],
   "author": "Navdeep Saini",

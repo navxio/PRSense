@@ -4,7 +4,8 @@
   "description": "An open-source, LLM-powered pull request reviewer that surfaces high-confidence issues as structured signals.",
   "main": "index.js",
   "scripts": {
-    "build:config": "pnpm --filter @prsense/config build"
+    "build:config": "pnpm --filter @prsense/config build",
+    "build:cli": "pnpm --filter @prsense/cli build"
   },
   "keywords": [],
   "author": "Navdeep Saini",
