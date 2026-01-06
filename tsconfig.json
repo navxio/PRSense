@@ -3,7 +3,7 @@
     /* Language */
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
 
     /* Strictness */

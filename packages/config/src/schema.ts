@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const SeverityEnum = z.enum(["low", "medium", "high"]);
+
 export const PrsenseConfigSchema = z.object({
   llm: z.object({
     provider: z.enum(["ollama", "openai"]),
@@ -14,7 +16,7 @@ export const PrsenseConfigSchema = z.object({
 
   rules: z.object({
     enable: z.array(z.string()).default([]),
-    severityOverrides: z.record(z.enum(["low", "medium", "high"])).default({}),
+    severityOverrides: z.record(z.string(), SeverityEnum).default({}),
   }),
 
   rag: z.object({
