@@ -23,6 +23,13 @@ export const PrsenseConfigSchema = z.object({
     enabled: z.boolean().default(false),
     maxChunks: z.number().int().positive().default(5),
   }),
+  git: z
+    .object({
+      baseBranch: z.string(),
+    })
+    .default({
+      baseBranch: "main",
+    }),
 });
 
 export type PrsenseConfig = z.infer<typeof PrsenseConfigSchema>;

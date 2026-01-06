@@ -40,3 +40,6 @@ rag:
   # Maximum number of retrieved context chunks
   # Higher values = more context, more tokens
   maxChunks: 5
+
+git:
+  baseBranch: "trunk"
