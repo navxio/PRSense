@@ -3,7 +3,7 @@
 PRsense is an open-source, LLM-powered pull request reviewer.
 
 It analyzes diffs, surrounding context, and repository conventions to surface
-high-confidence review signals — not noise.
+high-confidence review signals.
 
 ## What PRsense does
 

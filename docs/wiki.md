@@ -36,7 +36,6 @@
 
 ```
 apps/
-  api/                 # tRPC server (Node.js)
   worker/              # async jobs (reviews, retries)
   integrations/github/          # webhook receiver + auth
   cli/                 # local CLI (prsense review .)
