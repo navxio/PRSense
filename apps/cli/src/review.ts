@@ -18,7 +18,10 @@ export const reviewCommand = new Command("review")
     const unifiedDiff = parseUnifiedDiff(diffText);
 
     if (unifiedDiff.files.length === 0) {
-      console.log("No changes detected. Nothing to review.");
+      console.log(
+        `No changes detected.\n` +
+          `Hint: switch to a feature branch or make local changes.`,
+      );
       return;
     }
 

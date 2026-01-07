@@ -26,8 +26,6 @@ rules:
   # Empty list = engine defaults.
   enable:
     - todo-detection
-    - swallowed-errors
-    - missing-tests
 
   # Override default severities for specific rules
   severityOverrides:
