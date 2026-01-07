@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build:config": "pnpm --filter @prsense/config build",
-    "build:cli": "pnpm --filter @prsense/cli build"
+    "build:cli": "pnpm --filter @prsense/cli build",
+    "build:domain": "pnpm --filter @prsense/domain build"
   },
   "keywords": [],
   "author": "Navdeep Saini",
