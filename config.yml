@@ -42,4 +42,4 @@ rag:
   maxChunks: 5
 
 git:
-  baseBranch: "trunk"
+  baseBranch: trunk

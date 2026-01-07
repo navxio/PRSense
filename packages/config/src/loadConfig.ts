@@ -3,22 +3,48 @@ import path from "node:path";
 import yaml from "yaml";
 import { PrsenseConfigSchema, PrsenseConfig } from "./schema.js";
 
-export function loadPrsenseConfig(
-  cwd: string,
-  overrides: Partial<PrsenseConfig> = {},
-): PrsenseConfig {
-  const configPath = path.join(cwd, "prsense.yml");
+function findConfigFile(startDir: string): string | null {
+  let dir = startDir;
 
-  let fileConfig = {};
-  if (fs.existsSync(configPath)) {
-    const raw = fs.readFileSync(configPath, "utf8");
-    fileConfig = yaml.parse(raw) ?? {};
+  while (true) {
+    const candidate = path.join(dir, "config.yml");
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) break; // reached filesystem root
+    dir = parent;
   }
 
-  const merged = {
-    ...fileConfig,
-    ...overrides,
-  };
+  return null;
+}
 
-  return PrsenseConfigSchema.parse(merged);
+export function loadPrsenseConfig(
+  cwd: string,
+  overrides?: unknown,
+): PrsenseConfig {
+  const configPath = findConfigFile(cwd);
+
+  let fileConfig: unknown = {};
+  if (configPath) {
+    console.debug(`Using config file: ${configPath}`);
+    const raw = fs.readFileSync(configPath, "utf8");
+
+    const parsed = yaml.parse(raw);
+    fileConfig = typeof parsed === "object" && parsed !== null ? parsed : {};
+  }
+
+  const baseConfig = PrsenseConfigSchema.parse(fileConfig);
+
+  if (!overrides) {
+    return baseConfig;
+  }
+
+  const overrideConfig = PrsenseConfigSchema.partial().parse(overrides);
+
+  return PrsenseConfigSchema.parse({
+    ...baseConfig,
+    ...overrideConfig,
+  });
 }
