@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "clean": "rm -rf dist/"
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "files": [
     "dist"

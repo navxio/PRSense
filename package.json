@@ -4,6 +4,8 @@
   "description": "An open-source, LLM-powered pull request reviewer that surfaces high-confidence issues as structured signals.",
   "main": "index.js",
   "scripts": {
+    "clean": "pnpm -r clean",
+    "build": "pnpm -r build",
     "build:config": "pnpm --filter @prsense/config build",
     "build:cli": "pnpm --filter @prsense/cli build",
     "build:domain": "pnpm --filter @prsense/domain build",
