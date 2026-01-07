@@ -1,33 +1,36 @@
 {
   "compilerOptions": {
-    /* Language */
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
 
-    /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* Interop */
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    /* Output */
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
 
-    /* Monorepo sanity */
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@prsense/config": ["packages/config/src"],
+      "@prsense/domain": ["packages/domain/src"],
+      "@prsense/engine": ["packages/engine/src"]
+    }
   },
   "files": [],
   "references": [
-    {
-      "path": "./packages/config"
-    }
+    { "path": "packages/domain" },
+    { "path": "packages/config" },
+    { "path": "packages/engine" },
+    { "path": "apps/cli" }
   ]
 }
