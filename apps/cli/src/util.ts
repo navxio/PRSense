@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { ReviewSignal } from "@prsense/domain";
-import type { CliReviewResult } from "./types";
+import type { CliReviewResult } from "./types.js";
 export function summarize(signals: ReviewSignal[]): CliReviewResult {
   const summary = {
     total: signals.length,

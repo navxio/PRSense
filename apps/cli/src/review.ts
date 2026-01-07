@@ -1,34 +1,36 @@
 import { Command } from "commander";
 import { review } from "@prsense/engine";
 import { ReviewContext } from "@prsense/domain";
+import { loadPrsenseConfig } from "@prsense/config";
+import { getGitDiff } from "./git.js";
 import { summarize, printResult } from "./util.js";
+import { parseUnifiedDiff } from "./diff.js";
 
 export const reviewCommand = new Command("review")
   .argument("[path]", "Path to repository", ".")
-  .option("--base-branch <branch>", "Base branch to diff against", "main")
-  .description("Review changes in a repository")
-  .action((path: string, options) => {
-    // TEMPORARY: fake ReviewContext
+  .option("--base-branch <branch>", "Base branch to diff against")
+  .action(async (path, options) => {
+    const config = loadPrsenseConfig(process.cwd());
+
+    const baseBranch = options.baseBranch ?? config.git?.baseBranch ?? "main";
+
+    const diffText = await getGitDiff(path, baseBranch);
+    const unifiedDiff = parseUnifiedDiff(diffText);
+
+    if (unifiedDiff.files.length === 0) {
+      console.log("No changes detected. Nothing to review.");
+      return;
+    }
+
     const ctx: ReviewContext = {
       repoRoot: path,
-      baseBranch: options.baseBranch,
-      diff: {
-        files: [
-          {
-            path: "src/example.ts",
-            patch: `
-+ // TODO: handle edge case
-+ function foo() {}
-            `,
-          },
-        ],
-      },
+      baseBranch,
+      diff: unifiedDiff,
     };
 
     const signals = review(ctx, {
-      enabledRuleIds: ["todo-detection"],
+      enabledRuleIds: config.rules?.enable ?? [],
     });
 
-    const result = summarize(signals);
-    printResult(result);
+    printResult(summarize(signals));
   });
