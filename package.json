@@ -6,7 +6,9 @@
   "scripts": {
     "build:config": "pnpm --filter @prsense/config build",
     "build:cli": "pnpm --filter @prsense/cli build",
-    "build:domain": "pnpm --filter @prsense/domain build"
+    "build:domain": "pnpm --filter @prsense/domain build",
+    "build:engine": "pnpm --filter @prsense/engine build",
+    "cli:review": "pnpm --filter @prsense/cli dev:review"
   },
   "keywords": [],
   "author": "Navdeep Saini",
