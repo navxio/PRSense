@@ -24,7 +24,8 @@
       "@prsense/config": ["packages/config/src"],
       "@prsense/domain": ["packages/domain/src"],
       "@prsense/engine": ["packages/engine/src"],
-      "@prsense/context": ["packages/context/src"]
+      "@prsense/context": ["packages/context/src"],
+      "@prsense/llm": ["packages/llm/src"]
     }
   },
   "files": [],
@@ -33,6 +34,7 @@
     { "path": "packages/config" },
     { "path": "packages/engine" },
     { "path": "packages/context" },
+    { "path": "packages/llm" },
     { "path": "apps/cli" }
   ]
 }

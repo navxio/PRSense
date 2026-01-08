@@ -1,0 +1,25 @@
+{
+  "name": "@prsense/llm",
+  "version": "0.0.1",
+  "description": "LLM interface and providers for PRsense",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "keywords": [],
+  "author": "Navdeep Saini",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.27.0",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
