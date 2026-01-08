@@ -1,0 +1,21 @@
+{
+  "name": "@prsense/context",
+  "version": "0.0.1",
+  "description": "Context retrieval (RAG) subsystem for PRsense",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@prsense/domain": "workspace:*"
+  }
+}
