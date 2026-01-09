@@ -46,6 +46,12 @@ importers:
         specifier: ^3.30.0
         version: 3.30.0
 
+  packages/adapters:
+    dependencies:
+      '@prsense/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   packages/config:
     dependencies:
       yaml:

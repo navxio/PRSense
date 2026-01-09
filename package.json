@@ -11,6 +11,7 @@
     "build:domain": "pnpm --filter @prsense/domain build",
     "build:engine": "pnpm --filter @prsense/engine build",
     "build:context": "pnpm --filter @prsense/context build",
+    "build:llm": "pnpm --filter @prsense/llm build",
     "cli:review": "pnpm --filter @prsense/cli dev:review"
   },
   "keywords": [],
