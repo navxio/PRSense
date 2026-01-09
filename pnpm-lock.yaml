@@ -27,9 +27,15 @@ importers:
 
   apps/cli:
     dependencies:
+      '@prsense/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@prsense/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@prsense/context':
+        specifier: workspace:*
+        version: link:../../packages/context
       '@prsense/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -42,15 +48,15 @@ importers:
       commander:
         specifier: ^14.0.2
         version: 14.0.2
-      simple-git:
-        specifier: ^3.30.0
-        version: 3.30.0
 
   packages/adapters:
     dependencies:
       '@prsense/domain':
         specifier: workspace:*
         version: link:../domain
+      simple-git:
+        specifier: ^3.30.0
+        version: 3.30.0
 
   packages/config:
     dependencies:

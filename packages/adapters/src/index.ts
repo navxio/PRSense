@@ -7,3 +7,6 @@ export type { FilesystemAdapterOptions } from "./filesystemAdapter.js";
 export type { GitHubAdapterOptions } from "./githubAdapter.js";
 
 export { githubAdapter } from "./githubAdapter.js";
+
+export { gitAdapter } from "./gitAdapter.js";
+export type { GitAdapterOptions } from "./gitAdapter.js";
