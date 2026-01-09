@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { Adapter } from "./types";
-import type { AdapterResult } from "./result";
+import type { Adapter } from "./types.js";
+import type { AdapterResult } from "./result.js";
 
 export type FilesystemAdapterOptions = {
   repoRoot: string;

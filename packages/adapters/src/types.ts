@@ -1,5 +1,5 @@
 // packages/adapters/src/types.ts
-import type { AdapterResult } from "./result";
+import type { AdapterResult } from "./result.js";
 
 /**
  * Adapter = infrastructure ingress.
