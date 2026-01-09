@@ -1,10 +1,8 @@
 // packages/adapters/src/types.ts
-import type { ReviewInput } from "@prsense/domain";
+import type { AdapterResult } from "./result";
 
 /**
  * Adapter = infrastructure ingress.
- *
- * Fetches data from the outside world and
- * normalizes it into ReviewInput.
+ * Never throws for expected failures.
  */
-export type Adapter = () => Promise<ReviewInput>;
+export type Adapter = () => Promise<AdapterResult>;
