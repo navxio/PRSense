@@ -26,7 +26,8 @@
       "@prsense/engine": ["packages/engine/src"],
       "@prsense/context": ["packages/context/src"],
       "@prsense/llm": ["packages/llm/src"],
-      "@prsense/adapters": ["packages/adapters/src"]
+      "@prsense/adapters": ["packages/adapters/src"],
+      "@prsense/reporters": ["packages/reporters/src"]
     }
   },
   "files": [],
@@ -37,6 +38,7 @@
     { "path": "packages/context" },
     { "path": "packages/llm" },
     { "path": "packages/adapters" },
+    { "path": "packages/reporters" },
     { "path": "apps/cli" }
   ]
 }
