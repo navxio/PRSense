@@ -3,7 +3,7 @@ import {
   ReviewSignal,
   ReviewSignalType,
   ReviewSeverity,
-} from "../review/ReviewSignal.js";
+} from "../signal/ReviewSignal.js";
 
 // rules are pure functions with metadata
 export interface ReviewRule {
