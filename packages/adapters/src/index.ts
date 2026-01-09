@@ -4,3 +4,6 @@ export type { AdapterResult } from "./result.js";
 export type { AdapterError } from "./errors.js";
 export { filesystemAdapter } from "./filesystemAdapter.js";
 export type { FilesystemAdapterOptions } from "./filesystemAdapter.js";
+export type { GitHubAdapterOptions } from "./githubAdapter.js";
+
+export { githubAdapter } from "./githubAdapter.js";
