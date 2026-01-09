@@ -1,5 +1,7 @@
 import type { Adapter } from "./types.js";
 import type { AdapterResult } from "./result.js";
+import type { GitHubPullRequest } from "./githubTypes.js";
+import type { ReviewInput } from "@prsense/domain";
 export type GitHubAdapterOptions = {
   owner: string;
   repo: string;
@@ -65,7 +67,7 @@ export function githubAdapter(options: GitHubAdapterOptions): Adapter {
         };
       }
 
-      const pr = await prRes.json();
+      const pr = (await prRes.json()) as GitHubPullRequest;
 
       // 2. Fetch unified diff
       const diffRes = await githubFetch(
@@ -85,23 +87,35 @@ export function githubAdapter(options: GitHubAdapterOptions): Adapter {
       }
 
       const diffText = await diffRes.text();
+      const metadata: ReviewInput["metadata"] = {};
 
+      if (pr.title) {
+        metadata.title = pr.title;
+      }
+
+      if (pr.body) {
+        metadata.description = pr.body;
+      }
+
+      if (pr.user?.login) {
+        metadata.author = pr.user.login;
+      }
+
+      const value: ReviewInput = {
+        repo: {
+          owner,
+          name: repo,
+        },
+        baseBranch: pr.base?.ref,
+        diffText,
+      };
+      if (Object.keys(metadata).length > 0) {
+        value.metadata = metadata;
+      }
       // 3. Normalize into ReviewInput
       return {
         ok: true,
-        value: {
-          repo: {
-            owner,
-            name: repo,
-          },
-          baseBranch: pr.base?.ref,
-          diffText,
-          metadata: {
-            title: pr.title,
-            description: pr.body ?? "",
-            author: pr.user?.login,
-          },
-        },
+        value,
       };
     } catch (err) {
       return {
