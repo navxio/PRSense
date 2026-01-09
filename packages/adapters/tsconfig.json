@@ -3,16 +3,12 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "composite": true,
 
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-
-    "strict": true,
-    "noUncheckedIndexedAccess": true
+    "sourceMap": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
