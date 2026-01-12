@@ -17,5 +17,9 @@
     { "path": "../../packages/adapters" },
     { "path": "../../packages/reporters" }
   ],
-  "include": ["src"]
+  "include": [
+    "src",
+    "../../packages/context/src/diff.ts",
+    "../../packages/context/src/diff.ts"
+  ]
 }
