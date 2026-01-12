@@ -6,8 +6,6 @@ import { loadPrsenseConfig } from "@prsense/config";
 import { stdoutReporter } from "@prsense/reporters";
 import { buildReviewContext } from "@prsense/context";
 
-import { summarize, printResult } from "./util.js";
-
 export const reviewCommand = new Command("review")
   .argument("[path]", "Path to repository", ".")
   .option("--source <source>", "git | fs | github", "git")
@@ -23,12 +21,14 @@ export const reviewCommand = new Command("review")
 
     const adapter = selectAdapter({
       source: options.source,
+      ...(options.pullNumber !== undefined && {
+        pullNumber: options.pullNumber,
+      }),
+      ...(options.owner && { owner: options.owner }),
+      ...(options.repo && { repo: options.repo }),
+      ...(options.diffPath && { diffPath: options.diffPath }),
+      ...(baseBranch && { baseBranch }),
       repoRoot: path,
-      baseBranch,
-      diffPath: options.diffPath,
-      owner: options.owner,
-      repo: options.repo,
-      pullNumber: options.pullNumber ? Number(options.pullNumber) : undefined,
       token: process.env.GITHUB_TOKEN,
     });
 

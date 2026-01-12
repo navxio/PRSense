@@ -11,16 +11,25 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const args = Object.fromEntries(
     argv
       .slice(2)
-      .map((arg) => arg.split("="))
-      .map(([k, v]) => [k.replace(/^--/, ""), v]),
+      .map((arg) => {
+        const [k, v] = arg.split("=");
+        if (!k) return null;
+        return [k.replace(/^--/, ""), v] as const;
+      })
+      .filter((x): x is readonly [string, string | undefined] => x !== null),
   );
 
-  return {
+  const result: ParsedArgs = {
     source: (args.source as "github" | "fs") ?? "fs",
-    repoRoot: args["repo-root"],
-    diffPath: args["diff-path"],
-    owner: args.owner,
-    repo: args.repo,
-    pullNumber: args["pull-number"] ? Number(args["pull-number"]) : undefined,
   };
+
+  if (args["repo-root"]) result.repoRoot = args["repo-root"];
+  if (args["diff-path"]) result.diffPath = args["diff-path"];
+  if (args.owner) result.owner = args.owner;
+  if (args.repo) result.repo = args.repo;
+  if (args["pull-number"]) {
+    result.pullNumber = Number(args["pull-number"]);
+  }
+
+  return result;
 }

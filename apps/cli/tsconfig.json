@@ -6,7 +6,16 @@
     "module": "NodeNext",
     "target": "ES2022",
     "moduleResolution": "NodeNext",
-    "declaration": true
+    "declaration": true,
+    "composite": true
   },
+  "references": [
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/config" },
+    { "path": "../../packages/engine" },
+    { "path": "../../packages/context" },
+    { "path": "../../packages/adapters" },
+    { "path": "../../packages/reporters" }
+  ],
   "include": ["src"]
 }
