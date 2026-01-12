@@ -1,0 +1,16 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: prsense_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: prsense
+      POSTGRES_PASSWORD: prsense
+      POSTGRES_DB: prsense_dev
+    ports:
+      - "10000:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

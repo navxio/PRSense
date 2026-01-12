@@ -14,7 +14,8 @@
     "build:llm": "pnpm --filter @prsense/llm build",
     "build:adapters": "pnpm --filter @prsense/adapters build",
     "build:reporters": "pnpm --filter @prsense/reporters build",
-    "cli:review": "pnpm --filter @prsense/cli dev:review"
+    "cli:review": "pnpm --filter @prsense/cli dev:review",
+    "db:shell": "psql -h localhost -p 5432 -U prsense prsense_dev"
   },
   "keywords": [],
   "author": "Navdeep Saini",
