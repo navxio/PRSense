@@ -10,7 +10,8 @@
     "build": "tsc",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "dev:review": "tsx src/index.ts review ."
+    "dev:review": "tsx src/index.ts review .",
+    "clean": "rm -rf dist/ *.tsbuildinfo"
   },
   "keywords": [],
   "author": "Navdeep Saini",
@@ -22,7 +23,7 @@
     "@prsense/config": "workspace:*",
     "@prsense/adapters": "workspace:*",
     "@prsense/context": "workspace:*",
-    "chalk": "^5.6.2",
+    "@prsense/reporters": "workspace:*",
     "commander": "^14.0.2"
   }
 }

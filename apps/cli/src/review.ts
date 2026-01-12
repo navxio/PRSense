@@ -3,6 +3,7 @@ import { selectAdapter } from "./selectAdapter.js";
 
 import { review } from "@prsense/engine";
 import { loadPrsenseConfig } from "@prsense/config";
+import { stdoutReporter } from "@prsense/reporters";
 import { buildReviewContext } from "@prsense/context";
 
 import { summarize, printResult } from "./util.js";
@@ -44,5 +45,5 @@ export const reviewCommand = new Command("review")
       enabledRuleIds: config.rules?.enable ?? [],
     });
 
-    printResult(summarize(signals));
+    await stdoutReporter(signals);
   });

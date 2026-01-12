@@ -42,9 +42,9 @@ importers:
       '@prsense/engine':
         specifier: workspace:*
         version: link:../../packages/engine
-      chalk:
-        specifier: ^5.6.2
-        version: 5.6.2
+      '@prsense/reporters':
+        specifier: workspace:*
+        version: link:../../packages/reporters
       commander:
         specifier: ^14.0.2
         version: 14.0.2
@@ -89,6 +89,9 @@ importers:
       '@prsense/domain':
         specifier: workspace:*
         version: link:../domain
+      chalk:
+        specifier: ^5.6.2
+        version: 5.6.2
 
 packages:
 
