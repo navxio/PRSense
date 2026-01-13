@@ -1,6 +1,6 @@
-import type { Adapter } from "./types.js";
-import type { AdapterResult } from "./result.js";
-import type { GitHubPullRequest } from "./githubTypes.js";
+import type { Adapter } from "../shared/types.js";
+import type { AdapterResult } from "../shared/result.js";
+import type { GitHubPullRequest } from "../github/githubTypes.js";
 import type { ReviewInput } from "@prsense/domain";
 export type GitHubAdapterOptions = {
   owner: string;

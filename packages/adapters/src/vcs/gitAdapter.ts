@@ -1,7 +1,7 @@
 import { simpleGit } from "simple-git";
 
-import type { Adapter } from "./types.js";
-import type { AdapterResult } from "./result.js";
+import type { Adapter } from "../shared/types.js";
+import type { AdapterResult } from "../shared/result.js";
 
 export type GitAdapterOptions = {
   repoRoot: string;
