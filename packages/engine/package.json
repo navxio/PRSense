@@ -14,7 +14,8 @@
     "dist"
   ],
   "dependencies": {
-    "@prsense/domain": "workspace:*"
+    "@prsense/domain": "workspace:*",
+    "@prsense/context": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",

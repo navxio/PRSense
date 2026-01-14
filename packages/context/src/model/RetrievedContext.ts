@@ -1,5 +1,5 @@
 import { ContextChunk } from "./ContextChunk.js";
-import { RetrievalTrace } from "../debug/index.js";
+import { RetrievalTrace } from "../debug/retrieval.js";
 
 export type RetrievedContext = {
   chunks: ContextChunk[];
