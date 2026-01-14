@@ -9,7 +9,7 @@ export type GitHubAdapterOptions = {
   token: string;
 };
 
-const GITHUB_API = "https://api.github.com";
+const GITHUB_API_BASE_URL = "https://api.github.com";
 
 async function githubFetch(
   url: string,
@@ -32,7 +32,7 @@ export function githubAdapter(options: GitHubAdapterOptions): Adapter {
     try {
       // 1. Fetch PR metadata
       const prRes = await githubFetch(
-        `${GITHUB_API}/repos/${owner}/${repo}/pulls/${pullNumber}`,
+        `${GITHUB_API_BASE_URL}/repos/${owner}/${repo}/pulls/${pullNumber}`,
         token,
         "application/vnd.github.v3+json",
       );
@@ -71,7 +71,7 @@ export function githubAdapter(options: GitHubAdapterOptions): Adapter {
 
       // 2. Fetch unified diff
       const diffRes = await githubFetch(
-        `${GITHUB_API}/repos/${owner}/${repo}/pulls/${pullNumber}`,
+        `${GITHUB_API_BASE_URL}/repos/${owner}/${repo}/pulls/${pullNumber}`,
         token,
         "application/vnd.github.v3.diff",
       );
