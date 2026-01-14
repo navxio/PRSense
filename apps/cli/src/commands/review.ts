@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { selectAdapter } from "./selectAdapter.js";
+import { selectAdapter } from "../selectAdapter.js";
 
 import { review } from "@prsense/engine";
 import { loadPrsenseConfig } from "@prsense/config";

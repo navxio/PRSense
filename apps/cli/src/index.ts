@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { reviewCommand } from "./review.js";
+import { reviewCommand } from "./commands/review.js";
 
 const program = new Command();
 
