@@ -56,6 +56,56 @@ It combines:
 
 The result is explainable, auditable review output.
 
+## Architecture
+
+          ┌─────────────┐
+          │   GitHub    │
+          │   / Git     │
+          └──────┬──────┘
+                 │
+          [PR / Diff Event]
+                 │
+        ┌────────▼────────┐
+        │   Ingestion     │
+        │ (diff + meta)   │
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │ Context Builder │◄──── Repo, history, config
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │ Review Engine   │
+        │ (rules + LLM)   │
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │ Signal Compiler │
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │ Reporters       │
+        │ (GitHub, CLI)   │
+        └─────────────────┘
+
+## Monorepo layout
+
+```
+apps/
+  worker/              # async jobs (reviews, retries)
+  integrations/github/          # webhook receiver + auth
+  cli/                 # local CLI (prsense review .)
+
+packages/
+  domain/              # CORE: signals, rules, prompts (pure TS)
+  engine/              # review engine (rules + llm orchestration)
+  llm/                 # provider abstraction + implementations
+  context/             # diff parsing, context building, RAG-lite
+  config/              # prsense.yml parsing + validation
+  adapters/            # GitHub, GitLab, filesystem
+  reporters/           # GitHub comments, JSON, stdout
+```
+
 ## How PRsense is used
 
 Currently, PRsense runs as a local CLI:
@@ -95,13 +145,6 @@ PRsense treats LLMs as reasoning engines, not authorities.
 ## Project status
 
 PRsense is under active development.
-
-The architecture, core types, and CLI are in place.  
-RAG, additional rules, and integrations are evolving incrementally.
-
-If you’re curious about how PRsense works internally, including its architecture and design decisions, see:
-
-[wiki](docs/wiki.md)
 
 ## License
 
