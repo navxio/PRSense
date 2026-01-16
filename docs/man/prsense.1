@@ -1,0 +1,264 @@
+PRSENSE(1)
+PRSENSE — principled AI-assisted pull request review
+
+⸻
+
+NAME
+prsense — CLI-first, self-hosted AI code reviewer
+
+⸻
+
+SYNOPSIS
+prsense  [options] [target]
+
+⸻
+
+DESCRIPTION
+PRsense is a command-line tool for reviewing code changes using large
+language models with full repository context.
+
+It is designed for senior developers who want intentional, inspectable,
+and self-hosted reviews without relying on hosted SaaS platforms.
+
+PRsense operates primarily on diffs and surrounding context, producing
+structured review signals that prioritize clarity, correctness, and
+maintainability.
+
+
+⸻
+
+COMMANDS
+
+review      Review a code change and emit structured review signals
+index       Index a repository for faster and deeper contextual reviews
+doctor      Diagnose PRsense installation and runtime environment
+help        Show help for a command
+
+
+⸻
+
+COMMAND: review
+
+NAME
+prsense review — review a code change
+
+SYNOPSIS
+prsense review [target] [options]
+
+DESCRIPTION
+Reviews a code change and produces structured review signals.
+
+The review analyzes:
+- the diff itself
+- surrounding code context
+- repository conventions
+- test and documentation impact
+
+The default output is human-readable text suitable for terminal usage.
+Machine-readable JSON output is also supported.
+
+TARGETS
+The review target may be one of:
+
+.                       Current repository (default)
+<path>                  Path to a local repository
+<git-range>             Git revision range (e.g. origin/main..HEAD)
+<patch-file>            Unified diff file
+-                       Read diff from stdin
+
+OPTIONS
+–base-branch
+Override the base branch used for diff comparison.
+
+--max-signals <n>
+    Maximum number of review signals to emit.
+
+--confidence <0-1>
+    Minimum confidence required for a signal to be reported.
+
+--context <n>
+    Maximum number of context chunks retrieved during review.
+
+--no-context
+    Perform a diff-only review without contextual retrieval.
+
+--explain
+    Include reasoning details and context references in output.
+
+--format <text|json>
+    Output format. Default is text.
+
+EXAMPLES
+prsense review .
+prsense review origin/main..HEAD
+prsense review diff.patch
+git diff | prsense review -
+prsense review . –confidence 0.7 –max-signals 5
+
+⸻
+
+COMMAND: index
+
+NAME
+prsense index — index repository for contextual review
+
+SYNOPSIS
+prsense index [path] [options]
+
+DESCRIPTION
+Indexes a repository for contextual retrieval (RAG).
+
+Indexing enables PRsense to retrieve relevant surrounding code during
+reviews. The process is idempotent and safe to run multiple times.
+
+Indexing is not required for basic reviews, but improves depth and quality.
+
+TARGETS
+                  Path to a local repository (default: current directory)
+
+OPTIONS
+–force
+Rebuild the index from scratch.
+
+--stats
+    Print indexing statistics after completion.
+
+--dry-run
+    Show what would be indexed without performing writes.
+
+EXAMPLES
+prsense index .
+prsense index ../my-repo –force
+prsense index . –stats
+
+⸻
+
+COMMAND: doctor
+
+NAME
+prsense doctor — diagnose environment and configuration
+
+SYNOPSIS
+prsense doctor
+
+DESCRIPTION
+Performs a series of checks to validate that PRsense is correctly
+installed and configured.
+
+This command is intended to help diagnose missing dependencies,
+misconfiguration, or runtime issues.
+
+CHECKS PERFORMED
+- Environment variables
+- LLM provider availability
+- Vector database connectivity
+- Config file discovery
+- Filesystem access
+- Version compatibility
+
+OUTPUT
+The output lists checks with clear pass/fail status and actionable
+remediation steps.
+
+EXAMPLES
+prsense doctor
+
+⸻
+
+CONFIGURATION
+
+PRsense uses two kinds of configuration:
+
+1. User configuration (review behavior)
+2. Environment variables (runtime and infrastructure)
+
+USER CONFIGURATION
+A file named prsense.yml may be placed at the repository root.
+
+Example:
+
+    llm:
+      provider: ollama
+      model: qwen2.5-coder
+      temperature: 0.1
+
+    review:
+      confidenceThreshold: 0.6
+      maxSignals: 10
+
+    context:
+      maxChunks: 5
+
+    git:
+      baseBranch: trunk
+
+If no configuration file is found, PRsense uses built-in defaults.
+
+ENVIRONMENT VARIABLES
+Environment variables configure runtime and infrastructure details.
+
+Common variables include:
+
+    PRSENSE_OPENAI_API_KEY
+    PRSENSE_OLLAMA_HOST
+    PRSENSE_DATABASE_URL
+    PRSENSE_LOG_LEVEL
+
+Environment variables do not control review behavior.
+
+⸻
+
+EXIT STATUS
+
+0   Successful execution
+1   Invalid usage or configuration
+2   Runtime or dependency failure
+3   Review completed with internal errors
+
+
+⸻
+
+FILES
+
+prsense.yml
+    Repository-local review configuration.
+
+~/.config/prsense/config.yml
+    Optional user-level configuration (fallback).
+
+
+⸻
+
+DESIGN PHILOSOPHY
+
+PRsense is intentionally:
+
+- CLI-first
+- Self-hosted
+- Transparent
+- Opinionated but configurable
+- Focused on judgment, not enforcement
+
+It favors clarity and trust over automation and noise.
+
+
+⸻
+
+SEE ALSO
+
+git(1)
+gh(1)
+
+⸻
+
+AUTHOR
+
+PRsense is developed as an open-source project.
+
+⸻
+
+COPYRIGHT
+
+Licensed under the Apache License, Version 2.0.
+
+⸻
