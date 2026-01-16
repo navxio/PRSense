@@ -1,5 +1,6 @@
 // packages/adapters/src/index.ts
 export * from "./repository/index.js";
+export * from "./review/index.js";
 export * from "./vcs/index.js";
 export * from "./vectorstore/index.js";
 export * from "./github/index.js";
