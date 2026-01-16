@@ -1,14 +1,5 @@
 #!/usr/bin/env node
-import { Command } from "commander";
-import { reviewCommand } from "./commands/review.js";
-
-const program = new Command();
-
-program
-  .name("prsense")
-  .description("PRsense – signal-based pull request reviews")
-  .version("0.1.0");
-
-program.addCommand(reviewCommand);
+import "dotenv/config";
+import { program } from "./program.js";
 
 program.parse(process.argv);
