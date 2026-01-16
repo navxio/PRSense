@@ -1,11 +1,5 @@
 import { Command } from "commander";
-
-import { indexRepository } from "@prsense/engine";
-import { createFilesystemRepositorySource } from "@prsense/adapters";
-import {
-  createPgVectorStore,
-  createOllamaEmbeddingProvider,
-} from "@prsense/adapters";
+import { runIndexWorkflow } from "../workflows/indexWorkflow.js";
 
 export const indexCommand = new Command("index")
   .argument("<path>", "Path to repository")
@@ -21,64 +15,12 @@ export const indexCommand = new Command("index")
       process.exit(1);
     }
 
-    /* ---------------------------------- */
-    /* Adapters                           */
-    /* ---------------------------------- */
-
-    const source = createFilesystemRepositorySource(path);
-
-    const embeddingProvider = createOllamaEmbeddingProvider({
-      baseUrl: "http://localhost:11434",
-      model: "nomic-embed-text",
-    });
-
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
-    const vectorStore = createPgVectorStore(pool);
-
-    /* ---------------------------------- */
-    /* Execute indexing                   */
-    /* ---------------------------------- */
-
-    const result = await indexRepository({
-      source,
-      embeddingProvider,
-      vectorStore,
+    const exitCode = await runIndexWorkflow({
+      repoPath: path,
       chunkSize,
       chunkOverlap,
-      onDebugEvent: options.debug
-        ? (event) => {
-            switch (event.type) {
-              case "file_discovered":
-                console.log(`📄 ${event.path}`);
-                break;
-
-              case "chunk_created":
-                console.log(
-                  `  ↳ chunk ${event.startLine ?? "?"}-${event.endLine ?? "?"}`,
-                );
-                break;
-
-              case "embedding_created":
-                console.log(`    ↳ embedding (${event.vectorSize} dims)`);
-                break;
-
-              case "chunk_stored":
-                console.log(`    ↳ stored ${event.chunkId}`);
-                break;
-            }
-          }
-        : undefined,
+      debug: Boolean(options.debug),
     });
 
-    console.log("");
-    console.log("Indexing complete:");
-    console.log(`  Repo: ${result.repo.name}`);
-    console.log(`  Files indexed: ${result.filesIndexed}`);
-    console.log(`  Chunks created: ${result.chunksCreated}`);
-    console.log(`  Chunks stored: ${result.chunksStored}`);
-
-    await pool.end();
+    process.exit(exitCode);
   });
