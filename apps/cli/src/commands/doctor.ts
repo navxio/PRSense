@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { runDoctorWorkflow } from "../workflows/doctorWorkflow.js";
+import { runDoctorWorkflow } from "../workflows/doctor/doctorWorkflow.js";
 
 export const doctorCommand = new Command("doctor")
   .description("Diagnose PRsense installation and environment")
