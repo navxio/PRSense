@@ -1,54 +1,79 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { Adapter } from "../shared/types.js";
-import type { AdapterResult } from "../shared/result.js";
+import type { RepositorySource, RepositoryFile } from "./types.js";
 
-export type FilesystemAdapterOptions = {
-  repoRoot: string;
-  diffPath: string;
-};
+export function createFilesystemRepositorySource(
+  repoRoot: string,
+): RepositorySource {
+  const repoName = path.basename(repoRoot);
 
-export function filesystemAdapter(options: FilesystemAdapterOptions): Adapter {
-  const { repoRoot, diffPath } = options;
+  async function* walk(
+    dir: string,
+    baseDir: string,
+  ): AsyncIterable<RepositoryFile> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
 
-  return async (): Promise<AdapterResult> => {
-    try {
-      const diffText = await fs.readFile(
-        path.resolve(repoRoot, diffPath),
-        "utf8",
-      );
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(baseDir, fullPath);
 
-      return {
-        ok: true,
-        value: {
-          repo: {
-            owner: "local",
-            name: path.basename(repoRoot),
-          },
-          repoRoot,
-          diffText,
-        },
-      };
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-        return {
-          ok: false,
-          error: {
-            kind: "NotFoundError",
-            message: `Diff file not found at ${diffPath}`,
-          },
-        };
+      // Skip common junk
+      if (
+        entry.name === ".git" ||
+        entry.name === "node_modules" ||
+        entry.name.startsWith(".")
+      ) {
+        continue;
       }
 
-      return {
-        ok: false,
-        error: {
-          kind: "IOError",
-          message: "Failed to read diff from filesystem",
-          cause: err,
-        },
+      if (entry.isDirectory()) {
+        yield* walk(fullPath, baseDir);
+        continue;
+      }
+
+      if (!entry.isFile()) continue;
+
+      // Basic heuristic: only index text-like files
+      const content = await fs.readFile(fullPath, "utf8").catch(() => null);
+      if (content === null) continue;
+
+      yield {
+        path: relativePath,
+        content,
+        language: inferLanguageFromPath(relativePath),
       };
     }
+  }
+
+  return {
+    repo: {
+      id: `local:${repoRoot}`,
+      name: repoName,
+    },
+
+    files(): AsyncIterable<RepositoryFile> {
+      return walk(repoRoot, repoRoot);
+    },
   };
+}
+
+function inferLanguageFromPath(filePath: string): string | undefined {
+  const ext = path.extname(filePath).toLowerCase();
+
+  switch (ext) {
+    case ".ts":
+    case ".tsx":
+      return "typescript";
+    case ".js":
+      return "javascript";
+    case ".py":
+      return "python";
+    case ".md":
+      return "markdown";
+    case ".json":
+      return "json";
+    default:
+      return undefined;
+  }
 }
