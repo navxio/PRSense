@@ -273,7 +273,7 @@ PRsense follows a hexagonal architecture:
 ---
 
 ## Monorepo Layout
-
+```
 apps/
 cli/ # CLI entrypoint
 worker/ # background jobs (future)
@@ -287,7 +287,7 @@ llm/ # LLM provider abstractions
 config/ # prsense.yml and env validation
 adapters/ # git, filesystem, database, LLM adapters
 reporters/ # CLI and other output formats
-
+```
 ---
 
 ## Command Reference
