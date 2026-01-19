@@ -111,22 +111,24 @@ PRsense separates review intent from runtime configuration.
 Review behavior is configured via a YAML file placed at the repository root.
 
 Example:
+
 ```
 llm:
-provider: ollama
-model: qwen2.5-coder
-temperature: 0.1
+  provider: ollama
+  model: qwen2.5-coder
+  temperature: 0.1
 
 review:
-confidenceThreshold: 0.6
-maxSignals: 10
+  confidenceThreshold: 0.6
+  maxSignals: 10
 
 context:
-maxChunks: 5
+  maxChunks: 5
 
 git:
-baseBranch: trunk
+  baseBranch: trunk
 ```
+
 This configuration defines how PRsense behaves as a reviewer for the repository.
 
 If no configuration file is present, PRsense uses sensible defaults.
@@ -273,6 +275,7 @@ PRsense follows a hexagonal architecture:
 ---
 
 ## Monorepo Layout
+
 ```
 apps/
 cli/ # CLI entrypoint
@@ -288,6 +291,7 @@ config/ # prsense.yml and env validation
 adapters/ # git, filesystem, database, LLM adapters
 reporters/ # CLI and other output formats
 ```
+
 ---
 
 ## Command Reference
@@ -318,6 +322,13 @@ PRsense treats LLMs as reasoning engines, not authorities.
 PRsense is under active development.
 
 Interfaces and core concepts are stabilizing, while integrations and performance improvements continue.
+
+---
+
+## ToDo
+
+- [ ] move both commands to task runner UI
+- [ ] create service mode with GH webhook listeners
 
 ---
 
