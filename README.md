@@ -111,7 +111,7 @@ PRsense separates review intent from runtime configuration.
 Review behavior is configured via a YAML file placed at the repository root.
 
 Example:
-
+```
 llm:
 provider: ollama
 model: qwen2.5-coder
@@ -126,7 +126,7 @@ maxChunks: 5
 
 git:
 baseBranch: trunk
-
+```
 This configuration defines how PRsense behaves as a reviewer for the repository.
 
 If no configuration file is present, PRsense uses sensible defaults.
