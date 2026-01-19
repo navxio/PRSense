@@ -1,8 +1,8 @@
 import type { Adapter } from "@prsense/adapters";
 import {
-  filesystemAdapter,
-  githubAdapter,
-  gitAdapter,
+  filesystemDiffAdapter,
+  githubDiffAdapter,
+  gitDiffAdapter,
 } from "@prsense/adapters";
 
 type CliOptions = {
@@ -29,7 +29,7 @@ export function selectAdapter(opts: CliOptions): Adapter {
         throw new Error("Git source requires --repo-root and --base-branch");
       }
 
-      return gitAdapter({
+      return gitDiffAdapter({
         repoRoot: opts.repoRoot,
         baseBranch: opts.baseBranch,
       });
@@ -42,7 +42,7 @@ export function selectAdapter(opts: CliOptions): Adapter {
         );
       }
 
-      return filesystemAdapter({
+      return filesystemDiffAdapter({
         repoRoot: opts.repoRoot,
         diffPath: opts.diffPath,
       });
@@ -55,7 +55,7 @@ export function selectAdapter(opts: CliOptions): Adapter {
         );
       }
 
-      return githubAdapter({
+      return githubDiffAdapter({
         owner: opts.owner,
         repo: opts.repo,
         pullNumber: opts.pullNumber,
