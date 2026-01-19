@@ -1,2 +1,2 @@
 export * from "./filesystemRepositorySource.js";
-export * from "./githubRepositorySource.js";
+export * from "../github/githubDiffAdapter.js";

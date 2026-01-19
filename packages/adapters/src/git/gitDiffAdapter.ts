@@ -8,7 +8,7 @@ export type GitAdapterOptions = {
   baseBranch: string;
 };
 
-export function gitAdapter(options: GitAdapterOptions): Adapter {
+export function gitDiffAdapter(options: GitAdapterOptions): Adapter {
   const { repoRoot, baseBranch } = options;
 
   return async (): Promise<AdapterResult> => {

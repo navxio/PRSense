@@ -1,6 +1,6 @@
 import type { Adapter } from "../shared/types.js";
 import type { AdapterResult } from "../shared/result.js";
-import type { GitHubPullRequest } from "../github/githubTypes.js";
+import type { GitHubPullRequest } from "./githubTypes.js";
 import type { ReviewInput } from "@prsense/domain";
 export type GitHubAdapterOptions = {
   owner: string;
@@ -25,7 +25,7 @@ async function githubFetch(
   });
 }
 
-export function githubAdapter(options: GitHubAdapterOptions): Adapter {
+export function githubDiffAdapter(options: GitHubAdapterOptions): Adapter {
   const { owner, repo, pullNumber, token } = options;
 
   return async (): Promise<AdapterResult> => {
