@@ -16,6 +16,10 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@prsense/domain": "workspace:*"
+    "@prsense/domain": "workspace:*",
+    "pg": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0"
   }
 }

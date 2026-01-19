@@ -1,1 +1,1 @@
-export * from "./VectorStore.js";
+export * from "./types.js";

@@ -1,5 +1,5 @@
 import { Chunk } from "../indexing/Chunk.js";
-import { EmbeddingVector } from "../embeddings/EmbeddingProvider.js";
+import { EmbeddingVector } from "../embeddings/types.js";
 import { RepositoryId } from "../repository/RepositorySource.js";
 
 export type StoredChunk = Chunk & {

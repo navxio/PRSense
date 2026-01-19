@@ -1,1 +1,1 @@
-export * from "./gitAdapter.js";
+export * from "./gitDiffAdapter.js";

@@ -1,5 +1,4 @@
-import { EmbeddingProvider, EmbeddingVector } from "@prsense/context";
-
+import { EmbeddingProvider, EmbeddingVector } from "./types.js";
 type OllamaEmbeddingConfig = {
   baseUrl: string;
   model: string;
