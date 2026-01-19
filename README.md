@@ -118,6 +118,10 @@ llm:
   model: qwen2.5-coder
   temperature: 0.1
 
+embeddings:
+  provider: ollama
+  model: qwen2.5-coder
+
 review:
   confidenceThreshold: 0.6
   maxSignals: 10
@@ -329,6 +333,7 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 - [ ] move both commands to task runner UI
 - [ ] create service mode with GH webhook listeners
+- [ ] add `--rebuild` option to index command
 
 ---
 

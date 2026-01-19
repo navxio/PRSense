@@ -7,6 +7,11 @@ export const UserConfigSchema = z.object({
     temperature: z.number().min(0).max(1).default(0.1),
   }),
 
+  embeddings: z.object({
+    provider: z.enum(["ollama", "openai"]).default("ollama"),
+    model: z.string().default("nomic-embed-text"),
+  }),
+
   review: z.object({
     confidenceThreshold: z.number().min(0).max(1).default(0.6),
     maxSignals: z.number().int().positive().default(10),
