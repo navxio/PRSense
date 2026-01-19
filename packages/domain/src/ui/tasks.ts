@@ -3,26 +3,27 @@
 import { Task } from "./task.js";
 
 export const Tasks = {
-  readDiff(): Task {
-    return { id: "read-diff", label: "Reading git diff" };
+  loadConfig(): Task {
+    return { id: "load-config", label: "Loading configuration" };
+  },
+
+  selectAdapter(): Task {
+    return { id: "select-adapter", label: "Selecting diff source" };
+  },
+
+  ingestDiff(): Task {
+    return { id: "ingest-diff", label: "Ingesting diff" };
   },
 
   buildContext(): Task {
-    return { id: "build-context", label: "Building code context" };
+    return { id: "build-context", label: "Building review context" };
   },
 
-  queryLLM(model: string): Task {
-    return {
-      id: "query-llm",
-      label: `Querying LLM (${model})`,
-    };
+  runReviewEngine(): Task {
+    return { id: "run-review", label: "Running review engine" };
   },
 
   compileSignals(): Task {
     return { id: "compile-signals", label: "Compiling review signals" };
-  },
-
-  indexScan(): Task {
-    return { id: "index-scan", label: "Scanning repository" };
   },
 } as const;

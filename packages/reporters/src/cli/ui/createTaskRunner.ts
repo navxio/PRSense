@@ -3,11 +3,17 @@
 import { TaskRunner } from "@prsense/domain";
 import { OraTaskRunner } from "./OraTaskRunner.js";
 import { SilentTaskRunner } from "./SilentTaskRunner.js";
+import { DebugTaskRunner } from "./DebugTaskRunner.js";
+import { stderrHumanEmitter } from "./debugEmitters.js";
 
 export function createTaskRunner(): TaskRunner {
-  if (!process.stdout.isTTY) {
-    return new SilentTaskRunner();
+  const baseRunner = process.stdout.isTTY
+    ? new OraTaskRunner()
+    : new SilentTaskRunner();
+
+  if (process.env.PRSENSE_DEBUG === "1") {
+    return new DebugTaskRunner(baseRunner, stderrHumanEmitter);
   }
 
-  return new OraTaskRunner();
+  return baseRunner;
 }
