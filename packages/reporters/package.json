@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@prsense/domain": "workspace:*",
-    "chalk": "^5.6.2"
+    "chalk": "^5.6.2",
+    "ora": "^9.0.0"
   }
 }
