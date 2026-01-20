@@ -5,7 +5,7 @@ function checkDockerAvailable(): CapabilityStatus {
   try {
     execSync("docker info", { stdio: "ignore" });
     return { kind: "ready" };
-  } catch (err) {
+  } catch {
     return {
       kind: "missing",
       reason: "Docker is not installed or the daemon is not running",
@@ -21,10 +21,6 @@ export const dockerCapability: Capability = {
     return checkDockerAvailable();
   },
 
-  /**
-   * Docker cannot be installed automatically.
-   * This is intentionally non-applicable.
-   */
   async apply() {
     throw new Error(
       "Docker must be installed manually. See https://docs.docker.com/get-docker/",

@@ -19,6 +19,10 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@prsense/adapters": "workspace:*"
+    "@prsense/config": "workspace:*",
+    "pg": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0"
   }
 }
