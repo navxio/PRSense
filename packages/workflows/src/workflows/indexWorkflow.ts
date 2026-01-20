@@ -1,9 +1,11 @@
 import { indexRepository } from "@prsense/engine";
+
+import { createFilesystemRepositorySource } from "@prsense/adapters";
+
 import {
-  createFilesystemRepositorySource,
   createPgVectorStore,
   createOllamaEmbeddingProvider,
-} from "@prsense/adapters";
+} from "@prsense/context";
 import { loadEnvConfig } from "@prsense/config";
 
 type IndexWorkflowInput = {

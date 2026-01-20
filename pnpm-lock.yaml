@@ -45,6 +45,9 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters
+      '@prsense/workflows':
+        specifier: workspace:*
+        version: link:../../packages/workflows
       commander:
         specifier: ^14.0.2
         version: 14.0.2
@@ -108,6 +111,27 @@ importers:
       ora:
         specifier: ^9.0.0
         version: 9.0.0
+
+  packages/workflows:
+    dependencies:
+      '@prsense/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
+      '@prsense/context':
+        specifier: workspace:*
+        version: link:../context
+      '@prsense/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@prsense/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@prsense/reporters':
+        specifier: workspace:*
+        version: link:../reporters
 
 packages:
 
