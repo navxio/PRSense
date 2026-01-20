@@ -12,10 +12,10 @@ export type DatabaseConfig = {
 
   /**
    * How Postgres is expected to be provided.
-   * - docker: PRsense manages a local container
+   * - bundled: PRsense manages a local container
    * - external: user/self-hosted DB
    */
-  mode: "docker" | "external";
+  mode: "bundled" | "external";
 };
 
 export type CapabilityContext = {
