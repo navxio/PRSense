@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const EnvConfigSchema = z.object({
-  PRSENSE_DATABASE_URL: z.url(),
+  PRSENSE_DATABASE_URL: z
+    .url()
+    .default(
+      "postgresql://prsense:prsense@localhost:10000/prsense_dev?sslmode=disable",
+    ),
 
   PRSENSE_GITHUB_TOKEN: z.string().optional(),
   PRSENSE_OPENAI_API_KEY: z.string().optional(),
