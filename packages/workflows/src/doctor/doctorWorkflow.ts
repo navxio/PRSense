@@ -1,4 +1,6 @@
-import { stdoutDoctorReporter } from "../../reporting/stdoutDoctorReporter.js";
+// packages/workflows/src/doctor/runDoctorWorkflow.ts
+
+import type { DoctorWorkflowResult } from "./types.js";
 
 import { checkEnvConfig } from "./checks/checkEnvConfig.js";
 import { checkUserConfig } from "./checks/checkUserConfig.js";
@@ -6,9 +8,9 @@ import { checkLLM } from "./checks/checkLLM.js";
 import { checkVectorStore } from "./checks/checkVectorStore.js";
 import { checkRepository } from "./checks/checkRepository.js";
 
-export async function runDoctorWorkflow(): Promise<number> {
-  //PERF: concurrent?
-  const results = [
+export async function runDoctorWorkflow(): Promise<DoctorWorkflowResult> {
+  // NOTE: sequential for now; safe to parallelize later
+  const checks = [
     await checkEnvConfig(),
     await checkUserConfig(),
     await checkLLM(),
@@ -16,7 +18,12 @@ export async function runDoctorWorkflow(): Promise<number> {
     await checkRepository(),
   ];
 
-  await stdoutDoctorReporter(results);
+  const hasFailure = checks.some((c) => c.status === "fail");
 
-  return results.some((r) => r.status === "fail") ? 1 : 0;
+  return {
+    outcome: hasFailure ? "failure" : "success",
+    payload: {
+      checks,
+    },
+  };
 }
