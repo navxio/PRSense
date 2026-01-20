@@ -18,6 +18,7 @@
     "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
     "@prsense/engine": "workspace:*",
-    "@prsense/reporters": "workspace:*"
+    "@prsense/reporters": "workspace:*",
+    "@prsense/capabilities": "workspace:*"
   }
 }

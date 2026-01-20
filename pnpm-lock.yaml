@@ -66,9 +66,16 @@ importers:
 
   packages/capabilities:
     dependencies:
-      '@prsense/adapters':
+      '@prsense/config':
         specifier: workspace:*
-        version: link:../adapters
+        version: link:../config
+      pg:
+        specifier: ^8.17.1
+        version: 8.17.1
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.16.0
+        version: 8.16.0
 
   packages/config:
     dependencies:
@@ -123,6 +130,9 @@ importers:
       '@prsense/adapters':
         specifier: workspace:*
         version: link:../adapters
+      '@prsense/capabilities':
+        specifier: workspace:*
+        version: link:../capabilities
       '@prsense/config':
         specifier: workspace:*
         version: link:../config
