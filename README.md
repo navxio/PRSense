@@ -306,7 +306,6 @@ PRSense follows a hexagonal architecture:
 
 ```
 
-```
 
 CLI / Daemon / CI / GitHub App
 ─────────────── execution environments
@@ -317,7 +316,6 @@ Engine / Context / Adapters / LLM
 Domain
 ─────────────── pure types
 
-```
 
 ```
 
