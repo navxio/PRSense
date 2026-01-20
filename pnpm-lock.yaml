@@ -64,6 +64,12 @@ importers:
         specifier: ^3.30.0
         version: 3.30.0
 
+  packages/capabilities:
+    dependencies:
+      '@prsense/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+
   packages/config:
     dependencies:
       yaml:

@@ -28,7 +28,8 @@
       "@prsense/llm": ["packages/llm/src"],
       "@prsense/adapters": ["packages/adapters/src"],
       "@prsense/reporters": ["packages/reporters/src"],
-      "@prsense/workflows": ["packages/workflows/src"]
+      "@prsense/workflows": ["packages/workflows/src"],
+      "@prsense/capabilities": ["packages/capabilities/src"]
     }
   },
   "files": [],
@@ -40,7 +41,8 @@
     { "path": "packages/llm" },
     { "path": "packages/adapters" },
     { "path": "packages/reporters" },
-    { "path": "packageks/workflows" },
+    { "path": "packages/workflows" },
+    { "path": "packages/capabilities" },
     { "path": "apps/cli" }
   ]
 }

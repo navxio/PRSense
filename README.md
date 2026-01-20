@@ -10,7 +10,6 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 
 ## Table of Contents
 
-- [Introduction](#Introduction)
 - [Philosophy](#philosophy)
 - [What PRSense Does](#what-prsense-does)
 - [What PRSense Does Not Do](#what-prsense-does-not-do)
@@ -107,13 +106,26 @@ Future integrations (GitHub App, CI, background workers) are planned, but not re
 
 ## Requirements
 
-- NodeJs (22.x)
+- Node.Js (22.x) + npm
 - Docker
 - Ollama(optional)
 
 ---
 
 ## Features
+
+- **Fast, local-first CLI** for reviewing and analyzing code changes
+- **Self-hosted by default** — run entirely on your own machine or infrastructure
+- **Persistent background daemon**
+- **Diff-first intelligence**, understanding:
+  - local changes
+  - generated outputs
+  - pull request diffs
+- **Pluggable LLM backends**, including Ollama and OpenAI(more on the roadmap)
+- **Flexible outputs** for humans and machines:
+  - terminal summaries
+  - JSON for CI / tooling
+  - GitHub pull request annotations
 
 ---
 
@@ -319,13 +331,14 @@ apps/
 
 packages/
   domain/ # core domain types and signals
-  engine/ # review engine orchestration
+  engine/ # review logic orchestration
   context/ # diff parsing and contextual retrieval
   llm/ # LLM provider abstractions
   config/ # prsense.yml and env validation
   adapters/ # git, filesystem, database, LLM adapters
   reporters/ # CLI and other output formats
   workflows/ # all workflows (cli+daemon)
+  capabilities/ #executable infa truths and enforcement
 ```
 
 ---
