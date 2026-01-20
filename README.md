@@ -109,6 +109,7 @@ Future integrations (GitHub App, CI, background workers) are planned, but not re
 - Node.Js (22.x) + npm
 - Docker
 - Ollama(optional)
+- PostgreSQL + pgvector(optional)
 
 ---
 
