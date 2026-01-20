@@ -1,11 +1,11 @@
 import type { Capability, CapabilityContext } from "@prsense/capabilities";
-import type { SetupWorkflowResult } from "./types.js";
+import type { SetupWorkflowResult, SetupStepResult } from "./types.js";
 
 export async function runSetupWorkflow(
   capabilities: Capability[],
   ctx: CapabilityContext,
 ): Promise<SetupWorkflowResult> {
-  const results = [];
+  const results: SetupStepResult[] = [];
 
   for (const cap of capabilities) {
     const status = await cap.check(ctx);
