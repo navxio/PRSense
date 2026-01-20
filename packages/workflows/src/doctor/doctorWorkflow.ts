@@ -1,29 +1,39 @@
 // packages/workflows/src/doctor/runDoctorWorkflow.ts
-
 import type { DoctorWorkflowResult } from "./types.js";
 
 import { checkEnvConfig } from "./checks/checkEnvConfig.js";
 import { checkUserConfig } from "./checks/checkUserConfig.js";
 import { checkLLM } from "./checks/checkLLM.js";
-import { checkVectorStore } from "./checks/checkVectorStore.js";
 import { checkRepository } from "./checks/checkRepository.js";
 
+import {
+  dockerCapability,
+  postgresCapability,
+  pgVectorCapability,
+} from "@prsense/capabilities";
+
+import { buildCapabilityContext } from "./buildCapabilityContext.js";
+import { runCapabilityCheck } from "./adaptCapability.js";
+
 export async function runDoctorWorkflow(): Promise<DoctorWorkflowResult> {
-  // NOTE: sequential for now; safe to parallelize later
+  const ctx = await buildCapabilityContext();
+
   const checks = [
     await checkEnvConfig(),
     await checkUserConfig(),
     await checkLLM(),
-    await checkVectorStore(),
     await checkRepository(),
+
+    // Capability-backed checks
+    await runCapabilityCheck(dockerCapability, ctx),
+    await runCapabilityCheck(postgresCapability, ctx),
+    await runCapabilityCheck(pgVectorCapability, ctx),
   ];
 
   const hasFailure = checks.some((c) => c.status === "fail");
 
   return {
     outcome: hasFailure ? "failure" : "success",
-    payload: {
-      checks,
-    },
+    payload: { checks },
   };
 }
