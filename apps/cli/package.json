@@ -25,6 +25,7 @@
     "@prsense/engine": "workspace:*",
     "@prsense/reporters": "workspace:*",
     "@prsense/workflows": "workspace:*",
+    "@prsense/capabilities": "workspace:*",
     "commander": "^14.0.2"
   }
 }

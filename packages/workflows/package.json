@@ -14,11 +14,15 @@
   },
   "dependencies": {
     "@prsense/adapters": "workspace:*",
+    "@prsense/capabilities": "workspace:*",
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
     "@prsense/engine": "workspace:*",
     "@prsense/reporters": "workspace:*",
-    "@prsense/capabilities": "workspace:*"
+    "pg": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0"
   }
 }
