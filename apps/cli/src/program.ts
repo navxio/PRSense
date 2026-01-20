@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { reviewCommand } from "./commands/review.js";
 import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
+import { setupCommand } from "./commands/setup.js";
 
 export const program = new Command()
   .name("prsense")
@@ -11,3 +12,4 @@ export const program = new Command()
 program.addCommand(reviewCommand);
 program.addCommand(indexCommand);
 program.addCommand(doctorCommand);
+program.addCommand(setupCommand);

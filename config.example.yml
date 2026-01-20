@@ -3,6 +3,10 @@ llm:
   model: qwen2.5-coder
   temperature: 0.1
 
+embeddings:
+  provider: ollama
+  model: nomic-embed-text
+
 review:
   confidenceThreshold: 0.6
   maxSignals: 10

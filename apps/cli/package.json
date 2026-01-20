@@ -18,12 +18,14 @@
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
+    "@prsense/adapters": "workspace:*",
+    "@prsense/config": "workspace:*",
+    "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
     "@prsense/engine": "workspace:*",
-    "@prsense/config": "workspace:*",
-    "@prsense/adapters": "workspace:*",
-    "@prsense/context": "workspace:*",
     "@prsense/reporters": "workspace:*",
+    "@prsense/workflows": "workspace:*",
+    "@prsense/capabilities": "workspace:*",
     "commander": "^14.0.2"
   }
 }

@@ -1,0 +1,28 @@
+{
+  "name": "@prsense/workflows",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "PRsense workflow orchestration (environment-agnostic)",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@prsense/adapters": "workspace:*",
+    "@prsense/capabilities": "workspace:*",
+    "@prsense/config": "workspace:*",
+    "@prsense/context": "workspace:*",
+    "@prsense/domain": "workspace:*",
+    "@prsense/engine": "workspace:*",
+    "@prsense/reporters": "workspace:*",
+    "pg": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0"
+  }
+}
