@@ -9,7 +9,7 @@ prsense — CLI-first, self-hosted AI code reviewer
 ⸻
 
 SYNOPSIS
-prsense  [options] [target]
+prsense [command] [options] [target]
 
 ⸻
 
@@ -24,6 +24,9 @@ PRsense operates primarily on diffs and surrounding context, producing
 structured review signals that prioritize clarity, correctness, and
 maintainability.
 
+PRsense may optionally run a background daemon for long-lived or
+service-oriented workloads, but the CLI operates independently by
+default.
 
 ⸻
 
@@ -32,8 +35,100 @@ COMMANDS
 review      Review a code change and emit structured review signals
 index       Index a repository for faster and deeper contextual reviews
 doctor      Diagnose PRsense installation and runtime environment
+daemon      Manage the PRsense background daemon
+setup       Perform optional one-time setup checks
 help        Show help for a command
 
+⸻
+
+COMMAND: daemon
+
+NAME
+prsense daemon — manage the PRsense background daemon
+
+SYNOPSIS
+prsense daemon  [options]
+
+DESCRIPTION
+Manages the lifecycle of the PRsense background daemon.
+
+The daemon is an optional, long-lived process intended for
+service-oriented use cases such as:
+	•	continuous indexing
+	•	CI or webhook-triggered reviews
+	•	multi-request coordination
+	•	future integrations (e.g. GitHub Apps)
+
+The daemon is not required for normal CLI usage.
+The CLI does not delegate review execution to the daemon by default.
+
+SUBCOMMANDS
+
+prsense daemon start
+Start the PRsense daemon in the background.
+
+SYNOPSIS
+prsense daemon start [–foreground]
+
+OPTIONS
+–foreground
+Run the daemon in the foreground and log to stdout.
+
+By default, the daemon runs in the background and listens on a local
+socket or port.
+
+prsense daemon stop
+Stop a running PRsense daemon.
+
+SYNOPSIS
+prsense daemon stop
+
+This sends a termination signal and waits for in-flight jobs to finish
+before shutting down.
+
+prsense daemon status
+Show the current daemon status.
+
+SYNOPSIS
+prsense daemon status
+
+Reports whether the daemon is running and, if so, its process ID.
+
+NOTES
+	•	The daemon is started and stopped explicitly.
+	•	PRsense does not auto-start background processes.
+	•	Daemon lifecycle is managed by OS signals, not HTTP APIs.
+
+⸻
+
+COMMAND: setup
+
+NAME
+prsense setup — perform optional one-time setup checks
+
+SYNOPSIS
+prsense setup
+
+DESCRIPTION
+Performs non-destructive setup validation and guidance.
+
+This command is intended to help first-time users ensure that required
+dependencies and configuration are in place.
+
+Unlike prsense doctor, this command focuses on initial readiness rather
+than ongoing diagnostics.
+
+CHECKS PERFORMED
+	•	Configuration file discovery
+	•	Environment variable presence
+	•	LLM provider availability
+	•	Optional database or vector store connectivity
+	•	File system permissions
+
+No background services are started automatically.
+
+EXAMPLES
+prsense setup
 
 ⸻
 
@@ -49,10 +144,10 @@ DESCRIPTION
 Reviews a code change and produces structured review signals.
 
 The review analyzes:
-- the diff itself
-- surrounding code context
-- repository conventions
-- test and documentation impact
+	•	the diff itself
+	•	surrounding code context
+	•	repository conventions
+	•	test and documentation impact
 
 The default output is human-readable text suitable for terminal usage.
 Machine-readable JSON output is also supported.
@@ -61,32 +156,36 @@ TARGETS
 The review target may be one of:
 
 .                       Current repository (default)
-<path>                  Path to a local repository
-<git-range>             Git revision range (e.g. origin/main..HEAD)
-<patch-file>            Unified diff file
--                       Read diff from stdin
+                  Path to a local repository
+             Git revision range (e.g. origin/main..HEAD)
+            Unified diff file
+	•	
+
+                  Read diff from stdin
+
+
 
 OPTIONS
 –base-branch
 Override the base branch used for diff comparison.
 
---max-signals <n>
-    Maximum number of review signals to emit.
+–max-signals 
+Maximum number of review signals to emit.
 
---confidence <0-1>
-    Minimum confidence required for a signal to be reported.
+–confidence <0-1>
+Minimum confidence required for a signal to be reported.
 
---context <n>
-    Maximum number of context chunks retrieved during review.
+–context 
+Maximum number of context chunks retrieved during review.
 
---no-context
-    Perform a diff-only review without contextual retrieval.
+–no-context
+Perform a diff-only review without contextual retrieval.
 
---explain
-    Include reasoning details and context references in output.
+–explain
+Include reasoning details and context references in output.
 
---format <text|json>
-    Output format. Default is text.
+–format <text|json>
+Output format. Default is text.
 
 EXAMPLES
 prsense review .
@@ -111,7 +210,8 @@ Indexes a repository for contextual retrieval (RAG).
 Indexing enables PRsense to retrieve relevant surrounding code during
 reviews. The process is idempotent and safe to run multiple times.
 
-Indexing is not required for basic reviews, but improves depth and quality.
+Indexing is not required for basic reviews, but improves depth and
+quality.
 
 TARGETS
                   Path to a local repository (default: current directory)
@@ -120,11 +220,19 @@ OPTIONS
 –force
 Rebuild the index from scratch.
 
---stats
-    Print indexing statistics after completion.
+–stats
+Print indexing statistics after completion.
 
---dry-run
-    Show what would be indexed without performing writes.
+–dry-run
+Show what would be indexed without performing writes.
+
+NOTES
+Indexing may be executed either via the CLI or via the PRsense daemon,
+depending on the deployment model.
+
+CLI-based indexing runs synchronously and exits on completion.
+Daemon-based indexing is intended for long-running or automated
+workflows.
 
 EXAMPLES
 prsense index .
@@ -149,12 +257,12 @@ This command is intended to help diagnose missing dependencies,
 misconfiguration, or runtime issues.
 
 CHECKS PERFORMED
-- Environment variables
-- LLM provider availability
-- Vector database connectivity
-- Config file discovery
-- Filesystem access
-- Version compatibility
+	•	Environment variables
+	•	LLM provider availability
+	•	Vector database connectivity
+	•	Config file discovery
+	•	Filesystem access
+	•	Version compatibility
 
 OUTPUT
 The output lists checks with clear pass/fail status and actionable
@@ -168,29 +276,28 @@ prsense doctor
 CONFIGURATION
 
 PRsense uses two kinds of configuration:
-
-1. User configuration (review behavior)
-2. Environment variables (runtime and infrastructure)
+	1.	User configuration (review behavior)
+	2.	Environment variables (runtime and infrastructure)
 
 USER CONFIGURATION
 A file named prsense.yml may be placed at the repository root.
 
 Example:
 
-    llm:
-      provider: ollama
-      model: qwen2.5-coder
-      temperature: 0.1
+llm:
+  provider: ollama
+  model: qwen2.5-coder
+  temperature: 0.1
 
-    review:
-      confidenceThreshold: 0.6
-      maxSignals: 10
+review:
+  confidenceThreshold: 0.6
+  maxSignals: 10
 
-    context:
-      maxChunks: 5
+context:
+  maxChunks: 5
 
-    git:
-      baseBranch: trunk
+git:
+  baseBranch: trunk
 
 If no configuration file is found, PRsense uses built-in defaults.
 
@@ -199,12 +306,19 @@ Environment variables configure runtime and infrastructure details.
 
 Common variables include:
 
-    PRSENSE_OPENAI_API_KEY
-    PRSENSE_OLLAMA_HOST
-    PRSENSE_DATABASE_URL
-    PRSENSE_LOG_LEVEL
+PRSENSE_OPENAI_API_KEY  
+PRSENSE_OLLAMA_HOST  
+PRSENSE_DATABASE_URL  
+PRSENSE_LOG_LEVEL  
 
 Environment variables do not control review behavior.
+
+NOTES
+Environment variables may also be used by the PRsense daemon when running
+as a long-lived service.
+
+The CLI and daemon share configuration semantics but operate
+independently.
 
 ⸻
 
@@ -215,32 +329,35 @@ EXIT STATUS
 2   Runtime or dependency failure
 3   Review completed with internal errors
 
+Daemon lifecycle commands use exit status to report control-plane success
+or failure only.
 
 ⸻
 
 FILES
 
 prsense.yml
-    Repository-local review configuration.
+Repository-local review configuration.
 
 ~/.config/prsense/config.yml
-    Optional user-level configuration (fallback).
+Optional user-level configuration (fallback).
 
+~/.local/state/prsense/
+Runtime state directory (daemon PID, logs, sockets).
 
 ⸻
 
 DESIGN PHILOSOPHY
 
 PRsense is intentionally:
+	•	CLI-first
+	•	Self-hosted
+	•	Explicit in lifecycle management
+	•	Transparent in behavior
+	•	Opinionated but configurable
+	•	Focused on judgment, not enforcement
 
-- CLI-first
-- Self-hosted
-- Transparent
-- Opinionated but configurable
-- Focused on judgment, not enforcement
-
-It favors clarity and trust over automation and noise.
-
+Background services are optional and opt-in.
 
 ⸻
 
@@ -253,7 +370,7 @@ gh(1)
 
 AUTHOR
 
-PRsense is developed as an open-source project.
+Navdeep Saini<navdeep@mailbox.org>
 
 ⸻
 

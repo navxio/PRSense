@@ -44,7 +44,6 @@ async function runSetupCommand() {
   }
 }
 
-//TODO: update man
 export const setupCommand = new Command("setup")
   .description("Setup prsense for command line interface usage")
   .action(runSetupCommand);
