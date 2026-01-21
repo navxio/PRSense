@@ -57,6 +57,9 @@ importers:
 
   apps/daemon:
     dependencies:
+      '@prsense/workflows':
+        specifier: workspace:*
+        version: link:../../packages/workflows
       fastify:
         specifier: ^4.26.2
         version: 4.29.1

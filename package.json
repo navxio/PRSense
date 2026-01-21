@@ -19,7 +19,8 @@
     "cli:review": "pnpm --filter @prsense/cli dev:review",
     "dev:cli": "pnpm --filter @prsense/cli dev",
     "cli:doctor": "pnpm --filter @prsense/cli start -- doctor",
-    "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev"
+    "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev",
+    "daemon": "pnpm --filter @prsense/daemon dev"
   },
   "keywords": [],
   "author": "Navdeep Saini",
