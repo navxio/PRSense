@@ -6,10 +6,14 @@ export type JobStore = {
   list(): Job[];
   create(job: Job): void;
   update(id: string, patch: Partial<Job>): void;
+
+  track<T>(jobId: string, promise: Promise<T>): Promise<T>;
+  drain(): Promise<void>;
 };
 
 export function createJobStore(): JobStore {
   const jobs = new Map<string, Job>();
+  const inFlight = new Set<Promise<unknown>>();
 
   return {
     get(id) {
@@ -28,10 +32,20 @@ export function createJobStore(): JobStore {
       const job = jobs.get(id);
       if (!job) return;
 
-      jobs.set(id, {
-        ...job,
-        ...patch,
-      });
+      jobs.set(id, { ...job, ...patch });
+    },
+
+    async track(jobId, promise) {
+      inFlight.add(promise);
+      try {
+        return await promise;
+      } finally {
+        inFlight.delete(promise);
+      }
+    },
+
+    async drain() {
+      await Promise.allSettled(Array.from(inFlight));
     },
   };
 }

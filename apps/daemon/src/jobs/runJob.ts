@@ -6,24 +6,28 @@ export async function runJob<TResult>(
   jobId: string,
   fn: () => Promise<TResult>,
 ) {
-  store.update(jobId, {
-    state: "running",
-    startedAt: Date.now(),
-  });
-
-  try {
-    const result = await fn();
-
+  const promise = (async () => {
     store.update(jobId, {
-      state: "completed",
-      result,
-      finishedAt: Date.now(),
+      state: "running",
+      startedAt: Date.now(),
     });
-  } catch (err) {
-    store.update(jobId, {
-      state: "failed",
-      error: err instanceof Error ? err.message : "Unknown error",
-      finishedAt: Date.now(),
-    });
-  }
+
+    try {
+      const result = await fn();
+
+      store.update(jobId, {
+        state: "completed",
+        result,
+        finishedAt: Date.now(),
+      });
+    } catch (err) {
+      store.update(jobId, {
+        state: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+        finishedAt: Date.now(),
+      });
+    }
+  })();
+
+  return store.track(jobId, promise);
 }
