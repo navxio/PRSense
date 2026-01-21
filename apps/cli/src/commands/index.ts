@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { runIndexWorkflow } from "../workflows/indexWorkflow.js";
+import { runIndexWorkflow } from "@prsense/workflows";
 
 export const indexCommand = new Command("index")
   .argument("<path>", "Path to repository")

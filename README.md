@@ -379,7 +379,7 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 - [ ] create service mode with GH webhook listeners
 - [ ] add `--rebuild` option to index command
 - [ ] `prsense setup db` (bundle postgres+pgvector with docker)
-- [ ] README overhaul
+- [ ] update manpage
 
 ---
 
