@@ -380,6 +380,7 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 - [ ] add `--rebuild` option to index command
 - [ ] `prsense setup db` (bundle postgres+pgvector with docker)
 - [x] update manpage
+- [ ] setup concurrency
 
 ---
 

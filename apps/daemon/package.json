@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "fastify": "^4.26.2",
-    "p-queue": "^8.0.1",
     "@prsense/workflows": "workspace:*"
   }
 }
