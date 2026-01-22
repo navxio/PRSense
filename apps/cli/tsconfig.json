@@ -13,7 +13,6 @@
     { "path": "../../packages/config" },
     { "path": "../../packages/core" },
     { "path": "../../packages/context" },
-    { "path": "../../packages/adapters" },
     { "path": "../../packages/reporters" }
   ],
   "include": [

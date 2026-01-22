@@ -25,7 +25,6 @@
       "@prsense/core": ["packages/core/src"],
       "@prsense/context": ["packages/context/src"],
       "@prsense/llm": ["packages/llm/src"],
-      "@prsense/adapters": ["packages/adapters/src"],
       "@prsense/reporters": ["packages/reporters/src"],
       "@prsense/workflows": ["packages/workflows/src"],
       "@prsense/preflight": ["packages/preflight/src"]
@@ -37,7 +36,6 @@
     { "path": "packages/config" },
     { "path": "packages/context" },
     { "path": "packages/llm" },
-    { "path": "packages/adapters" },
     { "path": "packages/reporters" },
     { "path": "packages/workflows" },
     { "path": "packages/preflight" },

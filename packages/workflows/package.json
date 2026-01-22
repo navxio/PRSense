@@ -13,7 +13,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@prsense/adapters": "workspace:*",
     "@prsense/preflight": "workspace:*",
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
