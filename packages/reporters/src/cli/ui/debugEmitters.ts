@@ -1,4 +1,4 @@
-import { TaskDebugEvent } from "@prsense/domain";
+import { TaskDebugEvent } from "@prsense/core";
 
 export function stderrJsonEmitter(event: TaskDebugEvent) {
   process.stderr.write(

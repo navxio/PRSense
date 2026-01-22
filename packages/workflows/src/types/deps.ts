@@ -1,4 +1,4 @@
-import type { TaskRunner } from "@prsense/domain";
+import type { TaskRunner } from "@prsense/core";
 
 export type WorkflowDeps = {
   /**

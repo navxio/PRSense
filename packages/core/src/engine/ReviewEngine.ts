@@ -1,4 +1,5 @@
-import { ReviewContext, ReviewSignal } from "@prsense/domain";
+import { ReviewContext } from "../context/ReviewContext.js";
+import { ReviewSignal } from "../signal/ReviewSignal.js";
 
 export type ReviewEngineConfig = {
   enabledRuleIds: string[];

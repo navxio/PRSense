@@ -1,4 +1,4 @@
-import { ReviewSignal } from "@prsense/domain";
+import { ReviewSignal } from "@prsense/core";
 
 export type CliReviewResult = {
   signals: ReviewSignal[];

@@ -1,4 +1,4 @@
-import type { ReviewInput, ReviewContext } from "@prsense/domain";
+import type { ReviewInput, ReviewContext } from "@prsense/core";
 import { parseUnifiedDiff } from "./diff.js";
 
 /**

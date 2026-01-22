@@ -1,4 +1,4 @@
-import { indexRepository } from "@prsense/engine";
+import { indexRepository } from "@prsense/core";
 
 import { createFilesystemRepositorySource } from "@prsense/adapters";
 

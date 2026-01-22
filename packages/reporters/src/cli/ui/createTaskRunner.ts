@@ -1,6 +1,6 @@
 // packages/reporters/src/cli/ui/createTaskRunner.ts
 // detect whether it's running on tty or not
-import { TaskRunner } from "@prsense/domain";
+import { TaskRunner } from "@prsense/core";
 import { OraTaskRunner } from "./OraTaskRunner.js";
 import { SilentTaskRunner } from "./SilentTaskRunner.js";
 import { DebugTaskRunner } from "./DebugTaskRunner.js";

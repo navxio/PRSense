@@ -75,6 +75,9 @@ importers:
       '@prsense/context':
         specifier: workspace:*
         version: link:../context
+      '@prsense/core':
+        specifier: workspace:*
+        version: link:../core
       simple-git:
         specifier: ^3.30.0
         version: 3.30.0

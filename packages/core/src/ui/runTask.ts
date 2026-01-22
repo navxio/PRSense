@@ -1,6 +1,6 @@
 // packages/engine/src/ui/runTask.ts
 
-import { TaskRunner, Task } from "@prsense/domain";
+import { TaskRunner, Task } from "@prsense/core";
 
 export async function runTask<T>(
   runner: TaskRunner,

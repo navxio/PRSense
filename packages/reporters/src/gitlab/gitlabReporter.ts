@@ -1,5 +1,5 @@
 import { Gitlab } from "@gitbeaker/node";
-import type { ReviewSignal } from "@prsense/domain";
+import type { ReviewSignal } from "@prsense/core";
 import type { Reporter } from "../types.js";
 import type { GitLabCommentTarget } from "./types.js";
 

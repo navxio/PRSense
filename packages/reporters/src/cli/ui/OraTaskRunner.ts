@@ -1,7 +1,7 @@
 // packages/reporters/src/cli/ui/OraTaskRunner.ts
 
 import ora, { Ora } from "ora";
-import { TaskRunner, Task, TaskHandle } from "@prsense/domain";
+import { TaskRunner, Task, TaskHandle } from "@prsense/core";
 
 export class OraTaskRunner implements TaskRunner {
   start(task: Task): TaskHandle {

@@ -1,4 +1,4 @@
-import type { ReviewSignal } from "@prsense/domain";
+import type { ReviewSignal } from "@prsense/core";
 
 /**
  * Reporter = infrastructure egress.

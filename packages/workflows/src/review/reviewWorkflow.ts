@@ -1,11 +1,10 @@
 // cli/src/workflow/reviewWorkflow.ts
-import { review } from "@prsense/engine";
+import { review } from "@prsense/core";
 import { loadUserConfig, loadEnvConfig } from "@prsense/config";
 import { buildReviewContext } from "@prsense/context";
 import { stdoutReporter } from "@prsense/reporters";
 
-import { runTask } from "@prsense/engine";
-import { Tasks } from "@prsense/domain";
+import { Tasks, runTask } from "@prsense/core";
 import { createTaskRunner } from "@prsense/reporters";
 
 import { selectAdapter } from "../runtime/selectAdapter.js";

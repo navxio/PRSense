@@ -1,4 +1,4 @@
-import { UnifiedDiff, DiffFile } from "@prsense/domain";
+import { UnifiedDiff, DiffFile } from "@prsense/core";
 
 //TODO: add docs
 export function parseUnifiedDiff(diffText: string): UnifiedDiff {

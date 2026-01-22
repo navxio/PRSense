@@ -1,5 +1,3 @@
-import type { Task } from "@prsense/domain";
-
 /**
  * High-level outcome of a workflow.
  * This is NOT presentation and NOT process exit.

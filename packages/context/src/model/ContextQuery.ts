@@ -1,4 +1,4 @@
-import { UnifiedDiff, ReviewSignal } from "@prsense/domain";
+import { UnifiedDiff, ReviewSignal } from "@prsense/core";
 
 export type ContextQuery = {
   diff: UnifiedDiff;

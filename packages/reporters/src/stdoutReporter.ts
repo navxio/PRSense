@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import type { Reporter } from "./types.js";
-import type { ReviewSignal } from "@prsense/domain";
+import type { ReviewSignal } from "@prsense/core";
 
 type Summary = {
   total: number;
