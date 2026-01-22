@@ -15,6 +15,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@gitbeaker/node": "^35.8.1",
     "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
     "simple-git": "^3.30.0"
