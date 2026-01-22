@@ -29,7 +29,7 @@
       "@prsense/adapters": ["packages/adapters/src"],
       "@prsense/reporters": ["packages/reporters/src"],
       "@prsense/workflows": ["packages/workflows/src"],
-      "@prsense/capabilities": ["packages/capabilities/src"]
+      "@prsense/preflight": ["packages/preflight/src"]
     }
   },
   "files": [],
@@ -42,7 +42,7 @@
     { "path": "packages/adapters" },
     { "path": "packages/reporters" },
     { "path": "packages/workflows" },
-    { "path": "packages/capabilities" },
+    { "path": "packages/preflight" },
     { "path": "apps/cli" }
   ]
 }

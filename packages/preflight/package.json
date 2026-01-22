@@ -1,6 +1,6 @@
 {
-  "name": "@prsense/capabilities",
-  "version": "0.0.0",
+  "name": "@prsense/preflight",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "main": "dist/index.js",

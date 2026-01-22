@@ -25,7 +25,7 @@
     "@prsense/engine": "workspace:*",
     "@prsense/reporters": "workspace:*",
     "@prsense/workflows": "workspace:*",
-    "@prsense/capabilities": "workspace:*",
+    "@prsense/preflight": "workspace:*",
     "dotenv": "^17.2.3",
     "commander": "^14.0.2"
   },

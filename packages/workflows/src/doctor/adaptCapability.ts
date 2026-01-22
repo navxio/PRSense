@@ -2,7 +2,7 @@ import type {
   Capability,
   CapabilityContext,
   CapabilityStatus,
-} from "@prsense/capabilities";
+} from "@prsense/preflight";
 
 export type DoctorCheckResult = {
   id: string;

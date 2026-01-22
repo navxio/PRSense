@@ -3,9 +3,9 @@ import {
   dockerCapability,
   postgresCapability,
   pgVectorCapability,
-} from "@prsense/capabilities";
+} from "@prsense/preflight";
 
-import { DatabaseConfig } from "@prsense/capabilities";
+import { DatabaseConfig } from "@prsense/preflight";
 import { runSetupWorkflow } from "@prsense/workflows";
 import { loadEnvConfig } from "@prsense/config";
 

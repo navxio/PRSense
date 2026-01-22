@@ -13,9 +13,6 @@ importers:
       '@prsense/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@prsense/capabilities':
-        specifier: workspace:*
-        version: link:../../packages/capabilities
       '@prsense/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -28,6 +25,9 @@ importers:
       '@prsense/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@prsense/preflight':
+        specifier: workspace:*
+        version: link:../../packages/preflight
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters
@@ -88,25 +88,6 @@ importers:
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  packages/capabilities:
-    dependencies:
-      pg:
-        specifier: ^8.17.1
-        version: 8.17.1
-    devDependencies:
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      '@types/pg':
-        specifier: ^8.16.0
-        version: 8.16.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -202,6 +183,25 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/preflight:
+    dependencies:
+      pg:
+        specifier: ^8.17.1
+        version: 8.17.1
+    devDependencies:
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      '@types/pg':
+        specifier: ^8.16.0
+        version: 8.16.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/reporters:
     dependencies:
       '@gitbeaker/node':
@@ -232,9 +232,6 @@ importers:
       '@prsense/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@prsense/capabilities':
-        specifier: workspace:*
-        version: link:../capabilities
       '@prsense/config':
         specifier: workspace:*
         version: link:../config
@@ -247,6 +244,9 @@ importers:
       '@prsense/engine':
         specifier: workspace:*
         version: link:../engine
+      '@prsense/preflight':
+        specifier: workspace:*
+        version: link:../preflight
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../reporters

@@ -10,7 +10,7 @@ import {
   dockerCapability,
   postgresCapability,
   pgVectorCapability,
-} from "@prsense/capabilities";
+} from "@prsense/preflight";
 
 import { buildCapabilityContext } from "./buildCapabilityContext.js";
 import { runCapabilityCheck } from "./adaptCapability.js";

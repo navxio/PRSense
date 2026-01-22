@@ -1,4 +1,4 @@
-import type { Capability, CapabilityContext } from "@prsense/capabilities";
+import type { Capability, CapabilityContext } from "@prsense/preflight";
 import type { SetupWorkflowResult, SetupStepResult } from "./types.js";
 
 export async function runSetupWorkflow(

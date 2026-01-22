@@ -1,4 +1,4 @@
-import type { CapabilityContext, DatabaseConfig } from "@prsense/capabilities";
+import type { CapabilityContext, DatabaseConfig } from "@prsense/preflight";
 import { loadEnvConfig } from "@prsense/config";
 
 export async function buildCapabilityContext(): Promise<CapabilityContext> {

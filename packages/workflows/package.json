@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@prsense/adapters": "workspace:*",
-    "@prsense/capabilities": "workspace:*",
+    "@prsense/preflight": "workspace:*",
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
