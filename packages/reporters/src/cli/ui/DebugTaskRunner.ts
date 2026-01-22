@@ -1,6 +1,5 @@
 //packages/reporters/src/cli/ui/DebugTaskRunner.ts
-import { TaskRunner, Task, TaskHandle } from "@prsense/domain";
-import { TaskDebugEvent } from "@prsense/domain";
+import { TaskRunner, Task, TaskHandle, TaskDebugEvent } from "@prsense/core";
 
 export class DebugTaskRunner implements TaskRunner {
   constructor(

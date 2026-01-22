@@ -19,12 +19,9 @@ importers:
       '@prsense/context':
         specifier: workspace:*
         version: link:../../packages/context
-      '@prsense/domain':
+      '@prsense/core':
         specifier: workspace:*
-        version: link:../../packages/domain
-      '@prsense/engine':
-        specifier: workspace:*
-        version: link:../../packages/engine
+        version: link:../../packages/core
       '@prsense/preflight':
         specifier: workspace:*
         version: link:../../packages/preflight
@@ -78,9 +75,6 @@ importers:
       '@prsense/context':
         specifier: workspace:*
         version: link:../context
-      '@prsense/domain':
-        specifier: workspace:*
-        version: link:../domain
       simple-git:
         specifier: ^3.30.0
         version: 3.30.0
@@ -116,9 +110,9 @@ importers:
 
   packages/context:
     dependencies:
-      '@prsense/domain':
+      '@prsense/core':
         specifier: workspace:*
-        version: link:../domain
+        version: link:../core
       pg:
         specifier: ^8.17.1
         version: 8.17.1
@@ -136,26 +130,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/domain:
-    devDependencies:
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  packages/engine:
-    dependencies:
-      '@prsense/context':
-        specifier: workspace:*
-        version: link:../context
-      '@prsense/domain':
-        specifier: workspace:*
-        version: link:../domain
+  packages/core:
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
@@ -207,9 +182,9 @@ importers:
       '@gitbeaker/node':
         specifier: ^35.8.1
         version: 35.8.1
-      '@prsense/domain':
+      '@prsense/core':
         specifier: workspace:*
-        version: link:../domain
+        version: link:../core
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -238,12 +213,9 @@ importers:
       '@prsense/context':
         specifier: workspace:*
         version: link:../context
-      '@prsense/domain':
+      '@prsense/core':
         specifier: workspace:*
-        version: link:../domain
-      '@prsense/engine':
-        specifier: workspace:*
-        version: link:../engine
+        version: link:../core
       '@prsense/preflight':
         specifier: workspace:*
         version: link:../preflight

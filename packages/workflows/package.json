@@ -17,8 +17,7 @@
     "@prsense/preflight": "workspace:*",
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
-    "@prsense/domain": "workspace:*",
-    "@prsense/engine": "workspace:*",
+    "@prsense/core": "workspace:*",
     "@prsense/reporters": "workspace:*",
     "pg": "^8.17.1"
   },
