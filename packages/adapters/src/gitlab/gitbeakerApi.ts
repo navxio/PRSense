@@ -1,5 +1,5 @@
 import { Gitlab } from "@gitbeaker/node";
-import type { GitLabApi } from "./port.js";
+import type { GitLabApi } from "./ports.js";
 
 export function createGitLabApi(token: string): GitLabApi {
   const client = new Gitlab({ token });
