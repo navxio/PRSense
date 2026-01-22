@@ -21,5 +21,10 @@
   "keywords": [],
   "author": "Navdeep Saini",
   "license": "GPLv3",
-  "packageManager": "pnpm@10.27.0"
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
 }

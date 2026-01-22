@@ -26,6 +26,12 @@
     "@prsense/reporters": "workspace:*",
     "@prsense/workflows": "workspace:*",
     "@prsense/capabilities": "workspace:*",
+    "dotenv": "^17.2.3",
     "commander": "^14.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

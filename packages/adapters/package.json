@@ -18,5 +18,10 @@
     "@prsense/context": "workspace:*",
     "@prsense/domain": "workspace:*",
     "simple-git": "^3.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

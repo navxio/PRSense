@@ -17,6 +17,11 @@
     "@prsense/domain": "workspace:*",
     "@prsense/context": "workspace:*"
   },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo"
