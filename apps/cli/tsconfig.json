@@ -10,9 +10,8 @@
     "composite": true
   },
   "references": [
-    { "path": "../../packages/domain" },
     { "path": "../../packages/config" },
-    { "path": "../../packages/engine" },
+    { "path": "../../packages/core" },
     { "path": "../../packages/context" },
     { "path": "../../packages/adapters" },
     { "path": "../../packages/reporters" }

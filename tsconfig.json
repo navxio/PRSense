@@ -22,8 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@prsense/config": ["packages/config/src"],
-      "@prsense/domain": ["packages/domain/src"],
-      "@prsense/engine": ["packages/engine/src"],
+      "@prsense/core": ["packages/core/src"],
       "@prsense/context": ["packages/context/src"],
       "@prsense/llm": ["packages/llm/src"],
       "@prsense/adapters": ["packages/adapters/src"],
@@ -34,9 +33,8 @@
   },
   "files": [],
   "references": [
-    { "path": "packages/domain" },
+    { "path": "packages/core" },
     { "path": "packages/config" },
-    { "path": "packages/engine" },
     { "path": "packages/context" },
     { "path": "packages/llm" },
     { "path": "packages/adapters" },
