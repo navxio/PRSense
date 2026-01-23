@@ -158,6 +158,11 @@ context:
 
 git:
   baseBranch: trunk
+
+delivery:
+  - github
+  - slack
+  - gitlab
 ```
 
 This configuration defines how PRSense behaves as a reviewer for the repository.

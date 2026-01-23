@@ -16,3 +16,9 @@ context:
 
 git:
   baseBranch: trunk
+
+delivery:
+  # used for daemon outputs
+  - gitlab
+  - github
+  - slack

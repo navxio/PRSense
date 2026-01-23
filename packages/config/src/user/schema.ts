@@ -24,6 +24,7 @@ export const UserConfigSchema = z.object({
   git: z.object({
     baseBranch: z.string().default("main"),
   }),
+  delivery: z.array(z.enum(["github", "gitlab", "slack"])).optional(),
 });
 
 export type UserConfig = z.infer<typeof UserConfigSchema>;
