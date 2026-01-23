@@ -1,4 +1,4 @@
-import { DoctorCheckResult } from "../shared/doctorTypes.js";
+import { DoctorCheckResult } from "../shared/types.js";
 
 export async function stdoutDoctorReporter(
   results: DoctorCheckResult[],

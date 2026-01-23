@@ -1,4 +1,4 @@
-// packages/domain/src/ui/task.ts
+// packages/core/src/ui/task.ts
 
 export type TaskStatus = "idle" | "running" | "succeeded" | "failed";
 

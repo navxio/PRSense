@@ -1,4 +1,4 @@
-// packages/domain/src/ui/tasks.ts
+// packages/core/src/ui/tasks.ts
 
 import { Task } from "./task.js";
 

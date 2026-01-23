@@ -1,4 +1,4 @@
-// packages/domain/input/ReviewInput.ts
+// packages/core/input/ReviewInput.ts
 
 export type ReviewInput = {
   repo: {
