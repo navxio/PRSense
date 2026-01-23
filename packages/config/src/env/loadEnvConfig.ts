@@ -1,7 +1,7 @@
 import { EnvConfigSchema, EnvConfig } from "./schema.js";
 
-export function loadEnvConfig(env: NodeJS.ProcessEnv): EnvConfig {
-  const parsed = EnvConfigSchema.safeParse(env);
+export function loadEnvConfig(): EnvConfig {
+  const parsed = EnvConfigSchema.safeParse(process.env);
 
   if (!parsed.success) {
     throw new Error("Invalid environment configuration:\n" + parsed.error);
