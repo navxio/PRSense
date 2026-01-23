@@ -1,5 +1,5 @@
 import { loadEnvConfig, loadUserConfig } from "@prsense/config";
-import { DoctorCheckResult } from "../../../shared/doctorTypes.js";
+import { DoctorCheckResult } from "../types.js";
 
 export async function checkLLM(): Promise<DoctorCheckResult> {
   try {

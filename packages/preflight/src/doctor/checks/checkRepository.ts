@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { DoctorCheckResult } from "../../../shared/doctorTypes.js";
+import { DoctorCheckResult } from "../types.js";
 
 export async function checkRepository(): Promise<DoctorCheckResult> {
   try {

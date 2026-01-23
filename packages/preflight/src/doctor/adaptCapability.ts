@@ -1,17 +1,5 @@
-import type {
-  Capability,
-  CapabilityContext,
-  CapabilityStatus,
-} from "@prsense/preflight";
-
-export type DoctorCheckResult = {
-  id: string;
-  status: "ok" | "fail";
-  message: string;
-  fix?: {
-    command: string;
-  };
-};
+import type { DoctorCheckResult } from "./types.js";
+import { Capability, CapabilityContext, CapabilityStatus } from "../types.js";
 
 function mapStatus(
   cap: Capability,
