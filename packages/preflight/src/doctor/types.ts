@@ -1,6 +1,4 @@
-import type { WorkflowResult } from "../types/core.js";
-import type { WorkflowCheck } from "../types/checks.js";
-import { CapabilityId, CapabilityStatus } from "../_shared/capability.js";
+import { CapabilityId, CapabilityStatus } from "../types.js";
 
 export type DoctorPayload = {
   checks: WorkflowCheck[];

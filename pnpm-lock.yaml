@@ -135,6 +135,9 @@ importers:
 
   packages/preflight:
     dependencies:
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
       pg:
         specifier: ^8.17.1
         version: 8.17.1
