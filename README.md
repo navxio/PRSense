@@ -20,7 +20,6 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 - [Configuration](#configuration)
 - [Design](#design)
 - [Architecture](#architecture)
-- [Monorepo Layout](#monorepo-layout)
 - [Command Reference](#command-reference)
 - [Project Status](#project-status)
 - [License](#license)
@@ -321,7 +320,7 @@ Domain
 
 ---
 
-## Monorepo Layout
+### Monorepo Layout
 
 ```
 apps/
@@ -329,15 +328,13 @@ apps/
   daemon/ # http + scheduler
 
 packages/
-  domain/ # core domain types and signals
-  engine/ # review logic orchestration
+  core/ # core domain types and engine
   context/ # diff parsing and contextual retrieval
   llm/ # LLM provider abstractions
   config/ # prsense.yml and env validation
-  adapters/ # git, filesystem, database, LLM adapters
   reporters/ # CLI and other output formats
   workflows/ # all workflows (cli+daemon)
-  capabilities/ #executable infa truths and enforcement
+  preflight/ #executable infa truths and enforcement
 ```
 
 ---
