@@ -50,3 +50,13 @@ export class LlmError extends Error {
     super(message);
   }
 }
+
+export type ClaudeConfig = {
+  apiKey: string;
+  model: string; // e.g. "claude-3-5-sonnet-20241022"
+};
+
+export type GeminiConfig = {
+  apiKey: string;
+  model: string; // e.g. "gemini-1.5-pro"
+};
