@@ -5,3 +5,4 @@ export * from "./types/core.js";
 export * from "./types/deps.js";
 export * from "./review/types.js";
 export * from "./index/index.js";
+export * from "./contract/ResolvedConfig.js";
