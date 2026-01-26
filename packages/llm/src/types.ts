@@ -60,3 +60,9 @@ export type GeminiConfig = {
   apiKey: string;
   model: string; // e.g. "gemini-1.5-pro"
 };
+
+export type OpenAiConfig = {
+  apiKey: string;
+  model: string;
+  baseUrl?: string; // supports Azure / proxies
+};

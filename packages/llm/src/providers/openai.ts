@@ -1,50 +1,42 @@
-//packages/llm/src/providers/openai.ts
-import fetch from "node-fetch";
+// packages/llm/src/providers/openai.ts
+import OpenAI from "openai";
 import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
+import { LlmError } from "../types.js";
 
-export function createOpenAiClient(opts: {
+export function createOpenAiClient(config: {
   apiKey: string;
   model: string;
   baseUrl?: string;
 }): LlmClient {
-  const baseUrl = opts.baseUrl ?? "https://api.openai.com/v1";
+  const client = new OpenAI({
+    apiKey: config.apiKey,
+    baseURL: config.baseUrl, // optional, supports Azure / gateways
+  });
 
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
-      const res = await fetch(`${baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${opts.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: opts.model,
+      const { prompt, temperature = 0 } = req;
+
+      try {
+        const res = await client.chat.completions.create({
+          model: config.model,
+          temperature,
           messages: [
             { role: "system", content: prompt.system },
             { role: "user", content: prompt.user },
           ],
-          temperature: 0,
-        }),
-      });
+        });
 
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`OpenAI error (${res.status}): ${body}`);
+        const text = res.choices[0]?.message?.content;
+
+        if (!text) {
+          throw new Error("OpenAI returned empty response");
+        }
+
+        return { text };
+      } catch (err) {
+        throw new LlmError("OpenAI request failed", err);
       }
-
-      const json = (await res.json()) as {
-        choices?: Array<{
-          message?: { content?: string };
-        }>;
-      };
-
-      const text = json.choices?.[0]?.message?.content;
-
-      if (!text) {
-        throw new Error("OpenAI returned empty response");
-      }
-
-      return { text };
     },
   };
 }
