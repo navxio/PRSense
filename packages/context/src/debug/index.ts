@@ -1,2 +1,2 @@
 export * from "./retrieval.js";
-export * from "./indexing.js";
+export * from "../indexing/types.js";

@@ -1,21 +1,17 @@
 // packages/context/src/repository/RepositorySource.ts
-import type { Language } from "../model/Language.js";
-export type RepositoryId = {
-  provider: "local" | "github";
-  owner?: string;
-  name: string;
-  ref?: string; // branch | commit | tag
-};
-
-export type IndexableFile = {
-  path: string;
-  kind: "code" | "test" | "config" | "doc";
-  language?: Language;
-};
-
 export interface RepositorySource {
-  id: RepositoryId;
+  /** Human-readable identity */
+  describe(): Promise<{
+    name: string;
+    revision: string; // commit hash, branch, tag, etc
+  }>;
 
-  listFiles(): Promise<IndexableFile[]>;
+  /** Enumerate indexable files */
+  listFiles(): AsyncIterable<{
+    path: string;
+    language?: string;
+  }>;
+
+  /** Read file contents */
   readFile(path: string): Promise<string>;
 }
