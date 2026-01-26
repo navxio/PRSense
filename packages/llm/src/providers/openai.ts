@@ -1,6 +1,6 @@
 //packages/llm/src/providers/openai.ts
 import fetch from "node-fetch";
-import { LlmClient, LlmPrompt, LlmResponse } from "../types.js";
+import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
 
 export function createOpenAiClient(opts: {
   apiKey: string;
@@ -10,7 +10,7 @@ export function createOpenAiClient(opts: {
   const baseUrl = opts.baseUrl ?? "https://api.openai.com/v1";
 
   return {
-    async generate(prompt: LlmPrompt): Promise<LlmResponse> {
+    async generate(req: LlmRequest): Promise<LlmResponse> {
       const res = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
