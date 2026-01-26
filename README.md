@@ -349,7 +349,7 @@ packages/
 
 A complete command reference is available in:
 
-docs/man/prsense.1
+[docs/man/prsense.1](docs/man/prsense.1)
 
 ---
 
