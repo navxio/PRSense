@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+
+    /*
+     * Library-specific correctness
+     */
+    "composite": true,
+
+    /*
+     * Logging is consumed as a package, not an app
+     */
+    "noEmit": false
+  },
+
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}

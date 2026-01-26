@@ -27,7 +27,8 @@
       "@prsense/llm": ["packages/llm/src"],
       "@prsense/reporters": ["packages/reporters/src"],
       "@prsense/workflows": ["packages/workflows/src"],
-      "@prsense/preflight": ["packages/preflight/src"]
+      "@prsense/preflight": ["packages/preflight/src"],
+      "@prsense/logging": ["packages/logging/src"]
     }
   },
   "files": [],
@@ -39,6 +40,7 @@
     { "path": "packages/reporters" },
     { "path": "packages/workflows" },
     { "path": "packages/preflight" },
+    { "path": "packages/logging" },
     { "path": "apps/cli" }
   ]
 }

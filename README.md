@@ -340,6 +340,7 @@ packages/
   reporters/ # CLI and other output formats
   workflows/ # all workflows (cli+daemon)
   preflight/ #executable infa truths and enforcement
+  logging/ # structured logging
 ```
 
 ---

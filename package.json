@@ -14,6 +14,7 @@
     "build:reporters": "pnpm --filter @prsense/reporters build",
     "build:workflows": "pnpm --filter @prsense/workflows build",
     "build:preflight": "pnpm --filter @prsense/preflight build",
+    "build:logging": "pnpm --filter @prsense/logging build",
     "cli:review": "pnpm --filter @prsense/cli dev:review",
     "dev:cli": "pnpm --filter @prsense/cli dev",
     "cli:doctor": "pnpm --filter @prsense/cli start -- doctor",
