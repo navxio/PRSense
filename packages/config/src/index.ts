@@ -1,3 +1,4 @@
+import "dotenv/config";
 export { loadEnvConfig } from "./env/loadEnvConfig.js";
 export type { EnvConfig } from "./env/schema.js";
 

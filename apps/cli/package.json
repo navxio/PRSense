@@ -19,12 +19,10 @@
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@prsense/config": "workspace:*",
-    "@prsense/context": "workspace:*",
-    "@prsense/core": "workspace:*",
     "@prsense/reporters": "workspace:*",
     "@prsense/workflows": "workspace:*",
     "@prsense/preflight": "workspace:*",
-    "dotenv": "^17.2.3",
+    "@prsense/logging": "workspace:*",
     "commander": "^14.0.2"
   },
   "devDependencies": {
