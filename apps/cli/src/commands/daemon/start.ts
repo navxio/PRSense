@@ -6,14 +6,22 @@ import { getDaemonStateDir, getPidFile } from "./state.js";
 export async function startDaemon({ foreground }: { foreground: boolean }) {
   await fs.mkdir(getDaemonStateDir(), { recursive: true });
 
-  const child = spawn(process.execPath, ["apps/daemon/dist/index.js"], {
-    detached: !foreground,
-    stdio: foreground ? "inherit" : "ignore",
-  });
+  let child;
+  try {
+    child = spawn("prsense-daemon", [], {
+      detached: !foreground,
+      stdio: foreground ? "inherit" : "ignore",
+    });
+  } catch (err) {
+    console.error(
+      "prsense-daemon not found. Is @prsense/daemon installed and linked?",
+    );
+    process.exit(1);
+  }
 
   if (!foreground) {
     child.unref();
     await fs.writeFile(getPidFile(), String(child.pid));
-    console.log("PRsense daemon started");
+    console.log("PRSense daemon started");
   }
 }
