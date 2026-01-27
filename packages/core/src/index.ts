@@ -9,3 +9,7 @@ export * from "./ui/runTask.js";
 export * from "./indexing/index.js";
 export * from "./engine/ReviewEngine.js";
 export * from "./engine/types.js";
+
+// export the events
+export * from "./events.js";
+export * from "./eventBus.js";
