@@ -7,14 +7,30 @@ export type DomainEvent<T extends string = string> = {
 
 export type EventSink = (event: DomainEvent) => void;
 
+export type EmitEvent = <T extends string>(
+  event: T,
+  fields?: Record<string, unknown>,
+) => void;
+
+export type EventBus = {
+  emit: EmitEvent;
+};
+
+export const noopEmit: EmitEvent = () => {};
 /**
  * Minimal event emitter used by the core.
  * Defaults to no-op.
  */
-export function createEventBus(sink?: EventSink) {
+export function createEventBus(sink?: EventSink): EventBus {
   return {
-    emit<T extends string>(event: T, fields?: Record<string, unknown>) {
-      sink?.({ event, fields });
+    emit(event, fields) {
+      if (!sink) return;
+
+      if (fields === undefined) {
+        sink({ event });
+      } else {
+        sink({ event, fields });
+      }
     },
   };
 }
