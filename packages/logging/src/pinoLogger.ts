@@ -5,19 +5,22 @@ export function createPinoLogger(opts: {
   level: LogLevel;
   pretty?: boolean;
 }): Logger {
-  const logger = pino({
+  const options: pino.LoggerOptions = {
     level: opts.level,
-    transport: opts.pretty
-      ? {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            translateTime: "HH:MM:ss",
-            ignore: "pid,hostname",
-          },
-        }
-      : undefined,
-  });
+  };
+
+  if (opts.pretty) {
+    options.transport = {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "HH:MM:ss",
+        ignore: "pid,hostname",
+      },
+    };
+  }
+
+  const logger = pino(options);
 
   return {
     debug: (msg, fields) => logger.debug(fields ?? {}, msg),
