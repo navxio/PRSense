@@ -1,0 +1,23 @@
+{
+  "name": "@prsense/runtime-config",
+  "version": "0.0.1",
+  "description": "Resolved runtime configuration contract for PRSense",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "sideEffects": false
+}

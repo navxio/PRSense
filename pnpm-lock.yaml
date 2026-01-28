@@ -13,6 +13,9 @@ importers:
       '@prsense/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@prsense/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@prsense/logging':
         specifier: workspace:*
         version: link:../../packages/logging
@@ -41,6 +44,9 @@ importers:
 
   apps/daemon:
     dependencies:
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows
@@ -198,6 +204,8 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/runtime-config: {}
 
   packages/workflows:
     dependencies:
