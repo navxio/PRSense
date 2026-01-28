@@ -169,6 +169,9 @@ importers:
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
+      '@prsense/runtime-config':
+        specifier: workspace:*
+        version: link:../runtime-config
       pg:
         specifier: ^8.17.1
         version: 8.17.1

@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "pg": "^8.17.1",
-    "@prsense/core": "workspace:*"
+    "@prsense/core": "workspace:*",
+    "@prsense/runtime-config": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
