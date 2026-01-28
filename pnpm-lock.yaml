@@ -25,6 +25,9 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters
+      '@prsense/runtime-config':
+        specifier: workspace:*
+        version: link:../../packages/runtime-config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows
@@ -47,6 +50,9 @@ importers:
       '@prsense/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@prsense/runtime-config':
+        specifier: workspace:*
+        version: link:../../packages/runtime-config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows

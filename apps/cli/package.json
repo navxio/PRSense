@@ -23,6 +23,8 @@
     "@prsense/workflows": "workspace:*",
     "@prsense/preflight": "workspace:*",
     "@prsense/logging": "workspace:*",
+    "@prsense/core": "workspace:*",
+    "@prsense/runtime-config": "workspace:*",
     "commander": "^14.0.2"
   },
   "devDependencies": {
