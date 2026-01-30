@@ -4,7 +4,8 @@ import { ResolvedConfig } from "@prsense/runtime-config";
 export type CapabilityStatus =
   | { kind: "ready" }
   | { kind: "missing"; reason: string }
-  | { kind: "partial"; reason: string };
+  | { kind: "partial"; reason: string }
+  | { kind: "non-applicable"; reason: string };
 
 export type CapabilityContext = {
   config: ResolvedConfig;

@@ -1,9 +1,10 @@
+// packages/preflight/src/capabilities/pgvector.ts
 import pg from "pg";
 import type {
   Capability,
   CapabilityContext,
   CapabilityStatus,
-} from "./types.js";
+} from "../types.js";
 
 async function hasVectorExtension(url: string): Promise<boolean> {
   const client = new pg.Client({
@@ -17,9 +18,6 @@ async function hasVectorExtension(url: string): Promise<boolean> {
       "SELECT 1 FROM pg_extension WHERE extname = 'vector'",
     );
     return res.rowCount === 1;
-  } catch {
-    // Connection or permission issue will be handled by caller
-    throw new Error("Failed to inspect pgvector extension");
   } finally {
     await client.end().catch(() => {});
   }
@@ -43,15 +41,17 @@ export const pgVectorCapability: Capability = {
   description: "pgvector extension is installed",
 
   async check(ctx: CapabilityContext): Promise<CapabilityStatus> {
-    const db = ctx.database;
+    const db = ctx.config.database;
 
+    // 1️⃣ No database configured → not applicable
     if (!db) {
       return {
-        kind: "missing",
-        reason: "Database configuration not provided",
+        kind: "non-applicable",
+        reason: "No database configured",
       };
     }
 
+    // 2️⃣ Try to inspect pgvector
     try {
       const exists = await hasVectorExtension(db.url);
       return exists
@@ -61,19 +61,20 @@ export const pgVectorCapability: Capability = {
             reason: "pgvector extension is not installed",
           };
     } catch {
+      // Connection / permission / dependency failure
       return {
         kind: "partial",
         reason:
-          "Unable to inspect pgvector extension (permission or connection issue)",
+          "Postgres is not reachable or pgvector extension cannot be inspected",
       };
     }
   },
 
   async apply(ctx: CapabilityContext): Promise<void> {
-    const db = ctx.database;
+    const db = ctx.config.database;
 
     if (!db) {
-      throw new Error("Database configuration not provided");
+      throw new Error("No database configured");
     }
 
     if (db.mode === "external") {
