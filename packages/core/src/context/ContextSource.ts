@@ -1,6 +1,24 @@
+// packages/core/src/context/ContextSource.ts
+
 export type ContextSource =
-  | { kind: "code"; path: string }
-  | { kind: "doc"; path: string }
-  | { kind: "test"; path: string }
-  | { kind: "commit"; sha: string }
-  | { kind: "config"; path: string };
+  | {
+      kind: "file";
+      path: string;
+    }
+  | {
+      kind: "symbol";
+      name: string;
+      path?: string;
+    }
+  | {
+      kind: "commit";
+      sha: string;
+    }
+  | {
+      kind: "doc";
+      id: string;
+    }
+  | {
+      kind: "manual";
+      label: string;
+    };

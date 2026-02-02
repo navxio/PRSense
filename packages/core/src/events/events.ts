@@ -1,4 +1,4 @@
-// packages/core/src/events.ts
+// packages/core/src/events/events.ts
 
 /**
  * Canonical domain events.
