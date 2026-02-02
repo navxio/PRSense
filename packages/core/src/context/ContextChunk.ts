@@ -1,5 +1,4 @@
 import { ContextSource } from "./ContextSource.js";
-import type { Language } from "./Language.js";
 
 export type ContextChunk = {
   id: string;
@@ -7,9 +6,10 @@ export type ContextChunk = {
   content: string;
   metadata?: {
     symbols?: string[];
-    language?: Language;
+    language?: string;
     path?: string;
     lineStart?: number;
     lineEnd?: number;
+    [key: string]: unknown;
   };
 };
