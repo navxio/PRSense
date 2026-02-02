@@ -4,7 +4,7 @@ import type {
   Capability,
   CapabilityContext,
   CapabilityStatus,
-} from "./types.js";
+} from "../types.js";
 
 const CONTAINER_NAME = "prsense_postgres";
 
