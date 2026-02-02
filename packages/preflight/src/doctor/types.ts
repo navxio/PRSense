@@ -1,25 +1,12 @@
-import { CapabilityId, CapabilityStatus } from "../types.js";
+export type DoctorOutcome = "success" | "failure";
 
 export type DoctorPayload = {
-  checks: WorkflowCheck[];
+  checks: DiagnosticCheck[];
 };
 
-export type DoctorWorkflowResult = WorkflowResult<DoctorPayload>;
-
-export type DoctorCheck = {
-  id: CapabilityId;
-  description: string;
-  run(): Promise<CapabilityStatus>;
-  fixHint?: string;
-};
-
-export type DoctorCheckResult = {
-  id: string;
-  status: "ok" | "fail";
-  message: string;
-  fix?: {
-    command: string;
-  };
+export type DoctorWorkflowResult = {
+  outcome: DoctorOutcome;
+  payload: DoctorPayload;
 };
 
 export type CheckStatus = "pass" | "warn" | "fail";
@@ -28,7 +15,7 @@ export type CheckStatus = "pass" | "warn" | "fail";
  * A single diagnostic check.
  * Domain-neutral, execution-neutral.
  */
-export type WorkflowCheck = {
+export type DiagnosticCheck = {
   /** Stable identifier (used for reporting & automation) */
   id: string;
 
