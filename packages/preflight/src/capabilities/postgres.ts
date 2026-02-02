@@ -53,7 +53,7 @@ export const postgresCapability: Capability = {
   description: "Postgres is reachable",
 
   async check(ctx: CapabilityContext): Promise<CapabilityStatus> {
-    const db = ctx.database;
+    const db = ctx.config.database;
 
     if (!db) {
       return {
@@ -98,7 +98,7 @@ export const postgresCapability: Capability = {
   },
 
   async apply(ctx: CapabilityContext): Promise<void> {
-    const db = ctx.database;
+    const db = ctx.config.database;
 
     if (!db) {
       throw new Error("Database configuration not provided");
