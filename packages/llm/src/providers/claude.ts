@@ -1,7 +1,7 @@
 // packages/llm/src/providers/claude.ts
 import Anthropic from "@anthropic-ai/sdk";
-import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
-import { LlmError } from "../types.js";
+import type { TextBlock } from "@anthropic-ai/sdk/resources/messages/messages";
+import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
 
 export function createClaudeClient(config: {
   apiKey: string;
@@ -30,7 +30,7 @@ export function createClaudeClient(config: {
         });
 
         const text = res.content
-          .filter((c): c is { type: "text"; text: string } => c.type === "text")
+          .filter((c): c is TextBlock => c.type === "text")
           .map((c) => c.text)
           .join("\n");
 

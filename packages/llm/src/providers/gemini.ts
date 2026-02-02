@@ -4,8 +4,7 @@ import {
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
-import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
-import { LlmError } from "../types.js";
+import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
 
 export function createGeminiClient(config: {
   apiKey: string;
@@ -17,8 +16,8 @@ export function createGeminiClient(config: {
     model: config.model,
     safetySettings: [
       {
-        harmCategory: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        harmBlockThreshold: HarmBlockThreshold.BLOCK_NONE,
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
       },
     ],
   });

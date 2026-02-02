@@ -1,11 +1,13 @@
 import fetch from "node-fetch";
-import { LlmClient, LlmPrompt, LlmResponse, OllamaConfig } from "../types.js";
+import { LlmClient, LlmRequest, LlmResponse, OllamaConfig } from "../types.js";
 
 export function createOllamaClient(config: OllamaConfig): LlmClient {
   const baseUrl = config.baseUrl ?? "http://localhost:11434";
 
   return {
-    async generate(prompt: LlmPrompt): Promise<LlmResponse> {
+    async generate(req: LlmRequest): Promise<LlmResponse> {
+      const { prompt } = req;
+
       const res = await fetch(`${baseUrl}/api/generate`, {
         method: "POST",
         headers: {
