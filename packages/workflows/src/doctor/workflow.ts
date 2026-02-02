@@ -1,14 +1,16 @@
-// packages/workflows/src/doctor/runDoctorWorkflow.ts
+// packages/workflows/src/doctor/workflow.ts
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import type { EventBus } from "@prsense/core";
 import type { DoctorWorkflowResult, DiagnosticCheck } from "./types.js";
 
-import type { Capability, CapabilityContext } from "../types.js";
-import { gitRepositoryCapability } from "../capabilities/gitRepository.js";
-import { dockerCapability } from "../capabilities/docker.js";
-import { postgresCapability } from "../capabilities/postgres.js";
-import { pgVectorCapability } from "../capabilities/pgvector.js";
-import { ollamaCapability } from "../capabilities/ollama.js";
+import type { Capability, CapabilityContext } from "@prsense/preflight";
+import {
+  gitRepositoryCapability,
+  dockerCapability,
+  ollamaCapability,
+  pgVectorCapability,
+  postgresCapability,
+} from "@prsense/preflight";
 
 export async function runDoctorWorkflow({
   config,

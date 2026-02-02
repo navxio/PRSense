@@ -1,10 +1,3 @@
-import {
-  RepositorySource,
-  EmbeddingProvider,
-  VectorStore,
-  Chunk,
-} from "@prsense/context";
-import { IndexDebugEvent } from "@prsense/context";
 import { chunkText } from "./chunkFile.js";
 
 export type IndexRepositoryParams = {

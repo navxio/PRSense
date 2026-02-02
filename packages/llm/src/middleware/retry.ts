@@ -1,4 +1,5 @@
 import type { LlmMiddleware } from "../types.js";
+import { LlmEvents } from "../events.js";
 export function withRetries(opts: {
   retries: number;
   backoffMs?: number;

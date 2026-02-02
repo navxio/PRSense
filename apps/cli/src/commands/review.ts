@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { runReviewWorkflow } from "../workflows/reviewWorkflow.js";
+import { runReviewWorkflow } from "@prsense/workflows";
 
 export const reviewCommand = new Command("review")
   .argument("[path]", "Path to repository", ".")

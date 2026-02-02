@@ -17,6 +17,7 @@
     "@prsense/context": "workspace:*",
     "@prsense/core": "workspace:*",
     "@prsense/reporters": "workspace:*",
+    "@prsense/runtime-config": "workspace:*",
     "pg": "^8.17.1"
   },
   "devDependencies": {

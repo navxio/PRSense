@@ -230,6 +230,9 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../reporters
+      '@prsense/runtime-config':
+        specifier: workspace:*
+        version: link:../runtime-config
       pg:
         specifier: ^8.17.1
         version: 8.17.1

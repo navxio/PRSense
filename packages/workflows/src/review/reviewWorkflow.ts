@@ -1,10 +1,9 @@
 // cli/src/workflow/reviewWorkflow.ts
 import { review } from "@prsense/core";
-import { loadUserConfig, loadEnvConfig } from "@prsense/config";
 import { buildReviewContext } from "@prsense/context";
 import { stdoutReporter } from "@prsense/reporters";
 
-import { Tasks, runTask } from "@prsense/core";
+import { Tasks, runTask, EventSink } from "@prsense/core";
 import { createTaskRunner } from "@prsense/reporters";
 
 import { selectAdapter } from "../runtime/selectAdapter.js";
@@ -21,9 +20,10 @@ type ReviewWorkflowInput = {
   };
 };
 
-export async function runReviewWorkflow(
+export async function runReviewWorkflow({
   input: ReviewWorkflowInput,
-): Promise<number> {
+  eventBus: EventSink,
+}): Promise<number> {
   const ui = createTaskRunner();
 
   try {

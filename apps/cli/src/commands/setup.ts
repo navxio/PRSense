@@ -3,16 +3,16 @@ import {
   dockerCapability,
   postgresCapability,
   pgVectorCapability,
+  DatabaseConfig,
 } from "@prsense/preflight";
 
-import { DatabaseConfig } from "@prsense/preflight";
 import { runSetupWorkflow } from "@prsense/workflows";
 import { loadEnvConfig } from "@prsense/config";
 
 async function runSetupCommand() {
   //TODO: shouldn't load process.env on every invocation
   //TODO: internalise db mode to config
-  const config = loadEnvConfig(process.env);
+  const config = loadEnvConfig();
   const dbUrl: string = config.PRSENSE_DATABASE_URL
     ? config.PRSENSE_DATABASE_URL
     : "postgresql://prsense:prsense@localhost:10000/prsense_dev?sslmode=disable";

@@ -1,9 +1,10 @@
 import {
   RepositorySource,
-  EmebeddingProvider,
   VectorStore,
   IndexEventSink,
 } from "@prsense/context";
+
+import { EventSink } from "@prsense/core";
 
 export type IndexWorkflowInput = {
   /** Resolved intent (slice, not whole config) */
@@ -22,6 +23,7 @@ export type IndexWorkflowInput = {
   repositorySource: RepositorySource;
   embeddingProvider: EmbeddingProvider;
   vectorStore: VectorStore;
+  eventBus: EventSink;
 
   /** Optional diagnostics */
   onEvent?: IndexEventSink;
