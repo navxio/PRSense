@@ -1,103 +1,67 @@
-// cli/src/workflow/reviewWorkflow.ts
-import { review } from "@prsense/core";
-import { buildReviewContext } from "@prsense/context";
-import { stdoutReporter } from "@prsense/reporters";
+// packages/workflows/src/review/reviewWorkflow.ts
 
-import { Tasks, runTask, EventSink } from "@prsense/core";
-import { createTaskRunner } from "@prsense/reporters";
-
-import { selectAdapter } from "../runtime/selectAdapter.js";
-
-type ReviewWorkflowInput = {
-  repoPath: string;
-  options: {
-    source: "git" | "fs" | "github";
-    baseBranch?: string;
-    diffPath?: string;
-    owner?: string;
-    repo?: string;
-    pullNumber?: string;
-  };
-};
+import { CoreEvents, EventBus, UnifiedDiff } from "@prsense/core";
+import type { ContextRetriever, ReviewSignalCompiler } from "./ports.js";
+import type { ReviewWorkflowResult } from "./types.js";
 
 export async function runReviewWorkflow({
-  input: ReviewWorkflowInput,
-  eventBus: EventSink,
-}): Promise<number> {
-  const ui = createTaskRunner();
+  diff,
+  retriever,
+  compiler,
+  eventBus,
+}: {
+  diff: UnifiedDiff;
+  retriever: ContextRetriever;
+  compiler: ReviewSignalCompiler;
+  eventBus: EventBus;
+}): Promise<ReviewWorkflowResult> {
+  eventBus.emit(CoreEvents.RunStarted);
+  eventBus.emit(CoreEvents.WorkflowReviewStarted);
 
   try {
-    // 1. Load configuration
-    const { userConfig, envConfig } = await runTask(
-      ui,
-      Tasks.loadConfig(),
-      async () => {
-        return {
-          userConfig: loadUserConfig(process.cwd()),
-          envConfig: loadEnvConfig(process.env),
-        };
-      },
-    );
+    eventBus.emit(CoreEvents.ContextDiffLoaded);
 
-    const baseBranch = input.options.baseBranch ?? userConfig.git.baseBranch;
+    const retrieved = await retriever.retrieve(diff);
 
-    // 2. Select adapter
-    const adapter = await runTask(ui, Tasks.selectAdapter(), async () => {
-      return selectAdapter({
-        source: input.options.source,
-        repoRoot: input.repoPath,
-        baseBranch,
-
-        ...(input.options.diffPath && {
-          diffPath: input.options.diffPath,
-        }),
-
-        ...(input.options.owner && {
-          owner: input.options.owner,
-        }),
-
-        ...(input.options.repo && {
-          repo: input.options.repo,
-        }),
-
-        ...(input.options.pullNumber && {
-          pullNumber: input.options.pullNumber,
-        }),
-
-        token: envConfig.PRSENSE_GITHUB_TOKEN,
-      });
+    eventBus.emit(CoreEvents.ContextChunksBuilt, {
+      total: retrieved.stats.totalChunks,
+      truncated: retrieved.stats.truncated,
     });
 
-    // 3. Ingest diff
-    const diffResult = await runTask(ui, Tasks.ingestDiff(), async () => {
-      return adapter();
-    });
-
-    if (!diffResult.ok) {
-      throw new Error(diffResult.error.message);
+    if (retrieved.stats.truncated) {
+      eventBus.emit(CoreEvents.ContextTruncated);
     }
 
-    // 4. Build review context
-    const context = await runTask(ui, Tasks.buildContext(), async () => {
-      return buildReviewContext(diffResult.value, {
-        maxChunks: userConfig.context.maxChunks,
-      });
+    const signals = await compiler.compile(diff, retrieved.chunks);
+
+    eventBus.emit(CoreEvents.SignalCompiled, {
+      count: signals.length,
     });
 
-    // 5. Run review engine
-    const signals = await runTask(ui, Tasks.runReviewEngine(), async () => {
-      return review(context, {
-        confidenceThreshold: userConfig.review.confidenceThreshold,
-        maxSignals: userConfig.review.maxSignals,
-      });
-    });
+    eventBus.emit(CoreEvents.WorkflowReviewFinished);
+    eventBus.emit(CoreEvents.RunFinished);
 
-    // 6. Report results (intentionally NOT animated)
-    await stdoutReporter(signals);
-
-    return 0;
+    return {
+      outcome: "success",
+      payload: {
+        signals,
+      },
+    };
   } catch (err) {
-    console.error(err instanceof Error ? err.message : "Unexpected error");
-    return 1;
+    const message = err instanceof Error ? err.message : String(err);
+
+    eventBus.emit(CoreEvents.WorkflowReviewFailed, {
+      error: message,
+    });
+    eventBus.emit(CoreEvents.RunFailed, {
+      error: message,
+    });
+
+    return {
+      outcome: "failure",
+      payload: {
+        signals: [],
+      },
+    };
   }
 }

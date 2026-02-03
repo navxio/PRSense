@@ -1,14 +1,7 @@
-import type { ReviewContext, ReviewSignal } from "@prsense/core";
+// packages/workflows/src/review/types.ts
 
-import type { WorkflowResult } from "../types/core.js";
-export type ReviewWorkflowInput = {
-  context: ReviewContext;
-
-  options: {
-    confidenceThreshold: number;
-    maxSignals: number;
-  };
-};
+import type { ReviewSignal } from "@prsense/core";
+import { WorkflowResult } from "../types/core.js";
 
 export type ReviewPayload = {
   signals: ReviewSignal[];
