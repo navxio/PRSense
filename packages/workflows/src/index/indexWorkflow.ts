@@ -1,38 +1,51 @@
-import {
-  RepositorySource,
-  VectorStore,
-  IndexEventSink,
-} from "@prsense/context";
+// packages/workflows/src/index/runIndexWorkflow.ts
 
-import { EventSink } from "@prsense/core";
+import { CoreEvents, EventBus } from "@prsense/core";
+import type { ContextIndexer } from "./ports.js";
+import type { IndexWorkflowResult } from "./types.js";
 
-export type IndexWorkflowInput = {
-  /** Resolved intent (slice, not whole config) */
-  intent: {
-    repository: {
-      root: string;
+export async function runIndexWorkflow({
+  indexer,
+  eventBus,
+}: {
+  indexer: ContextIndexer;
+  eventBus: EventBus;
+}): Promise<IndexWorkflowResult> {
+  eventBus.emit(CoreEvents.RunStarted);
+  eventBus.emit("workflow.index.started");
+
+  try {
+    const chunks = await indexer.buildChunks();
+
+    eventBus.emit(CoreEvents.ContextChunksBuilt, {
+      count: chunks.length,
+    });
+
+    await indexer.persistChunks(chunks);
+
+    eventBus.emit("workflow.index.finished", {
+      chunks: chunks.length,
+    });
+
+    eventBus.emit(CoreEvents.RunFinished);
+
+    return {
+      outcome: "success",
+      payload: {
+        chunksIndexed: chunks.length,
+      },
     };
-    context: {
-      maxChunks: number;
-      chunkSize: number;
-      chunkOverlap: number;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    eventBus.emit("workflow.index.failed", { error: message });
+    eventBus.emit(CoreEvents.RunFailed, { error: message });
+
+    return {
+      outcome: "failure",
+      payload: {
+        chunksIndexed: 0,
+      },
     };
-  };
-
-  /** Explicit ports */
-  repositorySource: RepositorySource;
-  embeddingProvider: EmbeddingProvider;
-  vectorStore: VectorStore;
-  eventBus: EventSink;
-
-  /** Optional diagnostics */
-  onEvent?: IndexEventSink;
-};
-
-export async function runIndexWorkflow(input: IndexWorkflowInput): Promise<{
-  filesIndexed: number;
-  chunksCreated: number;
-  chunksStored: number;
-}> {
-  /* implementation */
+  }
 }
