@@ -1,8 +1,9 @@
 export type SetupStepResult =
-  | { id: string; status: "applied" }
-  | { id: string; status: "skipped" }
-  | { id: string; status: "failed"; error: Error };
+  | { id: string; outcome: "skipped" }
+  | { id: string; outcome: "applied" }
+  | { id: string; outcome: "failed"; error: string };
 
 export type SetupWorkflowResult = {
-  results: SetupStepResult[];
+  outcome: "success" | "failure";
+  steps: SetupStepResult[];
 };
