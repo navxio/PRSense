@@ -1,1 +1,4 @@
 export * from "./ResolvedConfig.js";
+export * from "./validateResolvedConfig.js";
+export * from "./CredentialContext.js";
+export * from "./credentials/index.js";
