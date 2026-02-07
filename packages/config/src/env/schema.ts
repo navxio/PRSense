@@ -10,6 +10,10 @@ export const EnvConfigSchema = z.object({
   PRSENSE_OLLAMA_HOST: z.url().optional().default("http://127.0.0.1:11434"),
 
   PRSENSE_LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  PRSENSE_GITHUB_APP_ID: z.string().optional(),
+  PRSENSE_GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+  PRSENSE_GITHUB_INSTALLATION_ID: z.string().optional(),
+  PRSENSE_SLACK_BOT_TOKEN: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;
