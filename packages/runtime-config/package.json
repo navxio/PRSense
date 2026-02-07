@@ -17,7 +17,9 @@
     "dev": "tsc -b --watch",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@prsense/config": "workspace:*"
+  },
   "devDependencies": {},
   "sideEffects": false
 }
