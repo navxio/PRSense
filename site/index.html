@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRSENSE — High-signal code review</title>
+    <!-- prsense.org -->
+
+    <!-- Inter is a safe, credible default -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #0f172a; /* slate-900 */
+        --muted: #475569; /* slate-600 */
+        --border: #e5e7eb; /* gray-200 */
+        --accent: #1e293b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.55;
+      }
+
+      .container {
+        max-width: 760px;
+        padding: 72px 24px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 12px 0;
+      }
+
+      .tagline {
+        font-size: 18px;
+        color: var(--muted);
+        margin-bottom: 32px;
+      }
+
+      .lede {
+        font-size: 18px;
+        margin-bottom: 32px;
+      }
+
+      ul {
+        padding-left: 18px;
+        margin: 0 0 48px 0;
+      }
+
+      li {
+        margin-bottom: 10px;
+      }
+
+      footer {
+        border-top: 1px solid var(--border);
+        padding-top: 24px;
+        font-size: 14px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>PRSENSE</h1>
+      <div class="tagline">
+        High-signal code review for modern engineering teams.
+      </div>
+
+      <p class="lede">
+        PRSense is an AI-assisted code review tool designed to surface risk and
+        intent in code changes — without noise, hallucinations, or
+        over-automation.
+      </p>
+
+      <ul>
+        <li>Diff-first analysis focused on what actually changed</li>
+        <li>Human-in-the-loop by design</li>
+        <li>Inspectable reasoning, not black-box output</li>
+        <li>Local-first, self-hostable core with a path to SaaS</li>
+      </ul>
+
+      <footer>
+        <div>
+          Open-source project ·
+          <a href="https://github.com/navxio/prsense">GitHub</a>
+        </div>
+        <div>
+          Contact:
+          <a href="mailto:navdeepone@icloud.com">navdeepone@icloud.com</a>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>
