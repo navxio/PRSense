@@ -48,17 +48,20 @@ export const doctorCommand = new Command("doctor")
     });
 
     try {
-      const user = loadUserConfig();
+      const user = loadUserConfig(process.cwd());
       const env = loadEnvConfig();
+      const credentialContext = buildCredentialContext(env, {
+        mode: "self-hosted",
+      });
       const resolved = resolveConfig({
         mode: "cli",
-        repoRoot,
-        repoProvider,
+        repoRoot: process.cwd(),
+        repoProvider: "filesystem",
         user,
         env,
       });
 
-      const validation = validateResolvedConfig(resolved);
+      const validation = validateResolvedConfig(resolved, credentialContext);
       if (!validation.valid) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
