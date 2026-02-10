@@ -20,7 +20,8 @@ export function createPinoLogger(opts: {
     };
   }
 
-  const logger = pino(options);
+  const destination = pino.destination({ fd: 2 });
+  const logger = pino(options, destination);
 
   return {
     debug: (msg, fields) => logger.debug(fields ?? {}, msg),
