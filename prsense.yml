@@ -19,6 +19,5 @@ git:
 
 delivery:
   # used for daemon outputs
-  - gitlab
   - github
   - slack

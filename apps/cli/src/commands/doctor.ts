@@ -84,6 +84,11 @@ export const doctorCommand = new Command("doctor")
         error: String(err),
       });
 
-      process.exit(1);
+      renderer.finish({
+        id: "run",
+        label: "PRSense failed",
+        state: "failed",
+      });
+      return;
     }
   });
