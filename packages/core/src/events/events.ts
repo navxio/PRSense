@@ -27,6 +27,10 @@ export const CoreEvents = {
   WorkflowReviewFinished: "workflow.review.finished",
   WorkflowReviewFailed: "workflow.review.failed",
 
+  WorkflowIndexStarted: "workflow.index.started",
+  WorkflowIndexFinished: "workflow.index.finished",
+  WorkflowIndexFailed: "workflow.index.failed",
+
   /* -------------------------------------------------
    * Capability lifecycle
    * ------------------------------------------------- */
