@@ -11,10 +11,8 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 ## Table of Contents
 
 - [Philosophy](#philosophy)
-- [What PRSense Does](#what-prsense-does)
-- [What PRSense Does Not Do](#what-prsense-does-not-do)
-- [Why PRSense Exists](#why-prsense-exists)
 - [Features](#features)
+- [What PRSense Does Not Do](#what-prsense-does-not-do)
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -26,89 +24,18 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 
 ---
 
-## What PRSense Does
+## Philosophy
 
-PRSense analyzes:
+PRSense is built around a few core principles:
 
-- your git diff
-- relevant surrounding code context
-- repository conventions
-- test and documentation impact
+- human-in-the-loop decision making
+- high signal, low noise
+- local-first and self-hosted operation
+- transparency over automation
+- inspectable reasoning
+- composability over monoliths
 
-and produces structured review signals such as:
-
-- potential bugs or edge cases
-- missing or insufficient tests
-- unclear or overly clever code
-- documentation gaps
-- modularity or design concerns
-
-Each review signal includes:
-
-- severity (low / medium / high)
-- confidence
-- a concise explanation
-- references to relevant code or context
-
-PRSense assists human reviewers. It does not replace them.
-
----
-
-## What PRSense Does Not Do
-
-PRSense intentionally avoids actions that reduce developer agency:
-
-- It does not write or modify code
-- It does not open or merge pull requests
-- It does not enforce opinions or style choices
-- It does not act autonomously
-
-PRSense makes reasoning visible, not automatic.
-
----
-
-## Why PRSense Exists
-
-Modern code review tools tend to fall into two extremes:
-
-- purely rule-based tools that miss context
-- LLM-based tools that hallucinate or overreach
-
-PRSense sits between these extremes.
-
-It combines:
-
-- full diff awareness
-- contextual retrieval (RAG)
-- disciplined LLM reasoning
-- structured, inspectable output
-
-The result is explainable, auditable review feedback that developers can trust.
-
----
-
-## Usage
-
-PRSense is currently used as a local CLI tool.
-
-Example:
-
-prsense review .
-
-This compares your current working branch against a base branch and prints review signals to stdout.
-
-PRSense can also review git ranges, patch files, or diffs from stdin.
-
-Future integrations (GitHub App, CI, background workers) are planned, but not required to use PRSense today.
-
----
-
-## Requirements
-
-- Node.Js (22.x) + npm
-- Docker
-- Ollama(optional)
-- PostgreSQL + pgvector(optional)
+PRSense treats LLMs as reasoning engines, not authorities.
 
 ---
 
@@ -126,6 +53,44 @@ Future integrations (GitHub App, CI, background workers) are planned, but not re
   - terminal summaries
   - JSON for CI / tooling
   - GitHub pull request annotations
+
+---
+
+## Requirements
+
+- Node.Js (22.x) + npm
+- Docker
+- Ollama(optional)
+- PostgreSQL + pgvector(optional)
+
+---
+
+## What PRSense Does Not Do
+
+PRSense intentionally avoids actions that reduce developer agency:
+
+- It does not write or modify code
+- It does not open or merge pull requests
+- It does not enforce opinions or style choices
+- It does not act autonomously
+
+PRSense makes reasoning visible, not automatic.
+
+---
+
+## Usage
+
+PRSense is currently used as a local CLI tool.
+
+Example:
+
+prsense review .
+
+This compares your current working branch against a base branch and prints review signals to stdout.
+
+PRSense can also review git ranges, patch files, or diffs from stdin.
+
+Future integrations (GitHub App, CI, background workers) are planned, but not required to use PRSense today.
 
 ---
 
@@ -155,6 +120,7 @@ review:
 
 context:
   maxChunks: 5
+  chunkSize: 50
 
 git:
   baseBranch: trunk
@@ -354,21 +320,6 @@ A complete command reference is available in:
 
 ---
 
-## Philosophy
-
-PRSense is built around a few core principles:
-
-- human-in-the-loop decision making
-- high signal, low noise
-- local-first and self-hosted operation
-- transparency over automation
-- inspectable reasoning
-- composability over monoliths
-
-PRSense treats LLMs as reasoning engines, not authorities.
-
----
-
 ## Project Status
 
 PRSense is under active development.
@@ -379,9 +330,6 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 ## ToDo
 
-- [ ] move both commands to task runner UI
-- [ ] create service mode with GH webhook listeners
-- [ ] add `--rebuild` option to index command
 - [ ] `prsense setup db` (bundle postgres+pgvector with docker)
 - [x] update manpage
 - [ ] setup concurrency
