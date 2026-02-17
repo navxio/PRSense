@@ -126,7 +126,11 @@ export async function runIndexWorkflow({
 
       return {
         outcome: "success",
-        payload: { chunksIndexed: 0 },
+        payload: {
+          chunksIndexed: 0,
+          commitSha: revision.commitSha,
+          upToDate: true,
+        },
       };
     }
 
@@ -155,7 +159,11 @@ export async function runIndexWorkflow({
 
       return {
         outcome: "success",
-        payload: { chunksIndexed: 0 },
+        payload: {
+          chunksIndexed: 0,
+          commitSha: revision.commitSha,
+          upToDate: false,
+        },
       };
     }
 
@@ -220,7 +228,11 @@ export async function runIndexWorkflow({
 
     return {
       outcome: "success",
-      payload: { chunksIndexed: chunks.length },
+      payload: {
+        chunksIndexed: chunks.length,
+        commitSha: revision.commitSha,
+        upToDate: false,
+      },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -231,7 +243,9 @@ export async function runIndexWorkflow({
 
     return {
       outcome: "failure",
-      payload: { chunksIndexed: 0 },
+      payload: {
+        chunksIndexed: 0,
+      },
     };
   }
 }
