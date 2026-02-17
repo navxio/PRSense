@@ -8,3 +8,4 @@ export * from "./adapters/filesystem.js";
 
 export * from "./repository/index.js";
 export * from "./index/index.js";
+export * from "./rag/index.js";
