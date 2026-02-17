@@ -1,10 +1,10 @@
-export * from "./model/index.js";
-export * from "./retrievers/index.js";
+//packages/context/src/index.ts
+
+export * from "./chunking/types.js";
+export * from "./chunking/simpleChunker.js";
+
+export * from "./adapters/diff.js";
+export * from "./adapters/filesystem.js";
 
 export * from "./repository/index.js";
-export * from "./indexing/index.js";
-export * from "./embeddings/index.js";
-export * from "./vector/index.js";
-export * from "./debug/index.js";
-
-export { buildReviewContext } from "./buildReviewContext.js";
+export * from "./index/index.js";
