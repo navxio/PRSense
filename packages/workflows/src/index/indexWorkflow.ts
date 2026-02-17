@@ -7,6 +7,7 @@ import {
   GitHubRepositorySource,
   PostgresIndexMetadataRepository,
 } from "@prsense/context";
+import { PRSENSE_VERSION } from "@prsense/core";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 
@@ -244,7 +245,7 @@ export async function runIndexWorkflow({
         strategy: "default",
         version: 1,
       },
-      prsenseVersion: "0.1.0",
+      prsenseVersion: PRSENSE_VERSION,
       createdAt: new Date().toISOString(),
     });
 
