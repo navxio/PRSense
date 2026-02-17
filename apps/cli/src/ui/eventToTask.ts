@@ -36,6 +36,56 @@ export function eventToCliTask(
         },
       };
 
+    case CoreEvents.WorkflowIndexStarted:
+      return {
+        kind: "start",
+        task: {
+          id: "index",
+          label: "Indexing repository",
+          state: "running",
+        },
+      };
+
+    case CoreEvents.WorkflowIndexFinished:
+      return {
+        kind: "finish",
+        task: {
+          id: "index",
+          label: "Indexing completed",
+          state: "succeeded",
+        },
+      };
+
+    case CoreEvents.WorkflowIndexFailed:
+      return {
+        kind: "finish",
+        task: {
+          id: "index",
+          label: "Indexing failed",
+          state: "failed",
+        },
+      };
+
+    case CoreEvents.WorkflowIndexUpToDate:
+      return {
+        kind: "finish",
+        task: {
+          id: "index",
+          label: "Index is up to date",
+          state: "succeeded",
+        },
+      };
+
+    case CoreEvents.WorkflowIndexRebuildRequired:
+      return {
+        kind: "finish",
+        task: {
+          id: "index",
+          label: "Index outdated. Use --force to rebuild",
+          state: "failed",
+        },
+      };
+
     default:
       return null;
   }

@@ -74,7 +74,7 @@ export const indexCommand = new Command("index")
           console.error("chunk-size must be a number");
           process.exit(1);
         }
-        resolved.context.maxChunks = n;
+        resolved.context.chunkSize = n;
       }
 
       const validation = validateResolvedConfig(resolved, credentialContext);
@@ -99,6 +99,18 @@ export const indexCommand = new Command("index")
       eventBus.emit(CoreEvents.RunFinished, {
         outcome: result.outcome,
       });
+
+      if (options.stats) {
+        const { chunksIndexed, commitSha, upToDate } = result.payload;
+
+        if (upToDate) {
+          console.log(`Index is up to date (commit ${commitSha ?? "unknown"})`);
+        } else {
+          console.log(
+            `Indexed ${chunksIndexed} chunks (commit ${commitSha ?? "unknown"})`,
+          );
+        }
+      }
 
       process.exit(result.outcome === "failure" ? 1 : 0);
     } catch (err) {

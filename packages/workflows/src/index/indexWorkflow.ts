@@ -32,7 +32,11 @@ export async function runIndexWorkflow({
 
     let repositorySource;
 
-    if (target.startsWith("http")) {
+    const isGithub =
+      target.startsWith("https://github.com") ||
+      target.startsWith("http://github.com");
+
+    if (isGithub) {
       const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
 
       if (!match) {
@@ -60,7 +64,15 @@ export async function runIndexWorkflow({
     // -------------------------------------------------
 
     const identity = repositorySource.getRepositoryIdentity();
-    const revision = await repositorySource.getRevision();
+    let revision;
+
+    try {
+      revision = await repositorySource.getRevision();
+    } catch {
+      throw new Error(
+        "Indexing requires a git repository. Run inside a git repository.",
+      );
+    }
 
     // -------------------------------------------------
     // Metadata Repository
@@ -172,6 +184,18 @@ export async function runIndexWorkflow({
     // -------------------------------------------------
 
     const files = await repositorySource.listFiles();
+    if (files.length === 0) {
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+      return {
+        outcome: "success",
+        payload: {
+          chunksIndexed: 0,
+          commitSha: revision.commitSha,
+          upToDate: false,
+        },
+      };
+    }
     const chunks = [];
 
     for (const file of files) {
