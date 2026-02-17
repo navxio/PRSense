@@ -21,7 +21,8 @@ export type ResolvedConfig = {
   };
 
   context: {
-    maxChunks: number;
+    maxChunks: number; // retrieval
+    chunkSize: number; // indexing
   };
 
   llm: {

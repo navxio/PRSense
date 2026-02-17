@@ -68,6 +68,7 @@ export function resolveConfig(input: ResolveConfigInput): ResolvedConfig {
 
     context: {
       maxChunks: user.context?.maxChunks ?? 5,
+      chunkSize: user.context?.chunkSize ?? 80,
     },
 
     llm: {
