@@ -1,22 +1,24 @@
 // packages/workflows/src/index/runIndexWorkflow.ts
 
+import path from "node:path";
 import { CoreEvents, EventBus } from "@prsense/core";
-import { RepositorySource } from "@prsense/context";
-import { IndexMetadataRepository } from "@prsense/context";
+import {
+  FileSystemRepositorySource,
+  GitHubRepositorySource,
+  PostgresIndexMetadataRepository,
+} from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 
 export async function runIndexWorkflow({
   config,
-  repositorySource,
-  metadataRepository,
+  target,
   force,
   dryRun,
   eventBus,
 }: {
   config: ResolvedConfig;
-  repositorySource: RepositorySource;
-  metadataRepository: IndexMetadataRepository;
+  target: string;
   force?: boolean;
   dryRun?: boolean;
   eventBus: EventBus;
@@ -24,13 +26,58 @@ export async function runIndexWorkflow({
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
   try {
+    // -------------------------------------------------
+    // Resolve Repository Source
+    // -------------------------------------------------
+
+    let repositorySource;
+
+    if (target.startsWith("http")) {
+      const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+
+      if (!match) {
+        throw new Error("Invalid GitHub URL");
+      }
+
+      const owner = match[1];
+      const repo = match[2];
+
+      if (!owner || !repo) {
+        throw new Error("Invalid GitHub repository url");
+      }
+
+      repositorySource = new GitHubRepositorySource(
+        owner,
+        repo.replace(".git", ""),
+      );
+    } else {
+      const absolute = path.resolve(target);
+      repositorySource = new FileSystemRepositorySource(absolute);
+    }
+
+    // -------------------------------------------------
+    // Resolve Identity + Revision
+    // -------------------------------------------------
+
     const identity = repositorySource.getRepositoryIdentity();
     const revision = await repositorySource.getRevision();
+
+    // -------------------------------------------------
+    // Metadata Repository
+    // -------------------------------------------------
+
+    const metadataRepository = new PostgresIndexMetadataRepository(
+      config.database.url,
+    );
 
     const stored = await metadataRepository.load(
       identity.provider,
       identity.id,
     );
+
+    // -------------------------------------------------
+    // Compute Current Fingerprint
+    // -------------------------------------------------
 
     const currentFingerprint = {
       commitSha: revision.commitSha,
@@ -66,6 +113,10 @@ export async function runIndexWorkflow({
       }
     }
 
+    // -------------------------------------------------
+    // Up-to-date Case
+    // -------------------------------------------------
+
     if (!rebuildRequired) {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
         commitSha: revision.commitSha,
@@ -75,11 +126,13 @@ export async function runIndexWorkflow({
 
       return {
         outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-        },
+        payload: { chunksIndexed: 0 },
       };
     }
+
+    // -------------------------------------------------
+    // Outdated Case
+    // -------------------------------------------------
 
     eventBus.emit(CoreEvents.WorkflowIndexOutdated, {
       commitSha: revision.commitSha,
@@ -87,12 +140,9 @@ export async function runIndexWorkflow({
 
     if (dryRun) {
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
       return {
         outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-        },
+        payload: { chunksIndexed: 0 },
       };
     }
 
@@ -105,40 +155,51 @@ export async function runIndexWorkflow({
 
       return {
         outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-        },
+        payload: { chunksIndexed: 0 },
       };
     }
 
-    // --- Rebuild begins ---
+    // -------------------------------------------------
+    // Rebuild
+    // -------------------------------------------------
 
     const files = await repositorySource.listFiles();
-
     const chunks = [];
 
     for (const file of files) {
       const content = await repositorySource.readFile(file);
 
-      chunks.push({
-        id: file,
-        source: { kind: "code", path: file },
-        content,
-      });
+      const lines = content.split("\n");
+      const size = config.context.chunkSize;
+
+      for (let i = 0; i < lines.length; i += size) {
+        const chunkLines = lines.slice(i, i + size);
+        const chunkContent = chunkLines.join("\n");
+
+        chunks.push({
+          id: `${file}:${i}`,
+          source: { kind: "code", path: file },
+          content: chunkContent,
+          metadata: {
+            path: file,
+            lineStart: i + 1,
+            lineEnd: i + chunkLines.length,
+          },
+        });
+      }
     }
 
     eventBus.emit(CoreEvents.ContextChunksBuilt, {
       count: chunks.length,
     });
 
-    // TODO: persist chunks via existing context index logic
-    // For now, assume persistence already exists elsewhere.
-
     await metadataRepository.save({
       repository: {
         provider: identity.provider,
         id: identity.id,
-        defaultBranch: revision.defaultBranch,
+        ...(revision.defaultBranch
+          ? { defaultBranch: revision.defaultBranch }
+          : {}),
       },
       revision: {
         commitSha: revision.commitSha,
@@ -159,9 +220,7 @@ export async function runIndexWorkflow({
 
     return {
       outcome: "success",
-      payload: {
-        chunksIndexed: chunks.length,
-      },
+      payload: { chunksIndexed: chunks.length },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -172,9 +231,7 @@ export async function runIndexWorkflow({
 
     return {
       outcome: "failure",
-      payload: {
-        chunksIndexed: 0,
-      },
+      payload: { chunksIndexed: 0 },
     };
   }
 }

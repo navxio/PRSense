@@ -13,9 +13,11 @@ import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 
 export const indexCommand = new Command("index")
-  .argument("<path>", "Path to repository")
+  .argument("[target]", "Path or GitHub URL", ".")
+  .option("--force", "Rebuild the index from scratch")
+  .option("--dry-run", "Show what would be indexed without writing")
+  .option("--stats", "Print indexing statistics after completion")
   .option("--chunk-size <n>", "Chunk size (lines)")
-  .option("--chunk-overlap <n>", "Chunk overlap (lines)")
   .action(async (path, options) => {
     const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
 
@@ -88,6 +90,9 @@ export const indexCommand = new Command("index")
 
       const result = await runIndexWorkflow({
         config: resolved,
+        target: path,
+        force: Boolean(options.force),
+        dryRun: Boolean(options.dryRun),
         eventBus,
       });
 
