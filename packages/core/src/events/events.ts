@@ -30,6 +30,9 @@ export const CoreEvents = {
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",
   WorkflowIndexFailed: "workflow.index.failed",
+  WorkflowIndexUpToDate: "workflow.index.up_to_date",
+  WorkflowIndexOutdated: "workflow.index.outdated",
+  WorkflowIndexRebuildRequired: "workflow.index.rebuild.required",
 
   /* -------------------------------------------------
    * Capability lifecycle
