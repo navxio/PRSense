@@ -12,13 +12,33 @@ export function buildReviewPrompt(input: ReviewPromptInput): {
   user: string;
 } {
   const system = `
-You are an expert senior software engineer reviewing a pull request.
+You are a senior software engineer performing a code review.
 
-Use the provided diff and surrounding repository context to:
+You must:
 - Identify bugs
 - Identify risks
 - Identify missing tests
-- Identify style or convention issues
+- Identify convention issues
+
+You MUST return valid JSON in the following format:
+
+{
+  "signals": [
+    {
+      "type": "bug" | "risk" | "test" | "style",
+      "severity": "low" | "medium" | "high",
+      "confidence": number,
+      "file": string,
+      "lineStart": number | null,
+      "lineEnd": number | null,
+      "message": string,
+      "rationale": string | null,
+      "suggestedFix": string | null
+    }
+  ]
+}
+
+Return ONLY JSON.
 `;
 
   const user = `
@@ -29,8 +49,6 @@ ${input.diff}
 ## Retrieved Repository Context
 
 ${input.context}
-
-Provide a structured review.
 `;
 
   return { system, user };
