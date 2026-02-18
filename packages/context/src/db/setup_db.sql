@@ -28,6 +28,10 @@ CREATE TABLE IF NOT EXISTS rag_chunks (
 );
 
 
+CREATE INDEX ON rag_chunks
+USING ivfflat (embedding vector_l2_ops)
+WITH (lists = 100);
+
 -- SELECT
 --   id,
 --   path,

@@ -164,4 +164,73 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       }
     });
   }
+
+  async searchNearest(params: {
+    repoProvider: string;
+    repoName: string;
+    repoRef?: string;
+    embedding: number[];
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      path: string;
+      kind: string;
+      language: string | null;
+      content: string;
+      lineStart: number | null;
+      lineEnd: number | null;
+      distance: number;
+    }>
+  > {
+    const client = new pg.Client({
+      connectionString: this.connectionString,
+    });
+
+    await client.connect();
+
+    try {
+      const query = `
+      SELECT
+        id,
+        path,
+        kind,
+        language,
+        content,
+        line_start,
+        line_end,
+        embedding <-> $1 AS distance
+      FROM rag_chunks
+      WHERE repo_provider = $2
+        AND repo_name = $3
+        ${params.repoRef ? "AND repo_ref = $4" : ""}
+      ORDER BY embedding <-> $1
+      LIMIT ${params.limit}
+    `;
+
+      const values = params.repoRef
+        ? [
+            params.embedding,
+            params.repoProvider,
+            params.repoName,
+            params.repoRef,
+          ]
+        : [params.embedding, params.repoProvider, params.repoName];
+
+      const result = await client.query(query, values);
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        path: row.path,
+        kind: row.kind,
+        language: row.language,
+        content: row.content,
+        lineStart: row.line_start,
+        lineEnd: row.line_end,
+        distance: row.distance,
+      }));
+    } finally {
+      await client.end().catch(() => {});
+    }
+  }
 }
