@@ -14,7 +14,7 @@ export const EnvConfigSchema = z.object({
   PRSENSE_GITHUB_APP_PRIVATE_KEY: z.string().optional(),
   PRSENSE_GITHUB_INSTALLATION_ID: z.string().optional(),
   PRSENSE_SLACK_BOT_TOKEN: z.string().optional(),
-  PRSENSE_SELF_HOSTED: z.boolean().default(true),
+  PRSENSE_SELF_HOSTED: z.boolean().default(false),
 });
 
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;

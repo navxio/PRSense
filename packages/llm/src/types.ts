@@ -66,3 +66,7 @@ export type OpenAiConfig = {
   model: string;
   baseUrl?: string; // supports Azure / proxies
 };
+
+export type EmbeddingClient = {
+  embed(texts: string[]): Promise<number[][]>;
+};
