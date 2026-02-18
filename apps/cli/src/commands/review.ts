@@ -1,19 +1,159 @@
 import { Command } from "commander";
 import { runReviewWorkflow } from "@prsense/workflows";
+import { createPinoLogger, logEvent } from "@prsense/logging";
+import { createEventBus, CoreEvents } from "@prsense/core";
+import {
+  validateResolvedConfig,
+  buildCredentialContext,
+} from "@prsense/runtime-config";
+import { loadUserConfig, loadEnvConfig } from "@prsense/config";
+import { resolveConfig } from "../resolveConfig.js";
+import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
+import { eventToCliTask } from "../ui/eventToTask.js";
+import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
+import path from "node:path";
+import { execSync } from "node:child_process";
 
 export const reviewCommand = new Command("review")
-  .argument("[path]", "Path to repository", ".")
-  .option("--source <source>", "git | fs | github", "git")
+  .argument("[target]", "Path or GitHub URL", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
-  .option("--diff-path <path>", "Diff file path (fs source)")
-  .option("--owner <owner>", "GitHub repo owner")
-  .option("--repo <repo>", "GitHub repo name")
-  .option("--pull-number <number>", "GitHub pull request number")
-  .action(async (path, options) => {
-    const exitCode = await runReviewWorkflow({
-      repoPath: path,
-      options,
+  .action(async (target, options) => {
+    const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
+
+    const logger = createPinoLogger({
+      level: logLevel,
+      pretty: true,
     });
 
-    process.exit(exitCode);
+    const renderer = createSpinnerRenderer(process.stdout);
+
+    const eventBus = createEventBus((event) => {
+      logEvent(logger, event);
+
+      const mapped = eventToCliTask(event);
+      if (!mapped) return;
+
+      if (mapped.kind === "start") {
+        renderer.start(mapped.task);
+      } else if (mapped.kind === "update") {
+        renderer.update(mapped.task);
+      } else {
+        renderer.finish(mapped.task);
+      }
+    });
+
+    eventBus.emit(CoreEvents.RunStarted, {
+      mode: "cli",
+      command: "review",
+    });
+
+    try {
+      // -------------------------------------------------
+      // Load Config
+      // -------------------------------------------------
+
+      const user = loadUserConfig(process.cwd());
+      const env = loadEnvConfig();
+
+      const credentialContext = buildCredentialContext(env, {
+        mode: "self-hosted",
+      });
+
+      const repoRoot = path.resolve(target);
+      const repoProvider = "filesystem";
+
+      const resolved = resolveConfig({
+        mode: "cli",
+        repoRoot,
+        repoProvider,
+        user,
+        env,
+      });
+
+      const validation = validateResolvedConfig(resolved, credentialContext);
+
+      if (!validation.valid) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-config",
+        });
+
+        await stdoutConfigReporter(validation.issues);
+        process.exit(1);
+      }
+
+      // -------------------------------------------------
+      // Load Diff
+      // -------------------------------------------------
+
+      let diffText: string;
+
+      if (options.baseBranch) {
+        diffText = execSync(`git diff ${options.baseBranch}`, {
+          encoding: "utf8",
+        });
+      } else {
+        diffText = execSync("git diff", { encoding: "utf8" });
+      }
+
+      if (!diffText.trim()) {
+        console.log("No changes detected.");
+        process.exit(0);
+      }
+
+      // -------------------------------------------------
+      // Resolve Identity
+      // -------------------------------------------------
+
+      const repoName = path.basename(repoRoot);
+
+      const revision = execSync("git rev-parse HEAD", {
+        encoding: "utf8",
+      }).trim();
+
+      // -------------------------------------------------
+      // Run Review Workflow
+      // -------------------------------------------------
+
+      const result = await runReviewWorkflow({
+        config: resolved,
+        diffText,
+        repoProvider,
+        repoName,
+        repoRef: revision,
+        eventBus,
+      });
+
+      eventBus.emit(CoreEvents.RunFinished, {
+        outcome: result.outcome,
+      });
+
+      if (result.outcome === "failure") {
+        process.exit(1);
+      }
+
+      // -------------------------------------------------
+      // Print Signals
+      // -------------------------------------------------
+
+      for (const signal of result.payload.signals) {
+        console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
+        console.log(signal.message);
+
+        if (signal.rationale) {
+          console.log(`  ↳ ${signal.rationale}`);
+        }
+
+        if (signal.suggestedFix) {
+          console.log(`  💡 ${signal.suggestedFix}`);
+        }
+      }
+
+      process.exit(0);
+    } catch (err) {
+      eventBus.emit(CoreEvents.RunFailed, {
+        error: String(err),
+      });
+
+      process.exit(1);
+    }
   });
