@@ -1,7 +1,7 @@
-// packages/workflows/src/index/runIndexWorkflow.ts
+// packages/workflows/src/index/indexWorkflow.ts
 
 import path from "node:path";
-import { CoreEvents, EventBus } from "@prsense/core";
+import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
   FileSystemRepositorySource,
   GitHubRepositorySource,
@@ -10,6 +10,13 @@ import {
 import { PRSENSE_VERSION } from "@prsense/core";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig } from "@prsense/runtime-config";
+import {
+  createOpenAiEmbeddingClient,
+  createOllamaEmbeddingClient,
+} from "@prsense/llm";
+import { PostgresRagChunkRepository } from "@prsense/context";
+import { detectKind } from "./helper.js";
+import { detectLanguage } from "@prsense/context";
 
 export async function runIndexWorkflow({
   config,
@@ -83,10 +90,29 @@ export async function runIndexWorkflow({
       config.database.url,
     );
 
+    const chunkRepository = new PostgresRagChunkRepository(config.database.url);
+
     const stored = await metadataRepository.load(
       identity.provider,
       identity.id,
     );
+
+    // -------------------------------------------------
+    // Create Embedding Client
+    // -------------------------------------------------
+
+    let embeddingClient;
+
+    if (config.embeddings.provider === "openai") {
+      embeddingClient = createOpenAiEmbeddingClient({
+        apiKey: process.env.OPENAI_API_KEY!,
+        model: config.embeddings.model,
+      });
+    } else {
+      embeddingClient = createOllamaEmbeddingClient({
+        model: config.embeddings.model,
+      });
+    }
 
     // -------------------------------------------------
     // Compute Current Fingerprint
@@ -197,7 +223,7 @@ export async function runIndexWorkflow({
         },
       };
     }
-    const chunks = [];
+    const chunks: ContextChunk[] = [];
 
     for (const file of files) {
       const content = await repositorySource.readFile(file);
@@ -211,12 +237,14 @@ export async function runIndexWorkflow({
 
         chunks.push({
           id: `${file}:${i}`,
-          source: { kind: "code", path: file },
+          source: { kind: "file", path: file },
           content: chunkContent,
           metadata: {
             path: file,
             lineStart: i + 1,
             lineEnd: i + chunkLines.length,
+            type: detectKind(file),
+            language: detectLanguage(file) || "undetermined",
           },
         });
       }
@@ -226,6 +254,50 @@ export async function runIndexWorkflow({
       count: chunks.length,
     });
 
+    // -------------------------------------------------
+    // Delete Existing Chunks (Rebuild)
+    // -------------------------------------------------
+
+    await chunkRepository.deleteByRepository(identity.provider, identity.id);
+
+    // -------------------------------------------------
+    // Embed + Persist Chunks
+    // -------------------------------------------------
+
+    const allRows = [];
+
+    const BATCH_SIZE = 16;
+
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+
+      const embeddings = await embeddingClient.embed(
+        batch.map((c) => c.content),
+      );
+
+      const rows = batch.map((chunk, idx) => {
+        const embedding = embeddings[idx];
+
+        if (!embedding) {
+          throw new Error("Embedding generation mismatch");
+        }
+        return {
+          chunk,
+          repoProvider: identity.provider,
+          repoName: identity.id,
+          repoRef: revision.commitSha,
+          embedding,
+        };
+      });
+
+      allRows.push(...rows);
+    }
+
+    await chunkRepository.rebuildRepository(
+      identity.provider,
+      identity.id,
+      allRows,
+    );
     await metadataRepository.save({
       repository: {
         provider: identity.provider,

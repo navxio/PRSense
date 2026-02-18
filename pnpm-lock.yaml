@@ -228,6 +228,9 @@ importers:
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
+      '@prsense/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@prsense/preflight':
         specifier: workspace:*
         version: link:../preflight
