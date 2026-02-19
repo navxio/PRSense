@@ -15,7 +15,7 @@ import {
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
 import { PostgresRagChunkRepository } from "@prsense/context";
-import { createSimpleChunker } from "@prsense/context";
+import { createCharChunker } from "@prsense/context";
 
 export async function runIndexWorkflow({
   config,
@@ -241,9 +241,9 @@ export async function runIndexWorkflow({
         },
       };
     }
-    const chunker = createSimpleChunker({
-      maxLines: config.context.chunkSize,
-      maxChars: 800,
+    const chunker = createCharChunker({
+      maxChars: config.index.chunkSizeChars,
+      overlapChars: config.index.chunkOverlapChars,
     });
 
     const chunks: ContextChunk[] = [];
