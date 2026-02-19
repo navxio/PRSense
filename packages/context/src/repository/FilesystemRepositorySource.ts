@@ -1,6 +1,6 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { execSync } from "node:child_process";
 import {
   RepositorySource,
   RepositoryIdentity,
@@ -11,15 +11,33 @@ export class FileSystemRepositorySource implements RepositorySource {
   constructor(private readonly root: string) {}
 
   async listFiles(): Promise<string[]> {
+    // Try authoritative git listing first
+    try {
+      const output = execSync("git ls-files", {
+        cwd: this.root,
+        encoding: "utf8",
+      });
+
+      return output
+        .split("\n")
+        .filter(Boolean)
+        .map((relative) => path.join(this.root, relative));
+    } catch {
+      // Fallback: not a git repository
+      return this.walkDirectory(this.root);
+    }
+  }
+
+  private async walkDirectory(dir: string): Promise<string[]> {
     const files: string[] = [];
 
-    async function walk(dir: string) {
-      const entries = await fs.readdir(dir, { withFileTypes: true });
+    async function walk(current: string) {
+      const entries = await fs.readdir(current, { withFileTypes: true });
 
       for (const entry of entries) {
         if (entry.name === ".git") continue;
 
-        const fullPath = path.join(dir, entry.name);
+        const fullPath = path.join(current, entry.name);
 
         if (entry.isDirectory()) {
           await walk(fullPath);
@@ -29,8 +47,7 @@ export class FileSystemRepositorySource implements RepositorySource {
       }
     }
 
-    await walk(this.root);
-
+    await walk(dir);
     return files;
   }
 
