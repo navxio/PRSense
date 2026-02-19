@@ -14,6 +14,12 @@ export const UserConfigSchema = z.object({
     model: z.string().default("nomic-embed-text"),
   }),
 
+  index: z.object({
+    chunkSizeChars: z.number().int().positive().default(1000),
+    chunkOverlapChars: z.number().int().positive().default(200),
+    maxFileSizeBytes: z.number().int().positive().default(1_000_000),
+  }),
+
   review: z.object({
     confidenceThreshold: z.number().min(0).max(1).default(0.6),
     maxSignals: z.number().int().positive().default(10),

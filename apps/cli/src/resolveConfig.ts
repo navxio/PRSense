@@ -66,9 +66,14 @@ export function resolveConfig(input: ResolveConfigInput): ResolvedConfig {
       maxSignals: user.review?.maxSignals ?? 10,
     },
 
+    index: {
+      chunkSizeChars: user.index?.chunkSizeChars ?? 1000,
+      chunkOverlapChars: user.index?.chunkOverlapChars ?? 200,
+      maxFileSizeByets: user.index?.maxFileSizeBytes ?? 1_000_000,
+    },
+
     context: {
       maxChunks: user.context?.maxChunks ?? 5,
-      chunkSize: user.context?.chunkSize ?? 80,
     },
 
     llm: {

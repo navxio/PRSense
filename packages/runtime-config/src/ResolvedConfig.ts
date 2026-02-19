@@ -15,6 +15,12 @@ export type ResolvedConfig = {
     provider: "github" | "gitlab" | "filesystem";
   };
 
+  index: {
+    chunkSizeChars: number;
+    chunkOverlapChars: number;
+    maxFileSizeByets: number;
+  };
+
   review: {
     confidenceThreshold: number;
     maxSignals: number;
@@ -22,7 +28,6 @@ export type ResolvedConfig = {
 
   context: {
     maxChunks: number; // retrieval
-    chunkSize: number; // indexing
   };
 
   llm: {
