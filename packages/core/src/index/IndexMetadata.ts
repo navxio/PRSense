@@ -12,6 +12,7 @@ export type IndexMetadata = {
   embedding: {
     provider: string;
     model: string;
+    dimension: number;
   };
 
   chunking: {

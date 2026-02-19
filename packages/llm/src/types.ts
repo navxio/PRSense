@@ -69,4 +69,5 @@ export type OpenAiConfig = {
 
 export type EmbeddingClient = {
   embed(texts: string[]): Promise<number[][]>;
+  dimension(): Promise<number>;
 };

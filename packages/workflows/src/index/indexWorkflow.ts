@@ -113,6 +113,24 @@ export async function runIndexWorkflow({
       });
     }
 
+    const embeddingDimension = await embeddingClient.dimension();
+    eventBus.emit(CoreEvents.WorkflowIndexEmbeddingDimensionDetected, {
+      dimension: embeddingDimension,
+    });
+
+    const dbDimension = await chunkRepository.getEmbeddingColumnDimension();
+
+    if (dbDimension !== null && dbDimension !== embeddingDimension) {
+      eventBus.emit(CoreEvents.WorkflowIndexDimensionMismatch, {
+        dbDimension,
+        embeddingDimension,
+      });
+
+      throw new Error(
+        `Embedding dimension mismatch: database=${dbDimension}, model=${embeddingDimension}. Recreate table or change model.`,
+      );
+    }
+
     // -------------------------------------------------
     // Compute Current Fingerprint
     // -------------------------------------------------
@@ -121,6 +139,7 @@ export async function runIndexWorkflow({
       commitSha: revision.commitSha,
       embeddingProvider: config.embeddings.provider,
       embeddingModel: config.embeddings.model,
+      embeddingDimension,
       chunkStrategy: "default",
       chunkVersion: 1,
     };
@@ -301,6 +320,7 @@ export async function runIndexWorkflow({
       embedding: {
         provider: config.embeddings.provider,
         model: config.embeddings.model,
+        dimension: embeddingDimension,
       },
       chunking: {
         strategy: "default",

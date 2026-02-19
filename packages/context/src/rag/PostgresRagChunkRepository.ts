@@ -21,6 +21,25 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     }
   }
 
+  async getEmbeddingColumnDimension(): Promise<number | null> {
+    return this.withClient(async (client) => {
+      const result = await client.query(`
+      SELECT
+        a.atttypmod - 4 AS dimension
+      FROM pg_attribute a
+      JOIN pg_class c ON a.attrelid = c.oid
+      WHERE c.relname = 'rag_chunks'
+        AND a.attname = 'embedding'
+    `);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return Number(result.rows[0].dimension);
+    });
+  }
+
   async rebuildRepository(
     provider: string,
     name: string,
