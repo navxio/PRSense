@@ -5,6 +5,9 @@ import { retrieveContext } from "./retrieveContext.js";
 import { buildReviewPrompt } from "@prsense/core";
 import { createOpenAiClient, createOllamaClient } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
+import { validateReviewOutput } from "./validateReviewOutput.js";
+import { dedupeSignals } from "./dedupeSignals.js";
+import { normalizeSignal } from "./normalizeSignal.js";
 
 export async function runReviewWorkflow({
   config,
@@ -79,29 +82,19 @@ export async function runReviewWorkflow({
     } catch {
       throw new Error("LLM returned invalid JSON");
     }
+    const validated = validateReviewOutput(parsed);
 
-    const rawSignals = parsed?.signals;
+    const rawSignals = validated.signals;
 
-    if (!Array.isArray(rawSignals)) {
-      throw new Error("Invalid review structure");
-    }
+    const normalized = rawSignals
+      .map(normalizeSignal)
+      .filter((s): s is ReviewSignal => Boolean(s));
 
-    const signals: ReviewSignal[] = rawSignals.map(
-      (s: any, index: number): ReviewSignal => ({
-        id: `signal-${index}`,
-        type: s.type,
-        severity: s.severity,
-        confidence: s.confidence,
-        file: s.file,
-        lineStart: s.lineStart ?? undefined,
-        lineEnd: s.lineEnd ?? undefined,
-        message: s.message,
-        rationale: s.rationale ?? undefined,
-        suggestedFix: s.suggestedFix ?? undefined,
-        source: "llm",
-      }),
+    const thresholded = normalized.filter(
+      (s) => s.confidence >= config.review.confidenceThreshold,
     );
 
+    const signals = dedupeSignals(thresholded);
     eventBus.emit(CoreEvents.SignalCompiled, {
       count: signals.length,
     });
