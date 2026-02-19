@@ -15,8 +15,7 @@ import {
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
 import { PostgresRagChunkRepository } from "@prsense/context";
-import { detectKind } from "./helper.js";
-import { detectLanguage } from "@prsense/context";
+import { createSimpleChunker } from "@prsense/context";
 
 export async function runIndexWorkflow({
   config,
@@ -223,31 +222,21 @@ export async function runIndexWorkflow({
         },
       };
     }
-    const chunks: ContextChunk[] = [];
+    const chunker = createSimpleChunker({
+      maxLines: config.context.chunkSize,
+      maxChars: 800,
+    });
 
+    const chunks: ContextChunk[] = [];
     for (const file of files) {
       const content = await repositorySource.readFile(file);
 
-      const lines = content.split("\n");
-      const size = config.context.chunkSize;
+      const fileChunks = chunker.chunk({
+        content,
+        source: { kind: "file", path: file },
+      });
 
-      for (let i = 0; i < lines.length; i += size) {
-        const chunkLines = lines.slice(i, i + size);
-        const chunkContent = chunkLines.join("\n");
-
-        chunks.push({
-          id: `${file}:${i}`,
-          source: { kind: "file", path: file },
-          content: chunkContent,
-          metadata: {
-            path: file,
-            lineStart: i + 1,
-            lineEnd: i + chunkLines.length,
-            type: detectKind(file),
-            language: detectLanguage(file) || "undetermined",
-          },
-        });
-      }
+      chunks.push(...fileChunks);
     }
 
     eventBus.emit(CoreEvents.ContextChunksBuilt, {

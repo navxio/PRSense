@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS rag_chunks (
   line_end INTEGER,
 
   -- embedding
-  embedding VECTOR(1536),
+  embedding VECTOR(768),
 
   indexed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

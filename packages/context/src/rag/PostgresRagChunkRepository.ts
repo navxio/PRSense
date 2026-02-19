@@ -1,3 +1,4 @@
+// packages/context/src/rag/PostgresRagChunkRepository.ts
 import pg from "pg";
 import type { RagChunkRepository } from "./RagChunkRepository.js";
 import type { ContextChunk } from "@prsense/core";
@@ -79,13 +80,13 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
           row.repoOwner ?? null,
           row.repoName,
           row.repoRef,
-          chunk.metadata?.path ?? null,
+          chunk.source.kind === "file" ? chunk.source.path : null,
           chunk.source.kind,
           chunk.metadata?.language ?? null,
           chunk.content,
           chunk.metadata?.lineStart ?? null,
           chunk.metadata?.lineEnd ?? null,
-          row.embedding,
+          `[${row.embedding.join(",")}]`,
         ]);
       }
 
@@ -159,7 +160,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
           chunk.content,
           chunk.metadata?.lineStart ?? null,
           chunk.metadata?.lineEnd ?? null,
-          row.embedding,
+          `[${row.embedding.join(",")}]`,
         ]);
       }
     });
@@ -208,14 +209,11 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       LIMIT ${params.limit}
     `;
 
+      const vectorLiteral = `[${params.embedding.join(",")}]`;
+
       const values = params.repoRef
-        ? [
-            params.embedding,
-            params.repoProvider,
-            params.repoName,
-            params.repoRef,
-          ]
-        : [params.embedding, params.repoProvider, params.repoName];
+        ? [vectorLiteral, params.repoProvider, params.repoName, params.repoRef]
+        : [vectorLiteral, params.repoProvider, params.repoName];
 
       const result = await client.query(query, values);
 

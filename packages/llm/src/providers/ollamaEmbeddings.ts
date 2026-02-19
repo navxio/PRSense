@@ -24,7 +24,9 @@ export function createOllamaEmbeddingClient(opts: {
         });
 
         if (!res.ok) {
-          throw new Error(`Ollama embedding error: ${res.statusText}`);
+          throw new Error(
+            `Ollama embedding error: ${res.status} ${await res.text()}`,
+          );
         }
 
         const json = (await res.json()) as {
