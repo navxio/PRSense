@@ -52,6 +52,7 @@ export class PostgresIndexMetadataRepository implements IndexMetadataRepository 
         embedding: {
           provider: row.embedding_provider,
           model: row.embedding_model,
+          dimension: Number(row.embedding_dimension),
         },
         chunking: {
           strategy: row.chunk_strategy,
@@ -73,6 +74,7 @@ export class PostgresIndexMetadataRepository implements IndexMetadataRepository 
           commit_sha,
           embedding_provider,
           embedding_model,
+          embedding_dimension,
           chunk_strategy,
           chunk_version,
           prsense_version,
@@ -95,6 +97,7 @@ export class PostgresIndexMetadataRepository implements IndexMetadataRepository 
           metadata.revision.commitSha,
           metadata.embedding.provider,
           metadata.embedding.model,
+          metadata.embedding.dimension,
           metadata.chunking.strategy,
           metadata.chunking.version,
           metadata.prsenseVersion,

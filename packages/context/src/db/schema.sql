@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS prsense_index_metadata (
 
   embedding_provider TEXT NOT NULL,
   embedding_model TEXT NOT NULL,
+  embedding_dimension INTEGER NOT NULL,
 
   chunk_strategy TEXT NOT NULL,
   chunk_version INTEGER NOT NULL,
