@@ -86,6 +86,16 @@ export function eventToCliTask(
         },
       };
 
+    case CoreEvents.WorkflowIndexProgress:
+      return {
+        kind: "update",
+        task: {
+          id: "index",
+          label: `Embedding ${event.fields.processed} / ${event.fields.total} chunks`,
+          state: "running",
+        },
+      };
+
     default:
       return null;
   }

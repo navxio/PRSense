@@ -279,6 +279,11 @@ export async function runIndexWorkflow({
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
       const batch = chunks.slice(i, i + BATCH_SIZE);
 
+      eventBus.emit(CoreEvents.WorkflowIndexProgress, {
+        processed: Math.min(i + BATCH_SIZE, chunks.length),
+        total: chunks.length,
+      });
+
       const embeddings = await embeddingClient.embed(
         batch.map((c) => c.content),
       );

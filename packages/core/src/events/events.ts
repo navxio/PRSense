@@ -32,6 +32,7 @@ export const CoreEvents = {
   WorkflowIndexFailed: "workflow.index.failed",
   WorkflowIndexUpToDate: "workflow.index.up_to_date",
   WorkflowIndexOutdated: "workflow.index.outdated",
+  WorkflowIndexProgress: "workflow.index.progress",
   WorkflowIndexRebuildRequired: "workflow.index.rebuild.required",
   WorkflowIndexEmbeddingDimensionDetected:
     "workflow.index.embedding_dimension_detected",
