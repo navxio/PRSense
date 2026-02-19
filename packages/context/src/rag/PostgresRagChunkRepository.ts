@@ -25,7 +25,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     return this.withClient(async (client) => {
       const result = await client.query(`
       SELECT
-        a.atttypmod - 4 AS dimension
+        a.atttypmod AS dimension
       FROM pg_attribute a
       JOIN pg_class c ON a.attrelid = c.oid
       WHERE c.relname = 'rag_chunks'
