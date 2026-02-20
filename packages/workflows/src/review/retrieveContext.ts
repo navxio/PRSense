@@ -1,3 +1,5 @@
+// packages/workflows/src/review/retrieveContext.ts
+
 import type { RetrievedContext } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import { PostgresRagChunkRepository } from "@prsense/context";
@@ -16,7 +18,10 @@ export async function retrieveContext(params: {
 }): Promise<RetrievedContext> {
   const { config, query, repoProvider, repoName, repoRef, limit } = params;
 
+  // -------------------------------------------------
   // Create embedding client
+  // -------------------------------------------------
+
   const embeddingClient =
     config.embeddings.provider === "openai"
       ? createOpenAiEmbeddingClient({
@@ -33,15 +38,23 @@ export async function retrieveContext(params: {
     throw new Error("Failed to generate query embedding");
   }
 
+  // -------------------------------------------------
+  // Query RAG store
+  // -------------------------------------------------
+
   const repository = new PostgresRagChunkRepository(config.database.url);
 
   const rows = await repository.searchNearest({
     repoProvider,
     repoName,
-    repoRef,
+    ...(repoRef ? { repoRef } : {}),
     embedding: queryEmbedding,
     limit,
   });
+
+  // -------------------------------------------------
+  // Map to domain objects
+  // -------------------------------------------------
 
   return {
     chunks: rows.map((row) => ({
@@ -53,10 +66,9 @@ export async function retrieveContext(params: {
       content: row.content,
       metadata: {
         path: row.path,
-        lineStart: row.lineStart ?? undefined,
-        lineEnd: row.lineEnd ?? undefined,
-        language: row.language ?? undefined,
-        type: row.kind,
+        ...(row.lineStart != null ? { lineStart: row.lineStart } : {}),
+        ...(row.lineEnd != null ? { lineEnd: row.lineEnd } : {}),
+        ...(row.language != null ? { language: row.language } : {}),
       },
     })),
     stats: {

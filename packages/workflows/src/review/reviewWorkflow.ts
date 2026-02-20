@@ -1,5 +1,7 @@
+// packages/workflows/src/review/reviewWorkflow.ts
+
 import { CoreEvents, EventBus } from "@prsense/core";
-import type { ReviewSignal } from "@prsense/core";
+import type { ReviewSignal, DiffProvider } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import { retrieveContext } from "./retrieveContext.js";
 import { buildReviewPrompt } from "@prsense/core";
@@ -11,43 +13,53 @@ import { normalizeSignal } from "./normalizeSignal.js";
 
 export async function runReviewWorkflow({
   config,
-  diffText,
-  repoProvider,
-  repoName,
-  repoRef,
+  diffProvider,
   eventBus,
 }: {
   config: ResolvedConfig;
-  diffText: string;
-  repoProvider: string;
-  repoName: string;
-  repoRef?: string;
+  diffProvider: DiffProvider;
   eventBus: EventBus;
 }): Promise<ReviewWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowReviewStarted);
 
   try {
     // -------------------------------------------------
-    // Retrieve context
+    // Load diff from provider
     // -------------------------------------------------
+
+    const { diff, revision, repositoryIdentity } = await diffProvider.load();
+
+    if (diff.files.length === 0) {
+      eventBus.emit(CoreEvents.WorkflowReviewFinished);
+      return {
+        outcome: "success",
+        payload: { signals: [] },
+      };
+    }
+
+    // -------------------------------------------------
+    // Retrieve contextual chunks (RAG)
+    // -------------------------------------------------
+
+    const diffText = diff.files.map((f) => f.patch).join("\n\n");
 
     const retrieved = await retrieveContext({
       config,
       query: diffText,
-      repoProvider,
-      repoName,
-      ...(repoRef ? { repoRef } : {}),
+      repoProvider: repositoryIdentity.provider,
+      repoName: repositoryIdentity.id,
+      repoRef: revision ?? undefined,
       limit: config.context.maxChunks,
     });
 
     const contextText = retrieved.chunks.map((c) => c.content).join("\n\n");
 
     // -------------------------------------------------
-    // Build prompt
+    // Build LLM prompt
     // -------------------------------------------------
 
     const prompt = buildReviewPrompt({
-      diff: diffText,
+      diff,
       context: contextText,
     });
 
@@ -71,10 +83,6 @@ export async function runReviewWorkflow({
 
     const response = await llmClient.generate({ prompt });
 
-    // -------------------------------------------------
-    // Parse JSON
-    // -------------------------------------------------
-
     let parsed: any;
 
     try {
@@ -82,7 +90,12 @@ export async function runReviewWorkflow({
     } catch {
       throw new Error("LLM returned invalid JSON");
     }
+
     const validated = validateReviewOutput(parsed);
+
+    // -------------------------------------------------
+    // Normalize + filter signals
+    // -------------------------------------------------
 
     const rawSignals = validated.signals;
 
@@ -95,6 +108,7 @@ export async function runReviewWorkflow({
     );
 
     const signals = dedupeSignals(thresholded);
+
     eventBus.emit(CoreEvents.SignalCompiled, {
       count: signals.length,
     });
@@ -103,9 +117,7 @@ export async function runReviewWorkflow({
 
     return {
       outcome: "success",
-      payload: {
-        signals,
-      },
+      payload: { signals },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -116,9 +128,7 @@ export async function runReviewWorkflow({
 
     return {
       outcome: "failure",
-      payload: {
-        signals: [],
-      },
+      payload: { signals: [] },
     };
   }
 }

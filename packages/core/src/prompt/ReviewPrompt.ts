@@ -1,5 +1,7 @@
+import type { UnifiedDiff } from "../diff/Diff.js";
+
 export type ReviewPromptInput = {
-  diff: string;
+  diff: UnifiedDiff;
   context: string;
   metadata?: {
     title?: string;
@@ -41,10 +43,13 @@ You MUST return valid JSON in the following format:
 Return ONLY JSON.
 `;
 
+  // Convert UnifiedDiff → string
+  const diffText = input.diff.files.map((f) => f.patch).join("\n\n");
+
   const user = `
 ## Pull Request Diff
 
-${input.diff}
+${diffText}
 
 ## Retrieved Repository Context
 

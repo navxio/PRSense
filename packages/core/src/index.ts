@@ -6,6 +6,7 @@ export * from "./events/eventBus.js";
 export * from "./events/types.js";
 
 export * from "./diff/Diff.js";
+export * from "./diff/DiffProvider.js";
 
 export * from "./context/index.js";
 export * from "./index/IndexMetadata.js";
