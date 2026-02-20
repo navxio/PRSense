@@ -80,12 +80,13 @@ export class PostgresIndexMetadataRepository implements IndexMetadataRepository 
           prsense_version,
           created_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         ON CONFLICT (repository_provider, repository_id)
         DO UPDATE SET
           commit_sha = EXCLUDED.commit_sha,
           embedding_provider = EXCLUDED.embedding_provider,
           embedding_model = EXCLUDED.embedding_model,
+          embedding_dimension = EXCLUDED.embedding_dimension,
           chunk_strategy = EXCLUDED.chunk_strategy,
           chunk_version = EXCLUDED.chunk_version,
           prsense_version = EXCLUDED.prsense_version,
