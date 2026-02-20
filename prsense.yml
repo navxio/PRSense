@@ -1,6 +1,6 @@
 llm:
   provider: ollama
-  model: qwen2.5-coder
+  model: llama3.2
   temperature: 0.1
 
 embeddings:

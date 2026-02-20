@@ -41,7 +41,13 @@ export async function runReviewWorkflow({
     // Retrieve contextual chunks (RAG)
     // -------------------------------------------------
 
-    const diffText = diff.files.map((f) => f.patch).join("\n\n");
+    const MAX_QUERY_CHARS = 4000;
+
+    let diffText = diff.files.map((f) => f.patch).join("\n\n");
+
+    if (diffText.length > MAX_QUERY_CHARS) {
+      diffText = diffText.slice(0, MAX_QUERY_CHARS);
+    }
 
     const retrieved = await retrieveContext({
       config,

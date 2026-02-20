@@ -12,10 +12,10 @@ import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { LocalGitDiffProvider } from "@prsense/context";
 
 export const reviewCommand = new Command("review")
-  .argument("[target]", "Path or GitHub URL", ".")
+  .argument("[target]", "Path to repository", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
   .action(async (target, options) => {
     const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
@@ -60,12 +60,11 @@ export const reviewCommand = new Command("review")
       });
 
       const repoRoot = path.resolve(target);
-      const repoProvider = "filesystem";
 
       const resolved = resolveConfig({
         mode: "cli",
         repoRoot,
-        repoProvider,
+        repoProvider: "filesystem",
         user,
         env,
       });
@@ -82,33 +81,13 @@ export const reviewCommand = new Command("review")
       }
 
       // -------------------------------------------------
-      // Load Diff
+      // Create Diff Provider
       // -------------------------------------------------
 
-      let diffText: string;
-
-      if (options.baseBranch) {
-        diffText = execSync(`git diff ${options.baseBranch}`, {
-          encoding: "utf8",
-        });
-      } else {
-        diffText = execSync("git diff", { encoding: "utf8" });
-      }
-
-      if (!diffText.trim()) {
-        console.log("No changes detected.");
-        process.exit(0);
-      }
-
-      // -------------------------------------------------
-      // Resolve Identity
-      // -------------------------------------------------
-
-      const repoName = path.basename(repoRoot);
-
-      const revision = execSync("git rev-parse HEAD", {
-        encoding: "utf8",
-      }).trim();
+      const diffProvider = new LocalGitDiffProvider(
+        repoRoot,
+        options.baseBranch,
+      );
 
       // -------------------------------------------------
       // Run Review Workflow
@@ -116,10 +95,7 @@ export const reviewCommand = new Command("review")
 
       const result = await runReviewWorkflow({
         config: resolved,
-        diffText,
-        repoProvider,
-        repoName,
-        repoRef: revision,
+        diffProvider,
         eventBus,
       });
 
