@@ -25,6 +25,7 @@
     "@prsense/logging": "workspace:*",
     "@prsense/core": "workspace:*",
     "@prsense/runtime-config": "workspace:*",
+    "@prsense/context": "workspace:*",
     "commander": "^14.0.2"
   },
   "devDependencies": {

@@ -12,7 +12,7 @@ import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 import path from "node:path";
-import { LocalGitDiffProvider } from "@prsense/context";
+import { LocalGitDiffProvider, GitHubPrDiffProvider } from "@prsense/context";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
@@ -80,14 +80,26 @@ export const reviewCommand = new Command("review")
         process.exit(1);
       }
 
+      const githubPrMatch = target.match(
+        /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
+      );
       // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
 
-      const diffProvider = new LocalGitDiffProvider(
-        repoRoot,
-        options.baseBranch,
-      );
+      let diffProvider;
+
+      if (githubPrMatch) {
+        const [, owner, repo, prNumber] = githubPrMatch;
+
+        diffProvider = new GitHubPrDiffProvider(
+          owner,
+          repo.replace(".git", ""),
+          prNumber,
+        );
+      } else {
+        diffProvider = new LocalGitDiffProvider(repoRoot, options.baseBranch);
+      }
 
       // -------------------------------------------------
       // Run Review Workflow

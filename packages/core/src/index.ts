@@ -13,3 +13,4 @@ export * from "./index/IndexMetadata.js";
 
 export * from "./version.js";
 export * from "./prompt/ReviewPrompt.js";
+export * from "./repository/identity.js";

@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import type { UnifiedDiff, DiffProvider } from "@prsense/core";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
+import { RepositoryIdentity } from "@prsense/core";
 
 export class LocalGitDiffProvider implements DiffProvider {
   constructor(
@@ -30,13 +31,14 @@ export class LocalGitDiffProvider implements DiffProvider {
 
     const diff: UnifiedDiff = parseUnifiedDiff(diffText);
 
+    const identity: RepositoryIdentity = {
+      provider: "filesystem",
+      id: cwd,
+    };
     return {
       diff,
       revision,
-      repositoryIdentity: {
-        provider: "filesystem",
-        id: cwd,
-      },
+      repositoryIdentity: identity,
     };
   }
 }
