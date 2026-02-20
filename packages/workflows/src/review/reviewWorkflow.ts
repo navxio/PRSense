@@ -8,6 +8,7 @@ import { buildReviewPrompt } from "@prsense/core";
 import { createOpenAiClient, createOllamaClient } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
 import { validateReviewOutput } from "./validateReviewOutput.js";
+import { buildDiffEmbeddingQuery } from "./buildDiffEmbeddingQuery.js";
 import { dedupeSignals } from "./dedupeSignals.js";
 import { normalizeSignal } from "./normalizeSignal.js";
 
@@ -41,20 +42,14 @@ export async function runReviewWorkflow({
     // Retrieve contextual chunks (RAG)
     // -------------------------------------------------
 
-    const MAX_QUERY_CHARS = 4000;
-
-    let diffText = diff.files.map((f) => f.patch).join("\n\n");
-
-    if (diffText.length > MAX_QUERY_CHARS) {
-      diffText = diffText.slice(0, MAX_QUERY_CHARS);
-    }
+    const retrievalQuery = buildDiffEmbeddingQuery(diff);
 
     const retrieved = await retrieveContext({
       config,
-      query: diffText,
+      query: retrievalQuery,
       repoProvider: repositoryIdentity.provider,
       repoName: repositoryIdentity.id,
-      repoRef: revision ?? undefined,
+      ...(revision ? { repoRef: revision } : {}),
       limit: config.context.maxChunks,
     });
 
