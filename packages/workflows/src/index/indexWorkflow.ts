@@ -248,14 +248,26 @@ export async function runIndexWorkflow({
 
     const chunks: ContextChunk[] = [];
     for (const file of files) {
-      const content = await repositorySource.readFile(file);
+      try {
+        const content = await repositorySource.readFile(file);
 
-      const fileChunks = chunker.chunk({
-        content,
-        source: { kind: "file", path: file },
-      });
+        const fileChunks = chunker.chunk({
+          content,
+          source: { kind: "file", path: file },
+        });
 
-      chunks.push(...fileChunks);
+        chunks.push(...fileChunks);
+      } catch (err) {
+        if (err instanceof Error && err.message === "BINARY_FILE_DETECTED") {
+          eventBus.emit(CoreEvents.ContextFileSkipped, {
+            path: file,
+            reason: "binary",
+          });
+          continue;
+        }
+
+        throw err;
+      }
     }
 
     eventBus.emit(CoreEvents.ContextChunksBuilt, {

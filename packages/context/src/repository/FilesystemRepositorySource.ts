@@ -52,7 +52,23 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    return fs.readFile(filePath, "utf8");
+    const buffer = await fs.readFile(filePath);
+
+    // Detect binary via NULL byte
+    const sampleSize = Math.min(buffer.length, 8000);
+    for (let i = 0; i < sampleSize; i++) {
+      if (buffer[i] === 0) {
+        throw new Error("BINARY_FILE_DETECTED");
+      }
+    }
+
+    // Convert to UTF-8 safely
+    let content = buffer.toString("utf8");
+
+    // Defensive: strip remaining NULL characters if any
+    content = content.replace(/\u0000/g, "");
+
+    return content;
   }
 
   async getRevision(): Promise<RepositoryRevision> {

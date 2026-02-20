@@ -54,6 +54,7 @@ export const CoreEvents = {
   ContextDiffLoaded: "context.diff.loaded",
   ContextChunksBuilt: "context.chunks.built",
   ContextTruncated: "context.truncated",
+  ContextFileSkipped: "context.file.skipped",
 
   /* -------------------------------------------------
    * Signal lifecycle (domain findings)
