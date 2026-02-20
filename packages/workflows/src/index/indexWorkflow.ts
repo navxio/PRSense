@@ -6,6 +6,7 @@ import {
   FileSystemRepositorySource,
   GitHubRepositorySource,
   PostgresIndexMetadataRepository,
+  GitLabRepositorySource,
 } from "@prsense/context";
 import { PRSENSE_VERSION } from "@prsense/core";
 import type { IndexWorkflowResult } from "./types.js";
@@ -17,6 +18,7 @@ import {
 import { PostgresRagChunkRepository } from "@prsense/context";
 import { createCharChunker } from "@prsense/context";
 
+//TODO: modularise this
 export async function runIndexWorkflow({
   config,
   target,
@@ -39,9 +41,8 @@ export async function runIndexWorkflow({
 
     let repositorySource;
 
-    const isGithub =
-      target.startsWith("https://github.com") ||
-      target.startsWith("http://github.com");
+    const isGithub = /github\.com/.test(target);
+    const isGitlab = /gitlab\.com/.test(target);
 
     if (isGithub) {
       const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
@@ -58,6 +59,18 @@ export async function runIndexWorkflow({
       }
 
       repositorySource = new GitHubRepositorySource(
+        owner,
+        repo.replace(".git", ""),
+      );
+    } else if (isGitlab) {
+      const match = target.match(/gitlab\.com\/(.+?)\/([^\/]+)(?:\.git)?$/);
+
+      if (!match) throw new Error("Invalid GitLab URL");
+
+      const owner = match[1];
+      const repo = match[2];
+      if (!owner || !repo) throw new Error("Invalid GitLab repository url");
+      repositorySource = new GitLabRepositorySource(
         owner,
         repo.replace(".git", ""),
       );
