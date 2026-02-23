@@ -37,6 +37,9 @@ export const CoreEvents = {
   WorkflowIndexEmbeddingDimensionDetected:
     "workflow.index.embedding_dimension_detected",
   WorkflowIndexDimensionMismatch: "workflow.index.dimension_mismatch",
+  WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
+  WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
+  WorkflowReviewContextAvailable: "workflow.review.context_available",
 
   /* -------------------------------------------------
    * Capability lifecycle

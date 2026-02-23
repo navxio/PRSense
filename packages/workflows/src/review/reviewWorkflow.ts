@@ -4,6 +4,7 @@ import { CoreEvents, EventBus } from "@prsense/core";
 import type { ReviewSignal, DiffProvider } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import { retrieveContext } from "./retrieveContext.js";
+import { PostgresIndexMetadataRepository } from "packages/context/dist/index.js";
 import { buildReviewPrompt } from "@prsense/core";
 import { createOpenAiClient, createOllamaClient } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
@@ -30,6 +31,29 @@ export async function runReviewWorkflow({
 
     const { diff, revision, repositoryIdentity, metadata } =
       await diffProvider.load();
+
+    const metadataRepository = new PostgresIndexMetadataRepository(
+      config.database.url,
+    );
+
+    const storedMetadata = await metadataRepository.load(
+      repositoryIdentity.provider,
+      repositoryIdentity.id,
+    );
+
+    let contextualReviewAvailable = false;
+
+    if (storedMetadata) {
+      const embeddingMatches =
+        storedMetadata.embedding.provider === config.embeddings.provider &&
+        storedMetadata.embedding.model === config.embeddings.model;
+
+      const revisionMatches = storedMetadata.revision.commitSha === revision;
+
+      if (embeddingMatches && revisionMatches) {
+        contextualReviewAvailable = true;
+      }
+    }
 
     if (diff.files.length === 0) {
       eventBus.emit(CoreEvents.WorkflowReviewFinished);
