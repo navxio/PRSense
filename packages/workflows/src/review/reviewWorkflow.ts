@@ -55,6 +55,17 @@ export async function runReviewWorkflow({
       }
     }
 
+    if (!storedMetadata) {
+      eventBus.emit(CoreEvents.WorkflowReviewContextUnavailable);
+    } else if (!contextualReviewAvailable) {
+      eventBus.emit(CoreEvents.WorkflowReviewIndexOutdated, {
+        indexedCommit: storedMetadata.revision.commitSha,
+        currentCommit: revision,
+      });
+    } else {
+      eventBus.emit(CoreEvents.WorkflowReviewContextAvailable);
+    }
+
     if (diff.files.length === 0) {
       eventBus.emit(CoreEvents.WorkflowReviewFinished);
       return {
@@ -64,21 +75,25 @@ export async function runReviewWorkflow({
     }
 
     // -------------------------------------------------
-    // Retrieve contextual chunks (RAG)
+    // Retrieve contextual chunks (RAG) if available
     // -------------------------------------------------
 
-    const retrievalQuery = buildDiffEmbeddingQuery(diff);
+    let contextText = "";
 
-    const retrieved = await retrieveContext({
-      config,
-      query: retrievalQuery,
-      repoProvider: repositoryIdentity.provider,
-      repoName: repositoryIdentity.id,
-      ...(revision ? { repoRef: revision } : {}),
-      limit: config.context.maxChunks,
-    });
+    if (contextualReviewAvailable) {
+      const retrievalQuery = buildDiffEmbeddingQuery(diff);
 
-    const contextText = retrieved.chunks.map((c) => c.content).join("\n\n");
+      const retrieved = await retrieveContext({
+        config,
+        query: retrievalQuery,
+        repoProvider: repositoryIdentity.provider,
+        repoName: repositoryIdentity.id,
+        ...(revision ? { repoRef: revision } : {}),
+        limit: config.context.maxChunks,
+      });
+
+      contextText = retrieved.chunks.map((c) => c.content).join("\n\n");
+    }
 
     // -------------------------------------------------
     // Build LLM prompt

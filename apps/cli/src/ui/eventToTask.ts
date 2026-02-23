@@ -96,6 +96,36 @@ export function eventToCliTask(
         },
       };
 
+    case CoreEvents.WorkflowReviewContextUnavailable:
+      return {
+        kind: "update",
+        task: {
+          id: "review",
+          label: "Running diff-only review (no index)",
+          state: "running",
+        },
+      };
+
+    case CoreEvents.WorkflowReviewIndexOutdated:
+      return {
+        kind: "update",
+        task: {
+          id: "review",
+          label: "Index outdated — running diff-only review",
+          state: "running",
+        },
+      };
+
+    case CoreEvents.WorkflowReviewContextAvailable:
+      return {
+        kind: "update",
+        task: {
+          id: "review",
+          label: "Using indexed repository context",
+          state: "running",
+        },
+      };
+
     default:
       return null;
   }
