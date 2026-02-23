@@ -30,11 +30,58 @@ export class GitLabMrDiffProvider implements DiffProvider {
 
     return tempDir;
   }
+  private async fetchMetadata(): Promise<{
+    title?: string;
+    description?: string;
+  }> {
+    try {
+      const encodedProject = encodeURIComponent(
+        `${this.group}/${this.project}`,
+      );
+
+      const res = await fetch(
+        `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${this.mrNumber}`,
+        {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        },
+      );
+
+      if (!res.ok) {
+        return {};
+      }
+
+      const json = (await res.json()) as {
+        title?: string;
+        description?: string;
+      };
+
+      const metadata: {
+        title?: string;
+        description?: string;
+      } = {};
+
+      if (json.title !== undefined) {
+        metadata.title = json.title;
+      }
+
+      if (json.description !== undefined) {
+        metadata.description = json.description;
+      }
+
+      return metadata;
+    } catch {
+      return {};
+    }
+  }
 
   async load(): Promise<{
     diff: UnifiedDiff;
     revision: string;
     repositoryIdentity: RepositoryIdentity;
+    metadata?: {
+      title?: string;
+      description?: string;
+    };
   }> {
     const repoRoot = await this.cloneTemp();
 
@@ -59,11 +106,13 @@ export class GitLabMrDiffProvider implements DiffProvider {
       provider: "gitlab",
       id: `${this.group}/${this.project}`,
     };
+    const metadata = await this.fetchMetadata();
 
     return {
       diff: parseUnifiedDiff(diffText),
       revision,
       repositoryIdentity: identity,
+      metadata,
     };
   }
 }
