@@ -14,6 +14,7 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 - [Features](#features)
 - [What PRSense Does Not Do](#what-prsense-does-not-do)
 - [Requirements](#requirements)
+- [Installation](#installation)
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Design](#design)
@@ -62,6 +63,12 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - Docker
 - Ollama(optional)
 - PostgreSQL + pgvector(optional)
+
+---
+
+## Installation
+
+## `npm i -g @prsense/cli`
 
 ---
 
