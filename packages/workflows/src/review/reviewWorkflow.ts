@@ -28,7 +28,8 @@ export async function runReviewWorkflow({
     // Load diff from provider
     // -------------------------------------------------
 
-    const { diff, revision, repositoryIdentity } = await diffProvider.load();
+    const { diff, revision, repositoryIdentity, metadata } =
+      await diffProvider.load();
 
     if (diff.files.length === 0) {
       eventBus.emit(CoreEvents.WorkflowReviewFinished);
@@ -62,6 +63,7 @@ export async function runReviewWorkflow({
     const prompt = buildReviewPrompt({
       diff,
       context: contextText,
+      ...(metadata ? metadata : null),
     });
 
     // -------------------------------------------------

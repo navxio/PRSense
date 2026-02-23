@@ -5,5 +5,9 @@ export interface DiffProvider {
     diff: UnifiedDiff;
     revision: string;
     repositoryIdentity: RepositoryIdentity;
+    metadata?: {
+      title?: string;
+      description?: string;
+    };
   }>;
 }

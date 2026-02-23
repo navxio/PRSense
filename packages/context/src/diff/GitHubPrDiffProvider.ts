@@ -17,6 +17,45 @@ export class GitHubPrDiffProvider implements DiffProvider {
     private readonly token?: string,
   ) {}
 
+  private async fetchMetadata(): Promise<{
+    title?: string;
+    description?: string;
+  }> {
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}`,
+        {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        },
+      );
+
+      if (!res.ok) {
+        return {};
+      }
+
+      const json = (await res.json()) as {
+        title?: string;
+        body?: string;
+      };
+
+      const metadata: {
+        title?: string;
+        description?: string;
+      } = {};
+
+      if (json.title !== undefined) {
+        metadata.title = json.title;
+      }
+      if (json.body !== undefined) {
+        metadata.description = json.body;
+      }
+
+      return metadata;
+    } catch {
+      return {};
+    }
+  }
+
   private async cloneTemp(): Promise<string> {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "prsense-pr-"));
 
@@ -35,6 +74,10 @@ export class GitHubPrDiffProvider implements DiffProvider {
     diff: UnifiedDiff;
     revision: string;
     repositoryIdentity: RepositoryIdentity;
+    metadata?: {
+      title?: string;
+      description?: string;
+    };
   }> {
     const repoRoot = await this.cloneTemp();
 
@@ -60,10 +103,12 @@ export class GitHubPrDiffProvider implements DiffProvider {
       id: `${this.owner}/${this.repo}`,
     };
 
+    const metadata = await this.fetchMetadata();
     return {
       diff: parseUnifiedDiff(diffText),
       revision,
       repositoryIdentity: identity,
+      metadata,
     };
   }
 }

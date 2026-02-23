@@ -47,6 +47,9 @@ Return ONLY JSON.
   const diffText = input.diff.files.map((f) => f.patch).join("\n\n");
 
   const user = `
+${input.metadata?.title ? `## PR Title\n${input.metadata.title}\n\n` : ""}
+
+${input.metadata?.description ? `## PR Description\n${input.metadata.description}\n\n` : ""}
 ## Pull Request Diff
 
 ${diffText}
