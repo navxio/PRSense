@@ -12,7 +12,11 @@ import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 import path from "node:path";
-import { LocalGitDiffProvider, GitHubPrDiffProvider } from "@prsense/context";
+import {
+  LocalGitDiffProvider,
+  GitHubPrDiffProvider,
+  GitLabMrDiffProvider,
+} from "@prsense/context";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
@@ -83,6 +87,9 @@ export const reviewCommand = new Command("review")
       const githubPrMatch = target.match(
         /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
       );
+      const gitlabMrMatch = target.match(
+        /gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
+      );
       // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
@@ -96,6 +103,14 @@ export const reviewCommand = new Command("review")
           owner,
           repo.replace(".git", ""),
           prNumber,
+        );
+      } else if (gitlabMrMatch) {
+        const [, group, project, mrNumber] = gitlabMrMatch;
+
+        diffProvider = new GitLabMrDiffProvider(
+          group,
+          project.replace(".git", ""),
+          mrNumber,
         );
       } else {
         diffProvider = new LocalGitDiffProvider(repoRoot, options.baseBranch);

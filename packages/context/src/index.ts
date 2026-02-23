@@ -11,3 +11,4 @@ export * from "./utils/detectLanguage.js";
 
 export * from "./diff/LocalGitDiffProvider.js";
 export * from "./diff/GitHubPrDiffProvider.js";
+export * from "./diff/GitLabMrDiffProvider.js";
