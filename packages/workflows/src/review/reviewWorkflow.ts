@@ -48,10 +48,15 @@ export async function runReviewWorkflow({
         storedMetadata.embedding.provider === config.embeddings.provider &&
         storedMetadata.embedding.model === config.embeddings.model;
 
-      const revisionMatches = storedMetadata.revision.commitSha === revision;
-
-      if (embeddingMatches && revisionMatches) {
+      if (embeddingMatches) {
         contextualReviewAvailable = true;
+
+        if (storedMetadata.revision.commitSha !== revision) {
+          eventBus.emit(CoreEvents.WorkflowReviewIndexOutdated, {
+            indexedCommit: storedMetadata.revision.commitSha,
+            currentCommit: revision,
+          });
+        }
       }
     }
 
