@@ -81,7 +81,11 @@ export async function runReviewWorkflow({
     let contextText = "";
 
     if (contextualReviewAvailable) {
-      const retrievalQuery = buildDiffEmbeddingQuery(diff);
+      const retrievalQuery = buildDiffEmbeddingQuery({
+        diff,
+        ...(metadata?.title ? { title: metadata.title } : {}),
+        ...(metadata?.description ? { description: metadata.description } : {}),
+      });
 
       const retrieved = await retrieveContext({
         config,
