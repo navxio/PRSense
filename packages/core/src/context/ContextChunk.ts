@@ -10,6 +10,7 @@ export type ContextChunk = {
     path?: string;
     lineStart?: number;
     lineEnd?: number;
+    kind?: "code" | "test" | "doc" | "config";
     [key: string]: unknown;
   };
 };

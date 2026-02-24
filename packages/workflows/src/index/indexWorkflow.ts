@@ -16,7 +16,11 @@ import {
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
 import { PostgresRagChunkRepository } from "@prsense/context";
-import { createCharChunker } from "@prsense/context";
+import {
+  createCharChunker,
+  detectKind,
+  detectLanguage,
+} from "@prsense/context";
 
 //TODO: modularise this
 export async function runIndexWorkflow({
@@ -263,11 +267,23 @@ export async function runIndexWorkflow({
     for (const file of files) {
       try {
         const content = await repositorySource.readFile(file);
+        const kind = detectKind(file);
+        const language = detectLanguage(file);
 
         const fileChunks = chunker.chunk({
           content,
           source: { kind: "file", path: file },
         });
+
+        for (const chunk of fileChunks) {
+          const metadata: typeof chunk.metadata = {
+            ...chunk.metadata,
+            path: file,
+            kind,
+          };
+          if (language !== undefined) metadata.language = language;
+          chunk.metadata = metadata;
+        }
 
         chunks.push(...fileChunks);
       } catch (err) {

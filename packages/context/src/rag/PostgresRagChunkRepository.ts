@@ -174,7 +174,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
           row.repoName,
           row.repoRef,
           chunk.metadata?.path ?? null,
-          chunk.source.kind,
+          chunk.metadata?.kind ?? "code",
           chunk.metadata?.language ?? null,
           chunk.content,
           chunk.metadata?.lineStart ?? null,
