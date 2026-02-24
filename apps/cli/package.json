@@ -1,6 +1,6 @@
 {
   "name": "@prsense/cli",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Command line interface to PRSense",
   "type": "module",
   "bin": {
@@ -13,9 +13,24 @@
     "dev:review": "tsx src/index.ts review .",
     "clean": "rm -rf dist/ *.tsbuildinfo"
   },
-  "keywords": [],
+  "keywords": [
+    "cli",
+    "pull-request",
+    "code-review",
+    "automation",
+    "ai",
+    "developer-tools",
+    "llm"
+  ],
   "author": "Navdeep Saini",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/navxio/prsense",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/navxio/PRSense/blob/trunk/apps/cli/README.md",
+  "bugs": "https://github.com/navxio/prsense/issues",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@prsense/config": "workspace:*",
