@@ -4,7 +4,9 @@ const DeliveryChannelSchema = z.enum(["github", "gitlab", "slack", "jira"]);
 
 export const UserConfigSchema = z.object({
   llm: z.object({
-    provider: z.enum(["ollama", "openai"]).default("ollama"),
+    provider: z
+      .enum(["ollama", "openai", "anthropic", "google"])
+      .default("ollama"),
     model: z.string(),
     temperature: z.number().min(0).max(1).default(0.1),
   }),

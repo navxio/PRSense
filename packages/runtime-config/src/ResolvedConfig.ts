@@ -31,7 +31,7 @@ export type ResolvedConfig = {
   };
 
   llm: {
-    provider: "ollama" | "openai";
+    provider: "ollama" | "openai" | "google" | "anthropic";
     model: string;
     temperature: number;
   };

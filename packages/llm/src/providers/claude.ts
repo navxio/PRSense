@@ -6,6 +6,7 @@ import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
 export function createClaudeClient(config: {
   apiKey: string;
   model: string;
+  temperature?: number;
 }): LlmClient {
   const client = new Anthropic({
     apiKey: config.apiKey,

@@ -9,6 +9,7 @@ import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
 export function createGeminiClient(config: {
   apiKey: string;
   model: string;
+  temperature?: number;
 }): LlmClient {
   const genAI = new GoogleGenerativeAI(config.apiKey);
 
@@ -24,7 +25,7 @@ export function createGeminiClient(config: {
 
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
-      const { prompt, temperature = 0 } = req;
+      const { prompt, temperature = 0.05 } = req;
 
       try {
         const res = await model.generateContent({
@@ -51,6 +52,7 @@ export function createGeminiClient(config: {
 
         return { text };
       } catch (err) {
+        console.log("Error with gemini: ", err.toString());
         throw new LlmError("Gemini request failed", err);
       }
     },

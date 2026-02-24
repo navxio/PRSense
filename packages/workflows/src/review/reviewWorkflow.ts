@@ -6,7 +6,12 @@ import type { ResolvedConfig } from "@prsense/runtime-config";
 import { retrieveContext } from "./retrieveContext.js";
 import { PostgresIndexMetadataRepository } from "packages/context/dist/index.js";
 import { buildReviewPrompt } from "@prsense/core";
-import { createOpenAiClient, createOllamaClient } from "@prsense/llm";
+import {
+  createOpenAiClient,
+  createOllamaClient,
+  createGeminiClient,
+  createClaudeClient,
+} from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
 import { validateReviewOutput } from "./validateReviewOutput.js";
 import { buildDiffEmbeddingQuery } from "./buildDiffEmbeddingQuery.js";
@@ -119,16 +124,39 @@ export async function runReviewWorkflow({
     // Create LLM client
     // -------------------------------------------------
 
-    const llmClient =
-      config.llm.provider === "openai"
-        ? createOpenAiClient({
-            apiKey: process.env.OPENAI_API_KEY!,
-            model: config.llm.model,
-          })
-        : createOllamaClient({
-            model: config.llm.model,
-            temperature: config.llm.temperature,
-          });
+    let llmClient: any;
+    switch (config.llm.provider) {
+      case "openai":
+        llmClient = createOpenAiClient({
+          apiKey: process.env.PRSENSE_OPENAI_API_KEY!,
+          model: config.llm.model,
+        });
+        break;
+      case "ollama":
+        llmClient = createOllamaClient({
+          model: config.llm.model,
+          temperature: config.llm.temperature,
+        });
+        break;
+      case "google":
+        llmClient = createGeminiClient({
+          apiKey: process.env.PRSENSE_GEMINI_API_KEY!,
+          model: config.llm.model,
+          temperature: config.llm.temperature || 0.05,
+        });
+        break;
+      case "anthropic":
+        llmClient = createClaudeClient({
+          apiKey: process.env.PRSENSE_CLAUDE_API_KEY!,
+          model: config.llm.model,
+        });
+        break;
+      default:
+        llmClient = createOllamaClient({
+          model: config.llm.model,
+          temperature: config.llm.temperature,
+        });
+    }
 
     // -------------------------------------------------
     // Generate review
