@@ -18,6 +18,7 @@ export type LlmResponse = {
 export type OllamaConfig = {
   baseUrl?: string;
   model: string;
+  temperature?: number;
 };
 
 export type LlmRequest = {

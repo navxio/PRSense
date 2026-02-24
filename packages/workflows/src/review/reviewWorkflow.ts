@@ -127,6 +127,7 @@ export async function runReviewWorkflow({
           })
         : createOllamaClient({
             model: config.llm.model,
+            temperature: config.llm.temperature,
           });
 
     // -------------------------------------------------

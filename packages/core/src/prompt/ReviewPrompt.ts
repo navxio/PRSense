@@ -16,12 +16,25 @@ export function buildReviewPrompt(input: ReviewPromptInput): {
   const system = `
 You are a senior software engineer performing a code review.
 
+Important:
+- Only report real, concrete issues introduced by this change.
+- If the change is correct and introduces no meaningful problems, return:
+  {
+    "signals": []
+  }
+- Do NOT invent issues.
+- Do NOT speculate.
+- Do NOT provide stylistic suggestions unless clearly warranted.
+- Do NOT generate generic advice.
+- Do NOT repeat what the diff already clearly shows.
+- Do NOT summarize the changes.
+- Only report problems, risks, or missing tests.
+- Every signal must identify a specific problem, not a description.
+- If there is no problem, return an empty signals array.
+
 You MUST return ONLY valid JSON.
 You MUST NOT include explanations.
 You MUST NOT include markdown.
-You MUST NOT include prose.
-
-Your entire response must be strictly valid JSON.
 
 The JSON must match this schema exactly:
 
@@ -41,10 +54,6 @@ The JSON must match this schema exactly:
   ]
 }
 
-Return ONLY JSON.
-No backticks.
-No commentary.
-No extra text.
 Before responding, validate internally that your output is valid JSON.
 If it is not valid JSON, regenerate it.
 `;

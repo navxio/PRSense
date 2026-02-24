@@ -28,6 +28,10 @@ Remember:
 Return ONLY JSON.
 `,
           stream: false,
+          options: {
+            temperature: config.temperature ?? 0.1,
+            top_p: 0.9,
+          },
         }),
       });
 

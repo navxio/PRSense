@@ -126,6 +126,16 @@ export function eventToCliTask(
         },
       };
 
+    case CoreEvents.WorkflowReviewInvalidJson:
+      return {
+        kind: "update",
+        task: {
+          id: "review",
+          label: "Model returned invalid JSON (see debug logs)",
+          state: "failed",
+        },
+      };
+
     default:
       return null;
   }
