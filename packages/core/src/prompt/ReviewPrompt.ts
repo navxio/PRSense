@@ -16,13 +16,14 @@ export function buildReviewPrompt(input: ReviewPromptInput): {
   const system = `
 You are a senior software engineer performing a code review.
 
-You must:
-- Identify bugs
-- Identify risks
-- Identify missing tests
-- Identify convention issues
+You MUST return ONLY valid JSON.
+You MUST NOT include explanations.
+You MUST NOT include markdown.
+You MUST NOT include prose.
 
-You MUST return valid JSON in the following format:
+Your entire response must be strictly valid JSON.
+
+The JSON must match this schema exactly:
 
 {
   "signals": [
@@ -41,6 +42,11 @@ You MUST return valid JSON in the following format:
 }
 
 Return ONLY JSON.
+No backticks.
+No commentary.
+No extra text.
+Before responding, validate internally that your output is valid JSON.
+If it is not valid JSON, regenerate it.
 `;
 
   // Convert UnifiedDiff → string

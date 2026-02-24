@@ -15,7 +15,18 @@ export function createOllamaClient(config: OllamaConfig): LlmClient {
         },
         body: JSON.stringify({
           model: config.model,
-          prompt: `${prompt.system}\n\n${prompt.user}`,
+          prompt: `
+${prompt.system}
+
+### REVIEW INPUT START ###
+
+${prompt.user}
+
+### REVIEW INPUT END ###
+
+Remember:
+Return ONLY JSON.
+`,
           stream: false,
         }),
       });

@@ -12,6 +12,7 @@ import { validateReviewOutput } from "./validateReviewOutput.js";
 import { buildDiffEmbeddingQuery } from "./buildDiffEmbeddingQuery.js";
 import { dedupeSignals } from "./dedupeSignals.js";
 import { normalizeSignal } from "./normalizeSignal.js";
+import { extractJson } from "./extractJson.js";
 
 export async function runReviewWorkflow({
   config,
@@ -134,18 +135,61 @@ export async function runReviewWorkflow({
 
     const response = await llmClient.generate({ prompt });
 
+    const cleaned = extractJson(response.text);
+
     let parsed: any;
 
     try {
-      parsed = JSON.parse(response.text);
+      parsed = JSON.parse(cleaned);
     } catch {
       eventBus.emit(CoreEvents.WorkflowReviewInvalidJson, {
         rawResponsePreview: response.text.slice(0, 2000),
       });
       throw new Error("LLM returned invalid JSON");
     }
+    let validated: any;
 
-    const validated = validateReviewOutput(parsed);
+    try {
+      validated = validateReviewOutput(parsed);
+    } catch {
+      const correctionPrompt = `
+The previous output did not match the required schema.
+
+Convert the following into valid JSON matching this schema:
+
+{
+  "signals": [
+    {
+      "type": "bug" | "risk" | "test" | "style",
+      "severity": "low" | "medium" | "high",
+      "confidence": number,
+      "file": string,
+      "lineStart": number | null,
+      "lineEnd": number | null,
+      "message": string,
+      "rationale": string | null,
+      "suggestedFix": string | null
+    }
+  ]
+}
+
+Output only valid JSON.
+
+Previous output:
+${cleaned}
+`;
+
+      const retry = await llmClient.generate({
+        prompt: {
+          system: "You are correcting malformed JSON output.",
+          user: correctionPrompt,
+        },
+      });
+
+      const retryCleaned = extractJson(retry.text);
+      parsed = JSON.parse(retryCleaned);
+      validated = validateReviewOutput(parsed);
+    }
 
     // -------------------------------------------------
     // Normalize + filter signals
