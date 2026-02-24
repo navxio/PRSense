@@ -139,6 +139,9 @@ export async function runReviewWorkflow({
     try {
       parsed = JSON.parse(response.text);
     } catch {
+      eventBus.emit(CoreEvents.WorkflowReviewInvalidJson, {
+        rawResponsePreview: response.text.slice(0, 2000),
+      });
       throw new Error("LLM returned invalid JSON");
     }
 

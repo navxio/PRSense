@@ -40,6 +40,7 @@ export const CoreEvents = {
   WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
   WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
   WorkflowReviewContextAvailable: "workflow.review.context_available",
+  WorkflowReviewInvalidJson: "workflow.review.invalid_json",
 
   /* -------------------------------------------------
    * Capability lifecycle
