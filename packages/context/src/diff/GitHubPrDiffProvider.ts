@@ -20,6 +20,7 @@ export class GitHubPrDiffProvider implements DiffProvider {
   private async fetchMetadata(): Promise<{
     title?: string;
     description?: string;
+    baseRef?: string;
   }> {
     try {
       const res = await fetch(
@@ -36,18 +37,25 @@ export class GitHubPrDiffProvider implements DiffProvider {
       const json = (await res.json()) as {
         title?: string;
         body?: string;
+        base?: { ref?: string };
       };
 
       const metadata: {
         title?: string;
         description?: string;
+        baseRef?: string;
       } = {};
 
       if (json.title !== undefined) {
         metadata.title = json.title;
       }
+
       if (json.body !== undefined) {
         metadata.description = json.body;
+      }
+
+      if (json.base?.ref !== undefined) {
+        metadata.baseRef = json.base.ref;
       }
 
       return metadata;
@@ -63,7 +71,7 @@ export class GitHubPrDiffProvider implements DiffProvider {
       ? `https://${this.token}@github.com/${this.owner}/${this.repo}.git`
       : `https://github.com/${this.owner}/${this.repo}.git`;
 
-    execSync(`git clone --depth 1 ${cloneUrl} ${tempDir}`, {
+    execSync(`git clone --depth 50 ${cloneUrl} ${tempDir}`, {
       stdio: "ignore",
     });
 
@@ -87,9 +95,18 @@ export class GitHubPrDiffProvider implements DiffProvider {
       { cwd: repoRoot, stdio: "ignore" },
     );
 
-    // Diff against default branch (origin/HEAD)
+    const metadata = await this.fetchMetadata();
+
+    const baseBranch = metadata.baseRef ?? "main";
+
+    // fetch base branch explicitly
+    execSync(`git fetch origin ${baseBranch}`, {
+      cwd: repoRoot,
+      stdio: "ignore",
+    });
+
     const diffText = execSync(
-      `git diff origin/HEAD...prsense-pr-${this.prNumber}`,
+      `git diff origin/${baseBranch}...prsense-pr-${this.prNumber}`,
       { cwd: repoRoot, encoding: "utf8" },
     );
 
@@ -103,7 +120,6 @@ export class GitHubPrDiffProvider implements DiffProvider {
       id: `${this.owner}/${this.repo}`,
     };
 
-    const metadata = await this.fetchMetadata();
     return {
       diff: parseUnifiedDiff(diffText),
       revision,
