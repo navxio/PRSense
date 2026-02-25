@@ -6,6 +6,7 @@ import { stdoutDoctorReporter } from "../reporting/stdoutDoctorReporter.js";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
 import {
+  resolveConfig,
   validateResolvedConfig,
   buildCredentialContext,
 } from "@prsense/runtime-config";
@@ -13,7 +14,6 @@ import { loadUserConfig, loadEnvConfig } from "@prsense/config";
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
-import { resolveConfig } from "../resolveConfig.js";
 
 const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "info";
 

@@ -3,11 +3,11 @@ import { runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
 import {
+  resolveConfig,
   validateResolvedConfig,
   buildCredentialContext,
 } from "@prsense/runtime-config";
 import { loadUserConfig, loadEnvConfig } from "@prsense/config";
-import { resolveConfig } from "../resolveConfig.js";
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";

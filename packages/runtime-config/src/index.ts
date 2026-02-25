@@ -4,3 +4,4 @@ export * from "./CredentialContext.js";
 export * from "./credentials/index.js";
 export * from "./runtimeMode.js";
 export * from "./buildCredentialContext.js";
+export * from "./resolveConfig.js";

@@ -21,6 +21,7 @@ PRSense is designed for senior developers who want intentional, inspectable, and
 - [Architecture](#architecture)
 - [Command Reference](#command-reference)
 - [Project Status](#project-status)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -45,15 +46,14 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - **Fast, local-first CLI** for reviewing and analyzing code changes
 - **Self-hosted by default** — run entirely on your own machine or infrastructure
 - **Persistent background daemon**
+  - Idempotent job creation
 - **Diff-first intelligence**, understanding:
   - local changes
-  - generated outputs
   - pull request diffs
-- **Pluggable LLM backends**, including Ollama and OpenAI(more on the roadmap)
+- **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
 - **Flexible outputs** for humans and machines:
   - terminal summaries
-  - JSON for CI / tooling
-  - GitHub pull request annotations
+  - GitHub/GitLab pull request comments
 
 ---
 
@@ -68,7 +68,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
 
 ## Installation
 
-## `npm i -g @prsense/cli`
+`npm i -g @prsense/cli`
 
 ---
 
@@ -342,10 +342,22 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 ## ToDo
 
-- [ ] `prsense setup db` (bundle postgres+pgvector with docker)
+- [x] `prsense setup db` (bundle postgres+pgvector with docker)
 - [x] update manpage
 - [ ] setup concurrency
-- [ ] allow any git repo indexing
+- [x] allow any git repo indexing
+- [ ] exclude bundled prsense.yml from indexing
+- [ ] JSON output for CI
+
+---
+
+## Contributing
+
+PRs are welcome
+
+## Similar Projects
+
+- [pr-agent](https://github.com/<>/<>)
 
 ---
 
