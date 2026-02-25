@@ -36,6 +36,8 @@ export function eventToCliTask(
         },
       };
 
+    // ---------------- INDEX ----------------
+
     case CoreEvents.WorkflowIndexStarted:
       return {
         kind: "start",
@@ -86,15 +88,22 @@ export function eventToCliTask(
         },
       };
 
-    case CoreEvents.WorkflowIndexProgress:
+    case CoreEvents.WorkflowIndexProgress: {
+      if (!event.fields) return null;
+
+      const { processed, total } = event.fields;
+
       return {
         kind: "update",
         task: {
           id: "index",
-          label: `Embedding ${event.fields.processed} / ${event.fields.total} chunks`,
+          label: `Embedding ${processed} / ${total} chunks`,
           state: "running",
         },
       };
+    }
+
+    // ---------------- REVIEW ----------------
 
     case CoreEvents.WorkflowReviewContextUnavailable:
       return {
@@ -135,6 +144,47 @@ export function eventToCliTask(
           state: "failed",
         },
       };
+
+    // ---------------- SETUP ----------------
+
+    case CoreEvents.WorkflowSetupStarted:
+      return {
+        kind: "start",
+        task: {
+          id: "setup",
+          label: "Running setup checks",
+          state: "running",
+        },
+      };
+
+    case CoreEvents.CapabilityCheckStarted: {
+      if (!event.fields) return null;
+
+      return {
+        kind: "update",
+        task: {
+          id: "setup",
+          label: `Checking ${event.fields.capability}`,
+          state: "running",
+        },
+      };
+    }
+
+    case CoreEvents.WorkflowSetupFinished: {
+      if (!event.fields) return null;
+
+      return {
+        kind: "finish",
+        task: {
+          id: "setup",
+          label:
+            event.fields.outcome === "success"
+              ? "Setup completed"
+              : "Setup failed",
+          state: event.fields.outcome === "success" ? "succeeded" : "failed",
+        },
+      };
+    }
 
     default:
       return null;
