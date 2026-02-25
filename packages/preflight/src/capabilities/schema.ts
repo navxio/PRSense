@@ -38,7 +38,7 @@ async function applySchema(url: string): Promise<void> {
 
     const schemaPath = path.resolve(
       process.cwd(),
-      "packages/context/src/db/db.sql",
+      "packages/context/migrations/0001_init.sql",
     );
 
     const sql = await fs.readFile(schemaPath, "utf8");
