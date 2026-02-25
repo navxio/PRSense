@@ -3,3 +3,4 @@ export * from "./ollama.js";
 export * from "./pgvector.js";
 export * from "./gitRepository.js";
 export * from "./postgres.js";
+export * from "./schema.js";

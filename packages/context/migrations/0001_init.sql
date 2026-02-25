@@ -1,3 +1,4 @@
+-- packages/context/migrations/0001_init.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS rag_chunks (
@@ -48,3 +49,24 @@ WITH (lists = 100);
 --   AND (repo_ref = $4 OR repo_ref IS NULL)
 -- ORDER BY embedding <-> $1
 -- LIMIT $5;
+--
+
+CREATE TABLE IF NOT EXISTS prsense_index_metadata (
+  repository_provider TEXT NOT NULL,
+  repository_id TEXT NOT NULL,
+
+  commit_sha TEXT NOT NULL,
+
+  embedding_provider TEXT NOT NULL,
+  embedding_model TEXT NOT NULL,
+  embedding_dimension INTEGER NOT NULL,
+
+  chunk_strategy TEXT NOT NULL,
+  chunk_version INTEGER NOT NULL,
+
+  prsense_version TEXT NOT NULL,
+
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+  PRIMARY KEY (repository_provider, repository_id)
+);
