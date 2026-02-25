@@ -38,7 +38,7 @@
     "node": "24.12.0"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "bugs": "https://github.com/navxio/prsense/issues"
 }

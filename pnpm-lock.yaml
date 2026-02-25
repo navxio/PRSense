@@ -53,6 +53,12 @@ importers:
       '@prsense/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@prsense/context':
+        specifier: workspace:*
+        version: link:../../packages/context
+      '@prsense/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@prsense/runtime-config':
         specifier: workspace:*
         version: link:../../packages/runtime-config

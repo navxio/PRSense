@@ -128,7 +128,7 @@ export async function runReviewWorkflow({
     switch (config.llm.provider) {
       case "openai":
         llmClient = createOpenAiClient({
-          apiKey: process.env.PRSENSE_OPENAI_API_KEY!,
+          apiKey: config.env.PRSENSE_OPENAI_API_KEY!,
           model: config.llm.model,
         });
         break;
@@ -149,6 +149,7 @@ export async function runReviewWorkflow({
         llmClient = createClaudeClient({
           apiKey: process.env.PRSENSE_CLAUDE_API_KEY!,
           model: config.llm.model,
+          temperature: config.llm.temperature || 0.05,
         });
         break;
       default:
