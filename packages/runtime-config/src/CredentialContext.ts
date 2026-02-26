@@ -1,4 +1,6 @@
 export type CredentialContext = {
+  /* ---------------- LLM ---------------- */
+
   openai?: {
     available: boolean;
     apiKey?: string;
@@ -14,19 +16,27 @@ export type CredentialContext = {
     apiKey?: string;
   };
 
+  /* ---------------- GitHub ---------------- */
+
   github?: {
     available: boolean;
-    mode: "token" | "app";
+    mode?: "token" | "app";
     token?: string;
     appId?: string;
     privateKey?: string;
     installationId?: string;
+    webhookSecret?: string;
   };
+
+  /* ---------------- GitLab ---------------- */
 
   gitlab?: {
     available: boolean;
     token?: string;
+    webhookSecret?: string;
   };
+
+  /* ---------------- Slack ---------------- */
 
   slack?: {
     available: boolean;
