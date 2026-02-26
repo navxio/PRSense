@@ -1,7 +1,8 @@
 export type BenchmarkScenario = {
   id: string;
   description: string;
-  reviewTarget: string; // PR URL or local path
+  reviewTarget: string;
+  tags?: string[];
 };
 
 export type ModelConfig = {
@@ -10,12 +11,30 @@ export type ModelConfig = {
   temperature: number;
 };
 
-export type BenchResult = {
-  outcome: "success" | "failure";
-  signals: {
-    file: string;
-    message: string;
-    startLine?: number;
-    endLine?: number;
-  }[];
+export type BenchSignal = {
+  file: string;
+  message: string;
+  startLine?: number;
+  endLine?: number;
+};
+
+export type BenchRun = {
+  durationMs: number;
+  outcome: "success" | "failure" | "timeout";
+  signals: BenchSignal[];
+  error?: string;
+};
+
+export type ModelScenarioResult = {
+  scenarioId: string;
+  model: string;
+  runs: BenchRun[];
+  metrics: Record<string, number>;
+  score: number;
+};
+
+export type BenchReport = {
+  timestamp: string;
+  gitSha?: string;
+  results: ModelScenarioResult[];
 };
