@@ -29,7 +29,8 @@
       "@prsense/workflows": ["packages/workflows/src"],
       "@prsense/preflight": ["packages/preflight/src"],
       "@prsense/logging": ["packages/logging/src"],
-      "@prsense/runtime-config": ["packages/runtime-config/src"]
+      "@prsense/runtime-config": ["packages/runtime-config/src"],
+      "@prsense/bench": ["packages/bench"]
     }
   },
   "files": [],
@@ -43,6 +44,7 @@
     { "path": "packages/preflight" },
     { "path": "packages/logging" },
     { "path": "packages/runtime-config" },
+    { "path": "packages/bench" },
     { "path": "apps/cli" }
   ]
 }

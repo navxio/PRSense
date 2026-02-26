@@ -85,6 +85,9 @@ importers:
         specifier: workspace:^
         version: link:../workflows
     devDependencies:
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
       tsx:
         specifier: ^4.7.0
         version: 4.21.0
