@@ -103,65 +103,7 @@ Future integrations (GitHub App, CI, background workers) are planned, but not re
 
 ## Configuration
 
-PRSense separates review intent from runtime configuration.
-
-### Repository configuration (prsense.yml)
-
-Review behavior is configured via a YAML file placed at the repository root.
-
-Example:
-
-```
-llm:
-  provider: ollama
-  model: qwen2.5-coder
-  temperature: 0.1
-
-embeddings:
-  provider: ollama
-  model: nomic-embed-text
-
-index:
-  chunkSizeChars: 1000
-  chunkOverlapChars: 200
-  maxFileSizeBytes: 1048576 # 1 MB
-
-review:
-  confidenceThreshold: 0.6
-  maxSignals: 10
-
-context:
-  maxChunks: 5
-  chunkSize: 50
-
-git:
-  baseBranch: trunk
-
-delivery:
-  - github
-  - slack
-  - gitlab
-```
-
-This configuration defines how PRSense behaves as a reviewer for the repository.
-
-If no configuration file is present, PRSense uses sensible defaults.
-
-### Environment variables
-
-Environment variables configure runtime and infrastructure details such as:
-
-- LLM endpoints or API keys
-- database connections
-- logging levels
-
-Examples:
-
-PRSENSE_OLLAMA_HOST  
-PRSENSE_OPENAI_API_KEY  
-PRSENSE_DATABASE_URL
-
-Environment variables do not control review behavior.
+See [Configuration](../../docs/configuration.md)
 
 ---
 
@@ -320,6 +262,7 @@ packages/
   preflight/ #executable infa truths and enforcement
   logging/ # structured logging
   runtime-config/ # runtime config primitives
+  bench/ # benchmarking primitives
 ```
 
 ---
@@ -342,12 +285,11 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 ## ToDo
 
-- [x] `prsense setup db` (bundle postgres+pgvector with docker)
-- [x] update manpage
 - [ ] setup concurrency
-- [x] allow any git repo indexing
 - [ ] exclude bundled prsense.yml from indexing
 - [ ] JSON output for CI
+- [ ] automated tests
+- [ ] codeberg support
 
 ---
 
