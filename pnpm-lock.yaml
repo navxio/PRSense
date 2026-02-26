@@ -81,6 +81,9 @@ importers:
 
   packages/bench:
     dependencies:
+      '@prsense/runtime-config':
+        specifier: workspace:^
+        version: link:../runtime-config
       '@prsense/workflows':
         specifier: workspace:^
         version: link:../workflows
