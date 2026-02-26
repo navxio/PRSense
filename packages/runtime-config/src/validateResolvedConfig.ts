@@ -1,7 +1,6 @@
 // packages/runtime-config/src/validateResolvedConfig.ts
 
 import type { ResolvedConfig } from "./ResolvedConfig.js";
-import type { CredentialContext } from "./CredentialContext.js";
 
 export type ConfigValidationIssue = {
   level: "error" | "warning";
@@ -16,7 +15,6 @@ export type ConfigValidationResult = {
 
 export function validateResolvedConfig(
   config: ResolvedConfig,
-  creds: CredentialContext,
 ): ConfigValidationResult {
   const issues: ConfigValidationIssue[] = [];
 
@@ -33,136 +31,69 @@ export function validateResolvedConfig(
   }
 
   /* ------------------------------------------------- */
-  /* LLM                                               */
+  /* Review                                            */
   /* ------------------------------------------------- */
 
-  if (config.llm.provider === "openai") {
-    const openai = creds.openai;
+  if (
+    config.review.confidenceThreshold < 0 ||
+    config.review.confidenceThreshold > 1
+  ) {
+    issues.push({
+      level: "error",
+      message: "review.confidenceThreshold must be between 0 and 1",
+      path: "review.confidenceThreshold",
+    });
+  }
 
-    if (!openai || !openai.available) {
-      issues.push({
-        level: "error",
-        message:
-          "OpenAI provider selected but no OpenAI credentials are configured",
-        path: "llm.provider",
-      });
-    } else if (openai.kind === "api-key" && !openai.apiKeyPresent) {
-      issues.push({
-        level: "error",
-        message: "OpenAI API key is missing or incomplete",
-        path: "llm.provider",
-      });
-    }
+  if (config.review.maxSignals <= 0) {
+    issues.push({
+      level: "error",
+      message: "review.maxSignals must be greater than 0",
+      path: "review.maxSignals",
+    });
   }
 
   /* ------------------------------------------------- */
-  /* Embeddings                                        */
+  /* Index                                             */
   /* ------------------------------------------------- */
 
-  if (config.embeddings.provider === "openai") {
-    const openai = creds.openai;
+  if (config.index.chunkSizeChars <= 0) {
+    issues.push({
+      level: "error",
+      message: "index.chunkSizeChars must be greater than 0",
+      path: "index.chunkSizeChars",
+    });
+  }
 
-    if (!openai || !openai.available) {
-      issues.push({
-        level: "error",
-        message:
-          "OpenAI embeddings selected but no OpenAI credentials are configured",
-        path: "embeddings.provider",
-      });
-    } else if (openai.kind === "api-key" && !openai.apiKeyPresent) {
-      issues.push({
-        level: "error",
-        message: "OpenAI API key is missing or incomplete",
-        path: "embeddings.provider",
-      });
-    }
+  if (config.index.chunkOverlapChars < 0) {
+    issues.push({
+      level: "error",
+      message: "index.chunkOverlapChars cannot be negative",
+      path: "index.chunkOverlapChars",
+    });
+  }
+
+  if (config.index.chunkOverlapChars >= config.index.chunkSizeChars) {
+    issues.push({
+      level: "error",
+      message: "index.chunkOverlapChars must be smaller than chunkSizeChars",
+      path: "index.chunkOverlapChars",
+    });
   }
 
   /* ------------------------------------------------- */
-  /* Delivery: VCS                                     */
+  /* Daemon-specific Domain Rules                      */
   /* ------------------------------------------------- */
 
-  if (config.delivery.vcs === "github") {
-    const gh = creds.github;
-
-    if (!gh || !gh.available) {
+  if (config.mode === "daemon") {
+    if (!config.delivery) {
       issues.push({
         level: "error",
-        message:
-          "GitHub delivery is enabled but no GitHub credentials are configured",
-        path: "delivery.vcs",
-      });
-    } else if (gh.kind === "app") {
-      if (
-        !gh.appIdPresent ||
-        !gh.privateKeyPresent ||
-        !gh.installationIdPresent
-      ) {
-        issues.push({
-          level: "error",
-          message:
-            "GitHub App credentials are incomplete (appId, privateKey, or installationId missing)",
-          path: "delivery.vcs",
-        });
-      }
-    } else if (gh.kind === "token") {
-      if (!gh.tokenPresent) {
-        issues.push({
-          level: "error",
-          message: "GitHub token is missing",
-          path: "delivery.vcs",
-        });
-      }
-    }
-  }
-
-  if (config.delivery.vcs === "gitlab") {
-    const gl = creds.gitlab;
-
-    if (!gl || !gl.available) {
-      issues.push({
-        level: "error",
-        message:
-          "GitLab delivery is enabled but no GitLab credentials are configured",
-        path: "delivery.vcs",
-      });
-    } else if (gl.kind === "token" && !gl.tokenPresent) {
-      issues.push({
-        level: "error",
-        message: "GitLab token is missing",
-        path: "delivery.vcs",
+        message: "Daemon mode requires delivery configuration",
+        path: "delivery",
       });
     }
   }
-
-  /* ------------------------------------------------- */
-  /* Delivery: Other channels                          */
-  /* ------------------------------------------------- */
-
-  for (const channel of config.delivery.other) {
-    if (channel === "slack") {
-      const slack = creds.slack;
-
-      if (!slack || !slack.available) {
-        issues.push({
-          level: "error",
-          message:
-            "Slack delivery is enabled but no Slack credentials are configured",
-          path: "delivery.other",
-        });
-      } else if (slack.kind === "bot" && !slack.botTokenPresent) {
-        issues.push({
-          level: "error",
-          message: "Slack bot token is missing",
-          path: "delivery.other",
-        });
-      }
-    }
-  }
-
-  /* ------------------------------------------------- */
-  /* Final result                                      */
-  /* ------------------------------------------------- */
 
   return {
     valid: !issues.some((i) => i.level === "error"),
