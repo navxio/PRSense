@@ -79,6 +79,19 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/bench:
+    dependencies:
+      '@prsense/workflows':
+        specifier: workspace:^
+        version: link:../workflows
+    devDependencies:
+      tsx:
+        specifier: ^4.7.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
   packages/config:
     dependencies:
       dotenv:

@@ -1,0 +1,24 @@
+{
+  "name": "@prsense/bench",
+  "version": "0.0.1",
+  "description": "Benchmarking different LLM models for PRSense",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "prsense-bench": "./dist/index.js"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@prsense/workflows": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0"
+  }
+}
