@@ -7,9 +7,7 @@ export type Delivery = {
   other: readonly OtherChannel[];
 };
 
-export type ResolvedConfig = {
-  mode: "cli" | "daemon";
-
+type BaseResolvedConfig = {
   repository: {
     root: string;
     provider: "github" | "gitlab" | "filesystem";
@@ -18,7 +16,7 @@ export type ResolvedConfig = {
   index: {
     chunkSizeChars: number;
     chunkOverlapChars: number;
-    maxFileSizeByets: number;
+    maxFileSizeBytes: number;
   };
 
   review: {
@@ -27,7 +25,7 @@ export type ResolvedConfig = {
   };
 
   context: {
-    maxChunks: number; // retrieval
+    maxChunks: number;
   };
 
   llm: {
@@ -41,10 +39,20 @@ export type ResolvedConfig = {
     model: string;
   };
 
-  delivery: Delivery;
-
   database: {
     url: string;
     mode: "bundled" | "external";
   };
 };
+
+export type CliResolvedConfig = BaseResolvedConfig & {
+  mode: "cli";
+};
+
+export type DaemonResolvedConfig = BaseResolvedConfig & {
+  mode: "daemon";
+
+  delivery: Delivery;
+};
+
+export type ResolvedConfig = CliResolvedConfig | DaemonResolvedConfig;
