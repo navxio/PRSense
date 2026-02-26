@@ -1,13 +1,35 @@
-import { GitHubCredentials } from "./credentials/Github.js";
-import { GitLabCredentials } from "./credentials/GitLab.js";
-import { OpenAICredentials } from "./credentials/OpenAI.js";
-import { SlackCredentials } from "./credentials/Slack.js";
-
 export type CredentialContext = {
-  mode: "saas" | "self-hosted";
+  openai?: {
+    available: boolean;
+    apiKey?: string;
+  };
 
-  github?: GitHubCredentials;
-  gitlab?: GitLabCredentials;
-  openai?: OpenAICredentials;
-  slack?: SlackCredentials;
+  gemini?: {
+    available: boolean;
+    apiKey?: string;
+  };
+
+  claude?: {
+    available: boolean;
+    apiKey?: string;
+  };
+
+  github?: {
+    available: boolean;
+    mode: "token" | "app";
+    token?: string;
+    appId?: string;
+    privateKey?: string;
+    installationId?: string;
+  };
+
+  gitlab?: {
+    available: boolean;
+    token?: string;
+  };
+
+  slack?: {
+    available: boolean;
+    botToken?: string;
+  };
 };
