@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const EnvConfigSchema = z.object({
   PRSENSE_GITLAB_WEBHOOK_SECRET: z.string().optional(),
+  PRSENSE_GITHUB_WEBHOOK_SECRET: z.string().optional(),
   PRSENSE_GITLAB_TOKEN: z.string().optional(),
   PRSENSE_DATABASE_URL: z.url().optional(),
   PRSENSE_GEMINI_API_KEY: z.string().optional(),

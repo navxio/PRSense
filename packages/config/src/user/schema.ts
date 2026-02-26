@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const DeliveryChannelSchema = z.enum(["github", "gitlab", "slack", "jira"]);
+const VcsChannelSchema = z.enum(["github", "gitlab"]);
+const OtherChannelSchema = z.enum(["slack", "jira"]);
 
 export const UserConfigSchema = z.object({
   llm: z.object({
@@ -36,23 +37,11 @@ export const UserConfigSchema = z.object({
   }),
 
   delivery: z
-    .array(DeliveryChannelSchema)
-    .optional()
-    .superRefine((channels, ctx) => {
-      if (!channels) return;
-
-      const vcsCount = channels.filter(
-        (c) => c === "github" || c === "gitlab",
-      ).length;
-
-      if (vcsCount > 1) {
-        ctx.addIssue({
-          code: "custom",
-          message:
-            "Only one VCS delivery channel is allowed (github or gitlab)",
-        });
-      }
-    }),
+    .object({
+      vcs: VcsChannelSchema,
+      other: z.array(OtherChannelSchema).default([]),
+    })
+    .optional(),
 });
 
 export type UserConfig = z.infer<typeof UserConfigSchema>;
