@@ -29,25 +29,27 @@ export function buildCredentialContext(env: EnvConfig): CredentialContext {
 
     /* ---------------- GitHub ---------------- */
 
-    github:
-      env.PRSENSE_GITHUB_TOKEN ||
-      (env.PRSENSE_GITHUB_APP_ID &&
-        env.PRSENSE_GITHUB_APP_PRIVATE_KEY &&
-        env.PRSENSE_GITHUB_INSTALLATION_ID)
+    github: env.PRSENSE_GITHUB_TOKEN
+      ? {
+          available: true,
+          mode: "token" as const,
+          token: env.PRSENSE_GITHUB_TOKEN,
+          ...(env.PRSENSE_GITHUB_WEBHOOK_SECRET
+            ? { webhookSecret: env.PRSENSE_GITHUB_WEBHOOK_SECRET }
+            : {}),
+        }
+      : env.PRSENSE_GITHUB_APP_ID &&
+          env.PRSENSE_GITHUB_APP_PRIVATE_KEY &&
+          env.PRSENSE_GITHUB_INSTALLATION_ID
         ? {
             available: true,
-            ...(env.PRSENSE_GITHUB_TOKEN
-              ? {
-                  mode: "token" as const,
-                  token: env.PRSENSE_GITHUB_TOKEN,
-                }
-              : {
-                  mode: "app" as const,
-                  appId: env.PRSENSE_GITHUB_APP_ID,
-                  privateKey: env.PRSENSE_GITHUB_APP_PRIVATE_KEY,
-                  installationId: env.PRSENSE_GITHUB_INSTALLATION_ID,
-                }),
-            webhookSecret: env.PRSENSE_GITHUB_WEBHOOK_SECRET,
+            mode: "app" as const,
+            appId: env.PRSENSE_GITHUB_APP_ID,
+            privateKey: env.PRSENSE_GITHUB_APP_PRIVATE_KEY,
+            installationId: env.PRSENSE_GITHUB_INSTALLATION_ID,
+            ...(env.PRSENSE_GITHUB_WEBHOOK_SECRET
+              ? { webhookSecret: env.PRSENSE_GITHUB_WEBHOOK_SECRET }
+              : {}),
           }
         : { available: false },
 
@@ -57,7 +59,9 @@ export function buildCredentialContext(env: EnvConfig): CredentialContext {
       ? {
           available: true,
           token: env.PRSENSE_GITLAB_TOKEN,
-          webhookSecret: env.PRSENSE_GITLAB_WEBHOOK_SECRET,
+          ...(env.PRSENSE_GITLAB_WEBHOOK_SECRET
+            ? { webhookSecret: env.PRSENSE_GITLAB_WEBHOOK_SECRET }
+            : {}),
         }
       : { available: false },
 
