@@ -1,3 +1,4 @@
+// apps/cli/src/commands/review.ts
 import { Command } from "commander";
 import { runReviewWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent } from "@prsense/logging";
@@ -6,6 +7,7 @@ import {
   resolveConfig,
   validateResolvedConfig,
   buildCredentialContext,
+  validateCredentialContext,
 } from "@prsense/runtime-config";
 import { loadUserConfig, loadEnvConfig } from "@prsense/config";
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
@@ -22,10 +24,10 @@ export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
   .action(async (target, options) => {
-    const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
+    const env = loadEnvConfig();
 
     const logger = createPinoLogger({
-      level: logLevel,
+      level: env.PRSENSE_LOG_LEVEL ?? "warn",
       pretty: true,
     });
 
@@ -59,30 +61,9 @@ export const reviewCommand = new Command("review")
       const user = loadUserConfig(process.cwd());
       const env = loadEnvConfig();
 
-      const credentialContext = buildCredentialContext(env, {
-        mode: "self-hosted",
-      });
+      const credentialContext = buildCredentialContext(env);
 
       const repoRoot = path.resolve(target);
-
-      const resolved = resolveConfig({
-        mode: "cli",
-        repoRoot,
-        repoProvider: "filesystem",
-        user,
-        env,
-      });
-
-      const validation = validateResolvedConfig(resolved, credentialContext);
-
-      if (!validation.valid) {
-        eventBus.emit(CoreEvents.RunFailed, {
-          reason: "invalid-config",
-        });
-
-        await stdoutConfigReporter(validation.issues);
-        process.exit(1);
-      }
 
       const githubPrMatch = target.match(
         /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
@@ -90,6 +71,37 @@ export const reviewCommand = new Command("review")
       const gitlabMrMatch = target.match(
         /gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
       );
+
+      const repoProvider = githubPrMatch
+        ? "github"
+        : gitlabMrMatch
+          ? "gitlab"
+          : "filesystem";
+      const resolved = resolveConfig({
+        mode: "cli",
+        repoRoot,
+        repoProvider,
+        user,
+        env,
+      });
+
+      const domainValidation = validateResolvedConfig(resolved);
+      const credentialIssues = validateCredentialContext(
+        resolved,
+        credentialContext,
+      );
+
+      const issues = [...domainValidation.issues, ...credentialIssues];
+
+      if (issues.some((i) => i.level === "error")) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-config",
+        });
+
+        await stdoutConfigReporter(issues);
+        process.exit(1);
+      }
+
       // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
@@ -122,6 +134,7 @@ export const reviewCommand = new Command("review")
 
       const result = await runReviewWorkflow({
         config: resolved,
+        credentials: credentialContext,
         diffProvider,
         eventBus,
       });

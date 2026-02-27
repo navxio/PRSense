@@ -2,7 +2,10 @@
 
 import { CoreEvents, EventBus } from "@prsense/core";
 import type { ReviewSignal, DiffProvider } from "@prsense/core";
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type {
+  ResolvedConfig,
+  CredentialContext,
+} from "@prsense/runtime-config";
 import { retrieveContext } from "./retrieveContext.js";
 import { PostgresIndexMetadataRepository } from "packages/context/dist/index.js";
 import { buildReviewPrompt } from "@prsense/core";
@@ -11,6 +14,7 @@ import {
   createOllamaClient,
   createGeminiClient,
   createClaudeClient,
+  LlmClient,
 } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
 import { validateReviewOutput } from "./validateReviewOutput.js";
@@ -21,10 +25,12 @@ import { extractJson } from "./extractJson.js";
 
 export async function runReviewWorkflow({
   config,
+  credentials,
   diffProvider,
   eventBus,
 }: {
   config: ResolvedConfig;
+  credentials: CredentialContext;
   diffProvider: DiffProvider;
   eventBus: EventBus;
 }): Promise<ReviewWorkflowResult> {
@@ -124,34 +130,52 @@ export async function runReviewWorkflow({
     // Create LLM client
     // -------------------------------------------------
 
-    let llmClient: any;
+    let llmClient: LlmClient;
+
     switch (config.llm.provider) {
-      case "openai":
+      case "openai": {
+        const apiKey = credentials.openai?.apiKey;
+        if (!apiKey) {
+          throw new Error("OpenAI credentials missing");
+        }
+
         llmClient = createOpenAiClient({
-          apiKey: config.env.PRSENSE_OPENAI_API_KEY!,
-          model: config.llm.model,
-        });
-        break;
-      case "ollama":
-        llmClient = createOllamaClient({
+          apiKey,
           model: config.llm.model,
           temperature: config.llm.temperature,
         });
         break;
-      case "google":
+      }
+
+      case "google": {
+        const apiKey = credentials.gemini?.apiKey;
+        if (!apiKey) {
+          throw new Error("Gemini credentials missing");
+        }
+
         llmClient = createGeminiClient({
-          apiKey: process.env.PRSENSE_GEMINI_API_KEY!,
+          apiKey,
           model: config.llm.model,
-          temperature: config.llm.temperature || 0.05,
+          temperature: config.llm.temperature,
         });
         break;
-      case "anthropic":
+      }
+
+      case "anthropic": {
+        const apiKey = credentials.claude?.apiKey;
+        if (!apiKey) {
+          throw new Error("Claude credentials missing");
+        }
+
         llmClient = createClaudeClient({
-          apiKey: process.env.PRSENSE_CLAUDE_API_KEY!,
+          apiKey,
           model: config.llm.model,
-          temperature: config.llm.temperature || 0.05,
+          temperature: config.llm.temperature,
         });
         break;
+      }
+
+      case "ollama":
       default:
         llmClient = createOllamaClient({
           model: config.llm.model,

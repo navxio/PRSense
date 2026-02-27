@@ -6,6 +6,7 @@ import { LlmError } from "../types.js";
 export function createOpenAiClient(config: {
   apiKey: string;
   model: string;
+  temperature?: number;
   baseUrl?: string;
 }): LlmClient {
   const client = new OpenAI({
@@ -15,7 +16,8 @@ export function createOpenAiClient(config: {
 
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
-      const { prompt, temperature = 0 } = req;
+      const { prompt } = req;
+      const temperature = config.temperature || 0.05;
 
       try {
         const res = await client.chat.completions.create({
