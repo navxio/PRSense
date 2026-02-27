@@ -16,11 +16,12 @@
   },
   "dependencies": {
     "fastify": "^4.26.2",
-    "@prsense/workflows": "workspace:*",
-    "@prsense/config": "workspace:*",
-    "@prsense/context": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
-    "@prsense/core": "workspace:*"
+    "@prsense/workflows": "workspace:^",
+    "@prsense/config": "workspace:^",
+    "@prsense/context": "workspace:^",
+    "@prsense/runtime-config": "workspace:^",
+    "@prsense/core": "workspace:^",
+    "@prsense/logging": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

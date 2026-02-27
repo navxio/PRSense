@@ -51,19 +51,22 @@ importers:
   apps/daemon:
     dependencies:
       '@prsense/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config
       '@prsense/context':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/context
       '@prsense/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/core
+      '@prsense/logging':
+        specifier: workspace:^
+        version: link:../../packages/logging
       '@prsense/runtime-config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/runtime-config
       '@prsense/workflows':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/workflows
       fastify:
         specifier: ^4.26.2
