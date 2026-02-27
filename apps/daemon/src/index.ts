@@ -1,11 +1,14 @@
 import Fastify from "fastify";
+import fastifyRawBody from "fastify-raw-body";
 
 import { bootstrapDaemon } from "./bootstrap.js";
 import { createDaemonLogger } from "./logger.js";
 import { createJobStore } from "./jobs/store.js";
-import { registerRoutes } from "./http/routes.js";
+import { registerJobRoutes } from "./http/jobs.js";
 import { registerHealthRoutes } from "./http/health.js";
 import { setupGracefulShutdown } from "./shutdown.js";
+import { registerGitHubWebhook } from "./http/webhooks/github.js";
+import { registerGitLabWebhook } from "./http/webhooks/gitlab.js";
 
 async function main() {
   const logger = createDaemonLogger();
@@ -17,7 +20,13 @@ async function main() {
     embeddings: config.embeddings.provider,
   });
 
-  const app = Fastify({ logger: false }); // use our logger instead
+  const app = Fastify({ logger: false, bodyLimit: 10 * 1024 * 1024 }); // use our logger instead
+
+  await app.register(fastifyRawBody, {
+    field: "rawBody",
+    global: false,
+    encoding: false,
+  });
 
   const jobStore = createJobStore(logger);
 
@@ -33,7 +42,9 @@ async function main() {
   });
 
   registerHealthRoutes(app, logger, config);
-  registerRoutes(app, jobStore, config, credentials, logger);
+  registerJobRoutes(app, jobStore, config, credentials, logger);
+  registerGitHubWebhook(app, jobStore, config, credentials, logger);
+  registerGitLabWebhook(app, jobStore, config, credentials, logger);
 
   await app.listen({ port: 3000 });
 
