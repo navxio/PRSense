@@ -1,34 +1,42 @@
 PRSENSE(1)
-PRSENSE — principled AI-assisted pull request review
+PRSENSE — AI-powered, self-hosted code review engine
 
 ⸻
 
 NAME
-prsense — CLI-first, self-hosted AI code reviewer
+prsense — AI-assisted pull request and repository review engine
 
 ⸻
 
 SYNOPSIS
 prsense [command] [options] [target]
 
+prsense-daemon
+
 ⸻
 
 DESCRIPTION
-PRsense is a command-line tool for reviewing code changes using large
-language models with full repository context.
 
-It combines:
-  • structured rule-based review signals
-  • retrieval-augmented generation (RAG)
-  • explicit configuration
-  • self-hosted infrastructure
+PRSense is an open-source AI-powered code review engine that surfaces high-confidence review signals from code changes.
 
-PRsense operates primarily on diffs and surrounding repository context,
-producing structured review signals that prioritize clarity, correctness,
-and maintainability.
+It is delivery-agnostic. The same review engine can run:
 
-PRsense may optionally run a background daemon for long-lived or
-service-oriented workloads, but the CLI operates independently by default.
+• As an interactive CLI
+• As a long-lived HTTP daemon
+• Behind webhooks
+• Inside CI pipelines
+
+PRSense focuses on structured review signals rather than autonomous modification. It prioritizes:
+
+• Risk detection
+• Change comprehension
+• Explicit reasoning
+• Deterministic configuration
+• Self-hosted infrastructure
+
+PRSense operates on diffs and optionally surrounding repository context using retrieval-augmented generation (RAG). Output is validated, normalized, deduplicated, and filtered by confidence before being emitted.
+
+The CLI and daemon are delivery surfaces over the same core review engine.
 
 ⸻
 
@@ -36,9 +44,9 @@ COMMANDS
 
 review      Review a code change and emit structured review signals
 index       Index a repository for contextual retrieval (RAG)
-doctor      Diagnose PRsense installation and runtime environment
-setup       Perform optional one-time setup checks
-daemon      Manage the PRsense background daemon
+doctor      Diagnose PRSense installation and runtime environment
+setup       Perform setup readiness checks
+daemon      Manage daemon lifecycle (if installed)
 help        Show help for a command
 
 ⸻
@@ -52,50 +60,51 @@ SYNOPSIS
 prsense review [target] [options]
 
 DESCRIPTION
-Reviews a code change and produces structured review signals.
+
+Reviews a code change and produces structured ReviewSignal objects.
 
 The review process:
+	1.	Computes a diff
+	2.	Retrieves relevant repository context (if indexed)
+	3.	Constructs a structured review prompt
+	4.	Invokes the configured LLM provider
+	5.	Validates and normalizes output
+	6.	Filters by confidence threshold
+	7.	Deduplicates signals
 
-  1. Computes a diff
-  2. Retrieves relevant surrounding repository context (if indexed)
-  3. Constructs a structured review prompt
-  4. Invokes the configured LLM provider
-  5. Validates and normalizes output
-  6. Emits structured ReviewSignal objects
-
-Signals are filtered by confidence threshold and deduplicated before output.
+If no index exists, review falls back to diff-only mode.
 
 TARGETS
 
-.                       Current repository (default)
-<path>                  Path to a local repository
+.
+Current repository (default)
 
-If no diff target is provided, PRsense runs `git diff` in the current
-repository.
+<path>  
+    Path to a local repository
+
+
+https://github.com/…/pull/
+GitHub Pull Request
+
+https://gitlab.com/…/-/merge_requests/
+GitLab Merge Request
 
 OPTIONS
 
---base-branch <branch>
-Override the base branch used for diff comparison.
+–base-branch 
+Override base branch for diff comparison.
 
---format <text|json>
-Output format. Default is text.
+–format <text|json>
+Output format (default: text).
 
---no-context
-Disable contextual retrieval and perform diff-only review.
-
-NOTES
-
-Contextual retrieval requires that the repository has been indexed via
-`prsense index`.
-
-If no index exists, review falls back to diff-only mode.
+–no-context
+Disable contextual retrieval (diff-only review).
 
 EXAMPLES
 
 prsense review .
-prsense review --base-branch origin/main
-prsense review . --format json
+prsense review –base-branch origin/main
+prsense review https://github.com/org/repo/pull/42
 
 ⸻
 
@@ -105,62 +114,72 @@ NAME
 prsense index — index repository for contextual review
 
 SYNOPSIS
-prsense index [path] [options]
+prsense index [target] [options]
 
 DESCRIPTION
+
 Indexes a repository for retrieval-augmented review (RAG).
 
 Indexing:
 
-  • Scans repository files
-  • Chunks content deterministically
-  • Generates embeddings
-  • Stores vectors in PostgreSQL with pgvector
-  • Tracks repository fingerprint metadata
+• Scans repository files
+• Chunks content deterministically
+• Generates embeddings
+• Stores vectors in PostgreSQL with pgvector
+• Tracks repository fingerprint metadata
 
-The process is idempotent and safe to run multiple times.
+The process is idempotent and safe to run repeatedly.
 
-Re-indexing occurs automatically when:
-  • commit SHA changes
-  • embedding provider changes
-  • embedding model changes
-  • chunking strategy changes
-  • PRsense version changes
+Re-indexing is triggered when:
+
+• Commit SHA changes
+• Embedding provider changes
+• Embedding model changes
+• Embedding dimension changes
+• Chunking strategy changes
+• PRSense version changes
 
 TARGETS
 
-.                       Current repository (default)
-<path>                  Path to a local repository
+.
+Current repository (default)
+
+<path>  
+    Path to local repository
+
+
+https://github.com/org/repo
+https://gitlab.com/group/project
 
 OPTIONS
 
---force
-Rebuild the index even if it appears up-to-date.
+–force
+Rebuild index even if up-to-date.
 
---dry-run
-Evaluate index state without writing to database.
+–dry-run
+Evaluate index state without writing.
 
---stats
-Print indexing statistics after completion.
+–stats
+Print indexing statistics.
 
---chunk-size <n>
-Override chunk size (lines per chunk).
+–chunk-size 
+Override chunk size in characters.
 
 NOTES
 
 Indexing requires:
 
-  • PostgreSQL
-  • pgvector extension
-  • Valid embedding provider configuration
+• PostgreSQL
+• pgvector extension
+• Valid embedding provider
 
-Embedding dimensions must match the vector schema.
+Embedding dimension must match database schema.
 
 EXAMPLES
 
 prsense index .
-prsense index ../repo --force
-prsense index . --stats
+prsense index . –force
+prsense index https://github.com/org/repo
 
 ⸻
 
@@ -173,17 +192,17 @@ SYNOPSIS
 prsense doctor
 
 DESCRIPTION
-Performs structured diagnostic checks to validate:
 
-  • Environment configuration
-  • User configuration
-  • Database connectivity
-  • pgvector extension
-  • Docker availability (if applicable)
-  • LLM provider availability
-  • Repository state
+Performs structured diagnostic checks:
 
-Each check emits structured results with actionable guidance.
+• Configuration validation
+• Credential validation
+• Database connectivity
+• pgvector availability
+• LLM provider configuration
+• Repository state
+
+Each check emits structured, actionable results.
 
 EXAMPLES
 
@@ -194,18 +213,17 @@ prsense doctor
 COMMAND: setup
 
 NAME
-prsense setup — perform optional setup guidance
+prsense setup — perform setup readiness checks
 
 SYNOPSIS
 prsense setup
 
 DESCRIPTION
-Provides first-time setup validation and instructions.
 
-Unlike `doctor`, this command focuses on readiness rather than ongoing
-diagnostics.
+Validates first-time setup requirements and readiness.
 
-It does not automatically provision services.
+Focuses on environment and infrastructure availability.
+Does not automatically provision services unless explicitly configured.
 
 EXAMPLES
 
@@ -213,75 +231,89 @@ prsense setup
 
 ⸻
 
-COMMAND: daemon
+DAEMON
 
 NAME
-prsense daemon — manage the PRsense background daemon
+prsense-daemon — run PRSense as a long-lived HTTP service
 
 SYNOPSIS
-prsense daemon [subcommand]
+prsense-daemon
 
 DESCRIPTION
-Manages an optional long-lived daemon process for:
 
-  • Continuous indexing
-  • CI-driven reviews
-  • Future GitHub App integrations
-  • Automated workflows
+Starts the PRSense HTTP daemon.
 
-The CLI does not depend on the daemon.
+The daemon exposes endpoints for:
 
-SUBCOMMANDS
+• Review job creation
+• Index job creation
+• Webhook-triggered reviews
+• Health and readiness checks
 
-prsense daemon start [--foreground]
-Start the daemon process.
+DEFAULT LISTEN ADDRESS
 
-prsense daemon stop
-Stop a running daemon.
+http://localhost:3000
 
-prsense daemon status
-Show daemon status.
+ENDPOINTS
 
-NOTES
+GET /health
+Liveness probe
 
-PRsense does not auto-start background services.
-Lifecycle is explicit and signal-based.
+GET /ready
+Readiness probe
+
+POST /jobs/review
+Trigger review job
+
+POST /jobs/index
+Trigger indexing job
+
+POST /webhooks/github
+GitHub pull_request webhook endpoint
+
+POST /webhooks/gitlab
+GitLab merge_request webhook endpoint
+
+Webhooks require corresponding webhook secrets configured via environment variables.
 
 ⸻
 
 CONFIGURATION
 
-PRsense uses:
-
-  1. User configuration (review behavior)
-  2. Environment configuration (runtime + credentials)
+PRSense separates:
+	1.	Review behavior configuration (repository-level)
+	2.	Runtime configuration and credentials (environment)
 
 USER CONFIGURATION
 
-A file named `prsense.yml` may be placed at repository root.
+A file named prsense.yml may be placed at repository root.
 
 Example:
 
 llm:
-  provider: ollama
-  model: qwen2.5-coder
-  temperature: 0.1
+provider: ollama
+model: qwen2.5-coder
+temperature: 0.1
 
 embeddings:
-  provider: ollama
-  model: nomic-embed-text
+provider: ollama
+model: nomic-embed-text
 
 review:
-  confidenceThreshold: 0.6
-  maxSignals: 10
+confidenceThreshold: 0.6
+maxSignals: 10
 
 context:
-  maxChunks: 5
+maxChunks: 5
 
 git:
-  baseBranch: trunk
+baseBranch: main
 
-If absent, defaults are applied.
+delivery:
+	•	github
+	•	gitlab
+
+If absent, sensible defaults are applied.
 
 ENVIRONMENT VARIABLES
 
@@ -290,21 +322,29 @@ Environment variables configure infrastructure and credentials.
 Common variables:
 
 PRSENSE_DATABASE_URL
-OPENAI_API_KEY
-GITHUB_TOKEN
-GITLAB_TOKEN
-SLACK_BOT_TOKEN
+PRSENSE_OPENAI_API_KEY
+PRSENSE_GEMINI_API_KEY
+PRSENSE_CLAUDE_API_KEY
+PRSENSE_GITHUB_TOKEN
+PRSENSE_GITHUB_APP_ID
+PRSENSE_GITHUB_APP_PRIVATE_KEY
+PRSENSE_GITHUB_INSTALLATION_ID
+PRSENSE_GITHUB_WEBHOOK_SECRET
+PRSENSE_GITLAB_TOKEN
+PRSENSE_GITLAB_WEBHOOK_SECRET
+PRSENSE_SLACK_BOT_TOKEN
+PRSENSE_OLLAMA_HOST
 PRSENSE_LOG_LEVEL
 
-Environment variables are validated before workflow execution.
+Environment variables are validated before workflows execute.
 
 ⸻
 
 EXIT STATUS
 
 0   Successful execution
-1   Invalid usage or configuration
-2   Runtime or dependency failure
+1   Invalid configuration or usage
+2   Runtime failure
 
 ⸻
 
@@ -313,7 +353,7 @@ FILES
 prsense.yml
 Repository-local configuration.
 
-~/.config/prsense/config.yml
+~/.config/prsense/
 Optional user-level configuration.
 
 ~/.local/state/prsense/
@@ -321,18 +361,17 @@ Runtime state directory (daemon PID, logs).
 
 ⸻
 
-DESIGN PHILOSOPHY
+DESIGN PRINCIPLES
 
-PRsense is intentionally:
+PRSense is intentionally:
 
-  • CLI-first
-  • Self-hosted
-  • Retrieval-augmented
-  • Deterministic
-  • Transparent
-  • Explicit in lifecycle management
-  • Structured in output
-  • Opinionated but configurable
+• Delivery-agnostic
+• Self-hosted
+• Retrieval-augmented
+• Deterministic
+• Structured in output
+• Explicit in configuration
+• Focused on high-signal review
 
 It prioritizes signal quality over verbosity.
 
@@ -346,7 +385,7 @@ git(1)
 
 AUTHOR
 
-Navdeep Saini <navdeep@mailbox.org>
+Navdeep Saini
 
 ⸻
 
