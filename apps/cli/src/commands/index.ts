@@ -1,4 +1,6 @@
 import { Command } from "commander";
+import path from "node:path";
+
 import { runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
@@ -6,91 +8,134 @@ import {
   resolveConfig,
   validateResolvedConfig,
   buildCredentialContext,
+  validateCredentialContext,
 } from "@prsense/runtime-config";
 import { loadUserConfig, loadEnvConfig } from "@prsense/config";
+
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 
 export const indexCommand = new Command("index")
-  .argument("[target]", "Path or GitHub URL", ".")
+  .argument("[target]", "Path or GitHub/GitLab URL", ".")
   .option("--force", "Rebuild the index from scratch")
   .option("--dry-run", "Show what would be indexed without writing")
   .option("--stats", "Print indexing statistics after completion")
-  .option("--chunk-size <n>", "Chunk size (lines)")
-  .action(async (path, options) => {
-    const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
-
-    const logger = createPinoLogger({
-      level: logLevel,
-      pretty: true,
-    });
-
-    const renderer = createSpinnerRenderer(process.stdout);
-
-    const eventBus = createEventBus((event) => {
-      logEvent(logger, event);
-
-      const mapped = eventToCliTask(event);
-      if (!mapped) return;
-
-      if (mapped.kind === "start") {
-        renderer.start(mapped.task);
-      } else if (mapped.kind === "update") {
-        renderer.update(mapped.task);
-      } else {
-        renderer.finish(mapped.task);
-      }
-    });
-
-    eventBus.emit(CoreEvents.RunStarted, {
-      mode: "cli",
-      command: "index",
-    });
-
+  .option("--chunk-size <n>", "Override chunk size (characters)")
+  .action(async (target, options) => {
     try {
+      /* ------------------------------------------------- */
+      /* Load Config                                       */
+      /* ------------------------------------------------- */
+
       const user = loadUserConfig(process.cwd());
       const env = loadEnvConfig();
 
-      const credentialContext = buildCredentialContext(env, {
-        mode: "self-hosted",
+      const logger = createPinoLogger({
+        level: env.PRSENSE_LOG_LEVEL,
+        pretty: true,
       });
 
-      const repoRoot = path;
-      const repoProvider = "filesystem";
+      const renderer = createSpinnerRenderer(process.stdout);
+
+      const eventBus = createEventBus((event) => {
+        logEvent(logger, event);
+
+        const mapped = eventToCliTask(event);
+        if (!mapped) return;
+
+        if (mapped.kind === "start") {
+          renderer.start(mapped.task);
+        } else if (mapped.kind === "update") {
+          renderer.update(mapped.task);
+        } else {
+          renderer.finish(mapped.task);
+        }
+      });
+
+      eventBus.emit(CoreEvents.RunStarted, {
+        mode: "cli",
+        command: "index",
+      });
+
+      /* ------------------------------------------------- */
+      /* Determine Repository Provider                     */
+      /* ------------------------------------------------- */
+
+      const isGithub = /github\.com/.test(target);
+      const isGitlab = /gitlab\.com/.test(target);
+
+      const repoProvider = isGithub
+        ? "github"
+        : isGitlab
+          ? "gitlab"
+          : "filesystem";
+
+      const repoRoot =
+        repoProvider === "filesystem" ? path.resolve(target) : target;
+
+      /* ------------------------------------------------- */
+      /* CLI Overrides (Before Resolve)                    */
+      /* ------------------------------------------------- */
+
+      let effectiveUser = user;
+
+      if (options.chunkSize) {
+        const chunkSize = Number(options.chunkSize);
+        if (Number.isNaN(chunkSize) || chunkSize <= 0) {
+          console.error("--chunk-size must be a positive number");
+          process.exit(1);
+        }
+
+        effectiveUser = {
+          ...user,
+          index: {
+            ...user.index,
+            chunkSizeChars: chunkSize,
+          },
+        };
+      }
+
+      /* ------------------------------------------------- */
+      /* Resolve Config                                    */
+      /* ------------------------------------------------- */
 
       const resolved = resolveConfig({
         mode: "cli",
         repoRoot,
         repoProvider,
-        user,
+        user: effectiveUser,
         env,
       });
 
-      // CLI overrides
-      if (options.chunkSize) {
-        const n = Number(options.chunkSize);
-        if (Number.isNaN(n)) {
-          console.error("chunk-size must be a number");
-          process.exit(1);
-        }
-        resolved.context.chunkSize = n;
-      }
+      /* ------------------------------------------------- */
+      /* Credentials + Validation                          */
+      /* ------------------------------------------------- */
 
-      const validation = validateResolvedConfig(resolved, credentialContext);
+      const credentials = buildCredentialContext(env);
 
-      if (!validation.valid) {
+      const domainValidation = validateResolvedConfig(resolved);
+      const credentialIssues = validateCredentialContext(resolved, credentials);
+
+      const issues = [...domainValidation.issues, ...credentialIssues];
+
+      if (issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter(validation.issues);
+        await stdoutConfigReporter(issues);
         process.exit(1);
       }
 
+      /* ------------------------------------------------- */
+      /* Run Workflow                                      */
+      /* ------------------------------------------------- */
+
       const result = await runIndexWorkflow({
         config: resolved,
-        target: path,
+        credentials,
+        target,
         force: Boolean(options.force),
         dryRun: Boolean(options.dryRun),
         eventBus,
@@ -99,6 +144,10 @@ export const indexCommand = new Command("index")
       eventBus.emit(CoreEvents.RunFinished, {
         outcome: result.outcome,
       });
+
+      /* ------------------------------------------------- */
+      /* Optional Stats                                    */
+      /* ------------------------------------------------- */
 
       if (options.stats) {
         const { chunksIndexed, commitSha, upToDate } = result.payload;
@@ -114,10 +163,7 @@ export const indexCommand = new Command("index")
 
       process.exit(result.outcome === "failure" ? 1 : 0);
     } catch (err) {
-      eventBus.emit(CoreEvents.RunFailed, {
-        error: String(err),
-      });
-
+      console.error(err instanceof Error ? err.message : String(err));
       process.exit(1);
     }
   });

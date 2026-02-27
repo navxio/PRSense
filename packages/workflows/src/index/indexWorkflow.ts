@@ -10,7 +10,10 @@ import {
 } from "@prsense/context";
 import { PRSENSE_VERSION } from "@prsense/core";
 import type { IndexWorkflowResult } from "./types.js";
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type {
+  ResolvedConfig,
+  CredentialContext,
+} from "@prsense/runtime-config";
 import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
@@ -25,12 +28,14 @@ import {
 //TODO: modularise this
 export async function runIndexWorkflow({
   config,
+  credentials,
   target,
   force,
   dryRun,
   eventBus,
 }: {
   config: ResolvedConfig;
+  credentials: CredentialContext;
   target: string;
   force?: boolean;
   dryRun?: boolean;
@@ -120,8 +125,13 @@ export async function runIndexWorkflow({
     let embeddingClient;
 
     if (config.embeddings.provider === "openai") {
+      const apiKey = credentials.openai?.apiKey;
+      if (!apiKey) {
+        throw new Error("OpenAI embedding credentials missing");
+      }
+
       embeddingClient = createOpenAiEmbeddingClient({
-        apiKey: process.env.OPENAI_API_KEY!,
+        apiKey,
         model: config.embeddings.model,
       });
     } else {
