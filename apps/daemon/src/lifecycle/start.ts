@@ -1,4 +1,4 @@
-// apps/cli/src/daemon/start.ts
+// apps/daemon/src/lifecycle/start.ts
 import fs from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { getDaemonStateDir, getPidFile } from "./state.js";

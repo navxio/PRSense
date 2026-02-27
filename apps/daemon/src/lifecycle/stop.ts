@@ -1,4 +1,4 @@
-// apps/cli/src/daemon/stop.ts
+//apps/daemon/src/lifecycle/stop.ts
 import fs from "node:fs/promises";
 import process from "node:process";
 import { getPidFile } from "./state.js";

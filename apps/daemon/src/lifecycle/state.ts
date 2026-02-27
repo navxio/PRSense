@@ -1,4 +1,4 @@
-// apps/cli/src/daemon/state.ts
+//apps/daemon/src/lifecycle/state.ts
 import path from "node:path";
 import os from "node:os";
 
