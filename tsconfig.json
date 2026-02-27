@@ -45,6 +45,7 @@
     { "path": "packages/logging" },
     { "path": "packages/runtime-config" },
     { "path": "packages/bench" },
-    { "path": "apps/cli" }
+    { "path": "apps/cli" },
+    { "path": "apps/daemon" }
   ]
 }
