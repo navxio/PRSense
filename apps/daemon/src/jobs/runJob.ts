@@ -1,8 +1,9 @@
-// apps/daemon/src/jobs/runJob.ts
 import type { JobStore } from "./store.js";
+import type { Logger } from "@prsense/logging";
 
 export async function runJob<TResult>(
   store: JobStore,
+  logger: Logger,
   jobId: string,
   fn: () => Promise<TResult>,
 ) {
@@ -20,12 +21,23 @@ export async function runJob<TResult>(
         result,
         finishedAt: Date.now(),
       });
+
+      return result;
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+
       store.update(jobId, {
         state: "failed",
-        error: err instanceof Error ? err.message : "Unknown error",
+        error: message,
         finishedAt: Date.now(),
       });
+
+      logger.error("job.execution.failed", {
+        jobId,
+        error: message,
+      });
+
+      throw err;
     }
   })();
 

@@ -1,22 +1,12 @@
-// apps/daemon/src/jobs/store.ts
 import type { Job } from "./types.js";
+import type { Logger } from "@prsense/logging";
 
-export type JobStore = {
-  get(id: string): Job | undefined;
-  list(): Job[];
-  create(job: Job): void;
-  update(id: string, patch: Partial<Job>): void;
-
-  track<T>(jobId: string, promise: Promise<T>): Promise<T>;
-  drain(): Promise<void>;
-};
-
-export function createJobStore(): JobStore {
+export function createJobStore(logger: Logger) {
   const jobs = new Map<string, Job>();
   const inFlight = new Set<Promise<unknown>>();
 
   return {
-    get(id) {
+    get(id: string) {
       return jobs.get(id);
     },
 
@@ -24,18 +14,45 @@ export function createJobStore(): JobStore {
       return Array.from(jobs.values());
     },
 
-    create(job) {
+    create(job: Job) {
       jobs.set(job.id, job);
+
+      logger.info("job.queued", {
+        jobId: job.id,
+        type: job.type,
+      });
     },
 
-    update(id, patch) {
+    update(id: string, patch: Partial<Job>) {
       const job = jobs.get(id);
       if (!job) return;
 
-      jobs.set(id, { ...job, ...patch });
+      const updated = { ...job, ...patch };
+      jobs.set(id, updated);
+
+      if (patch.state === "running") {
+        logger.info("job.started", { jobId: id });
+      }
+
+      if (patch.state === "completed") {
+        logger.info("job.completed", {
+          jobId: id,
+          duration:
+            updated.finishedAt && updated.startedAt
+              ? updated.finishedAt - updated.startedAt
+              : undefined,
+        });
+      }
+
+      if (patch.state === "failed") {
+        logger.error("job.failed", {
+          jobId: id,
+          error: patch.error,
+        });
+      }
     },
 
-    async track(jobId, promise) {
+    async track(jobId: string, promise: Promise<unknown>) {
       inFlight.add(promise);
       try {
         return await promise;
@@ -49,3 +66,5 @@ export function createJobStore(): JobStore {
     },
   };
 }
+
+export type JobStore = ReturnType<typeof createJobStore>;
