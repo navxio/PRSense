@@ -1,15 +1,18 @@
-// apps/daemon/src/jobs/index/runIndexJob.ts
 import { runIndexWorkflow } from "@prsense/workflows";
 import { createEventBus } from "@prsense/core";
-import { type Logger } from "@prsense/logging";
-import type { IndexJobInput, IndexJobResult } from "./types.js";
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type {
+  ResolvedConfig,
+  CredentialContext,
+} from "@prsense/runtime-config";
+import type { Logger } from "@prsense/logging";
+import type { IndexJobInput } from "./types.js";
 
 export async function runIndexJob(
-  config: ResolvedConfig,
   input: IndexJobInput,
+  config: ResolvedConfig,
+  credentials: CredentialContext,
   logger: Logger,
-): Promise<IndexJobResult> {
+) {
   const eventBus = createEventBus((event) => {
     logger.info("domain.event", {
       event: event.event,
@@ -19,9 +22,10 @@ export async function runIndexJob(
 
   return runIndexWorkflow({
     config,
+    credentials,
     target: input.target,
-    force: input.force,
-    dryRun: input.dryRun,
+    ...(input.force !== undefined ? { force: input.force } : {}),
+    ...(input.dryRun !== undefined ? { dryRun: input.dryRun } : {}),
     eventBus,
   });
 }
