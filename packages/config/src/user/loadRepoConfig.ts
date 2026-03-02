@@ -1,3 +1,4 @@
+// packages/config/src/user/loadUserConfig.ts
 import fs from "node:fs";
 import path from "node:path";
 import yaml from "yaml";
@@ -18,11 +19,10 @@ function findConfigFile(startDir: string): string | null {
   }
 }
 
-export function loadUserConfig(cwd: string): UserConfig {
+export function loadRepoConfig(cwd: string): UserConfig {
   const configPath = findConfigFile(cwd);
 
   if (!configPath) {
-    // No user config: return defaults
     return UserConfigSchema.parse({});
   }
 
