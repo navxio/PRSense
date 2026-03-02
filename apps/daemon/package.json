@@ -21,6 +21,7 @@
     "@prsense/logging": "workspace:^",
     "@prsense/runtime-config": "workspace:^",
     "@prsense/workflows": "workspace:^",
+    "@prsense/reporters": "workspace:^",
     "fastify": "^4.26.2",
     "fastify-raw-body": "^5.0.0",
     "pg": "^8.17.1"
