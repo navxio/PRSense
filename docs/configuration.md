@@ -1,28 +1,76 @@
 ## Configuration
 
-PRSense separates review behavior from runtime infrastructure configuration.
+PRSense separates **review behavior** from **runtime infrastructure configuration**.
 
-- `prsense.yml` → defines how PRSense behaves as a reviewer (domain configuration).
-- Environment variables → configure credentials, delivery, and infrastructure (runtime configuration).
+Configuration is layered and deterministic.
 
-This separation ensures reproducible reviews while keeping secrets out of source control.
+### Configuration Layers (Lowest → Highest Priority)
+
+1. Built-in defaults
+2. Global config (`~/.config/prsense/config.yml`)
+3. Repository config (`prsense.yml`)
+4. CLI flags (when applicable)
+
+Environment variables are used exclusively for **credentials and infrastructure**, never review behavior.
+
+This ensures:
+
+- Reproducible reviews
+- No secrets in source control
+- Deterministic layering
+- Clear separation of domain vs runtime concerns
 
 ---
 
-## Repository Configuration (`prsense.yml`)
+# Global Configuration (Optional)
+
+Location:
+
+```
+$XDG_CONFIG_HOME/prsense/config.yml
+```
+
+or
+
+```
+~/.config/prsense/config.yml
+```
+
+Global config defines personal defaults applied to all repositories.
+
+Example:
+
+```yaml
+llm:
+  provider: ollama
+  model: qwen2.5-coder
+  temperature: 0.1
+
+embeddings:
+  provider: ollama
+  model: nomic-embed-text
+```
+
+Repository config overrides global config.
+
+---
+
+# Repository Configuration (`prsense.yml`)
 
 Placed at the root of your repository.
 
-This file defines:
+This file defines review behavior:
 
-- LLM selection
-- Embeddings model
-- Indexing behavior
+- LLM provider and model
+- Embedding model
+- Chunking strategy
 - Review thresholds
 - Retrieval limits
 - Delivery channels (daemon mode)
 
-### Example
+---
+
+## Example
 
 ```yaml
 llm:
@@ -37,7 +85,7 @@ embeddings:
 index:
   chunkSizeChars: 1000
   chunkOverlapChars: 200
-  maxFileSizeBytes: 1048576 # 1 MB
+  maxFileSizeBytes: 1048576
 
 review:
   confidenceThreshold: 0.6
@@ -49,100 +97,127 @@ context:
 git:
   baseBranch: main
 
-# Only required in daemon mode
+# Daemon mode only
 delivery:
-  vcs: github # github | gitlab
-  other:
-    - slack
+  - github
+  - slack
 ```
 
 ---
 
-## Configuration Sections Explained
+# Configuration Sections Explained
 
-### `llm`
+## `llm`
 
-Controls the language model used for review generation.
+Controls review generation model.
 
 Supported providers:
 
 - `ollama`
 - `openai`
-- `google` (Gemini)
-- `anthropic` (Claude)
+- `google`
+- `anthropic`
 
-`temperature` controls randomness (lower = more deterministic).
+`temperature` controls randomness.
 
-### `embeddings`
-
-Controls the embedding model used for indexing and retrieval.
-
-- Must match the model used during indexing.
-- Changing embeddings requires re-indexing.
-
-### `index`
-
-Controls repository chunking behavior.
-
-- `chunkSizeChars` — max characters per chunk.
-- `chunkOverlapChars` — overlap between chunks.
-- `maxFileSizeBytes` — files larger than this are skipped.
-
-### `review`
-
-Controls post-processing of model output.
-
-- `confidenceThreshold` — minimum confidence to emit a signal.
-- `maxSignals` — maximum number of issues returned.
-
-### `context`
-
-Controls retrieval (RAG).
-
-- `maxChunks` — maximum indexed chunks retrieved per review.
-
-### `delivery` (Daemon Mode Only)
-
-Defines where PRSense posts review results.
-
-```yaml
-delivery:
-  vcs: github
-  other:
-    - slack
-```
-
-- `vcs` → the primary version control system.
-- `other` → optional additional channels.
-
-This section is ignored in CLI mode.
+Lower values produce more deterministic output.
 
 ---
 
-## Environment Variables
+## `embeddings`
+
+Controls vector embeddings used for indexing and retrieval.
+
+If changed:
+
+- Re-indexing is required.
+- Embedding dimensions must match the database schema.
+
+---
+
+## `index`
+
+Controls repository chunking.
+
+- `chunkSizeChars` — characters per chunk.
+- `chunkOverlapChars` — overlap between chunks.
+- `maxFileSizeBytes` — skip large files.
+
+---
+
+## `review`
+
+Controls signal filtering.
+
+- `confidenceThreshold` — minimum confidence.
+- `maxSignals` — maximum number of emitted signals.
+
+---
+
+## `context`
+
+Controls retrieval (RAG).
+
+- `maxChunks` — number of chunks retrieved per review.
+
+---
+
+## `delivery` (Daemon Mode Only)
+
+Defines where review results are posted.
+
+Example:
+
+```yaml
+delivery:
+  - github
+  - slack
+```
+
+Rules:
+
+- Only one VCS channel allowed (`github` or `gitlab`)
+- Additional channels optional (`slack`, `jira`)
+
+Ignored in CLI mode.
+
+---
+
+# Environment Variables
 
 Environment variables configure runtime infrastructure and credentials.
 
 They are never stored in `prsense.yml`.
 
-### LLM Credentials
+---
 
-| Provider | Required Variable                                                      |
-| -------- | ---------------------------------------------------------------------- |
-| OpenAI   | `PRSENSE_OPENAI_API_KEY`                                               |
-| Gemini   | `PRSENSE_GEMINI_API_KEY`                                               |
-| Claude   | `PRSENSE_CLAUDE_API_KEY`                                               |
-| Ollama   | `PRSENSE_OLLAMA_HOST` (optional, defaults to `http://127.0.0.1:11434`) |
+## LLM Credentials
 
-### Embeddings (if using OpenAI)
+| Provider | Variable                         |
+| -------- | -------------------------------- |
+| OpenAI   | `PRSENSE_OPENAI_API_KEY`         |
+| Gemini   | `PRSENSE_GEMINI_API_KEY`         |
+| Claude   | `PRSENSE_CLAUDE_API_KEY`         |
+| Ollama   | `PRSENSE_OLLAMA_HOST` (optional) |
+
+---
+
+## Embeddings (OpenAI)
 
 ```
 PRSENSE_OPENAI_API_KEY
 ```
 
-### Database
+---
 
-Used for indexing. If not provided, PRSense uses a bundled Docker Postgres instance.
+## Database
+
+Used for indexing.
+
+If not provided:
+
+- CLI may use bundled Docker Postgres
+- Daemon requires valid configuration
 
 ```
 PRSENSE_DATABASE_URL
@@ -154,16 +229,18 @@ Example:
 postgresql://prsense:prsense@localhost:10000/prsense_dev
 ```
 
-### GitHub Delivery
+---
 
-**Option 1 — Personal Access Token**
+## GitHub Delivery
+
+### Personal Access Token
 
 ```
 PRSENSE_GITHUB_TOKEN
 PRSENSE_GITHUB_WEBHOOK_SECRET
 ```
 
-**Option 2 — GitHub App (recommended for SaaS)**
+### GitHub App (Recommended)
 
 ```
 PRSENSE_GITHUB_APP_ID
@@ -172,20 +249,26 @@ PRSENSE_GITHUB_INSTALLATION_ID
 PRSENSE_GITHUB_WEBHOOK_SECRET
 ```
 
-### GitLab Delivery
+---
+
+## GitLab Delivery
 
 ```
 PRSENSE_GITLAB_TOKEN
 PRSENSE_GITLAB_WEBHOOK_SECRET
 ```
 
-### Slack Delivery
+---
+
+## Slack Delivery
 
 ```
 PRSENSE_SLACK_BOT_TOKEN
 ```
 
-### Logging
+---
+
+## Logging
 
 ```
 PRSENSE_LOG_LEVEL=debug | info | warn | error
@@ -193,14 +276,14 @@ PRSENSE_LOG_LEVEL=debug | info | warn | error
 
 ---
 
-## CLI Mode vs Daemon Mode
+# CLI Mode vs Daemon Mode
 
-### CLI Mode
+## CLI Mode
 
-- No delivery required.
-- Can review local repositories.
-- No webhook secrets required.
-- Delivery section in `prsense.yml` is ignored.
+- Loads global + repo config
+- Ignores `delivery`
+- No webhook secrets required
+- Can run fully local
 
 Example:
 
@@ -208,54 +291,77 @@ Example:
 prsense review .
 ```
 
-### Daemon Mode
+---
 
-- Requires delivery configuration.
-- Requires webhook secret.
-- Requires VCS credentials.
-- Validates credentials at startup.
+## Daemon Mode
 
-Example:
+- Loads global config at startup
+- Validates credentials at boot
+- Requires delivery configuration
+- Requires webhook secrets
+- Loads repo config dynamically per review job
+
+Start daemon:
 
 ```sh
 prsense daemon start
 ```
 
-Daemon will refuse to start if:
+Daemon refuses to start if:
 
-- Delivery is enabled but credentials are missing.
-- Webhook secret is not configured.
-- LLM credentials are missing.
-
----
-
-## Defaults
-
-If `prsense.yml` is missing, PRSense uses:
-
-- `ollama` as LLM
-- `nomic-embed-text` for embeddings
-- Safe chunking defaults
-- No delivery (CLI mode)
+- Delivery enabled but credentials missing
+- Webhook secret missing
+- Required LLM credentials missing
 
 ---
 
-## Security Notes
+# Inspecting Effective Configuration
+
+You can inspect merged configuration:
+
+```sh
+prsense config inspect
+```
+
+This shows:
+
+- Global config
+- Repository config
+- Effective merged config
+- Runtime resolved config
+- Credential availability
+
+---
+
+# Defaults
+
+If no configuration is provided:
+
+- `ollama` is used as default LLM
+- `nomic-embed-text` used for embeddings
+- Safe chunking defaults applied
+- No delivery enabled
+
+---
+
+# Security Notes
 
 - Never commit API keys.
 - Never commit webhook secrets.
 - Prefer GitHub App over PAT in production.
-- Use environment-specific credentials for daemon mode.
+- Use separate credentials for staging/production.
+- Global config should not contain secrets.
 
 ---
 
-## Summary
+# Configuration Summary
 
-| Configuration Type | Location              | Purpose                     |
-| ------------------ | --------------------- | --------------------------- |
-| Review behavior    | `prsense.yml`         | Controls model and indexing |
-| Credentials        | Environment variables | Secrets and API access      |
-| Database           | Environment variables | Index storage               |
-| Delivery           | `prsense.yml` + env   | Posting review results      |
+| Type              | Location                              | Purpose                |
+| ----------------- | ------------------------------------- | ---------------------- |
+| Global defaults   | `~/.config/prsense/config.yml`        | Personal defaults      |
+| Repository config | `prsense.yml`                         | Review behavior        |
+| Credentials       | Environment variables                 | Secrets / API access   |
+| Database          | Environment variables                 | Index storage          |
+| Delivery channels | `prsense.yml` + environment variables | Posting review results |
 
-PRSense enforces strict separation between domain behavior and runtime credentials to ensure reproducibility and security.
+PRSense enforces strict separation between domain behavior and runtime credentials to ensure reproducibility, determinism, and security.

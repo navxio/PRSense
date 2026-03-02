@@ -288,7 +288,7 @@ PRSense is delivery-agnostic — the core engine remains the same.
 
 ## Configuration
 
-See [Configuration](../../docs/configuration.md)
+See [Configuration](./docs/configuration.md)
 
 ---
 
@@ -472,13 +472,13 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 - [ ] setup concurrency
 - [ ] exclude bundled prsense.yml from indexing
-- [ ] JSON output for CI
 - [ ] automated tests
 - [ ] codeberg support
 - [ ] README
   - [ ] Quickstart
   - [ ] Self hosted deployment
   - [ ] update manpage
+- [ ] CI mode
 
 ---
 
