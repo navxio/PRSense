@@ -33,14 +33,14 @@
   "bugs": "https://github.com/navxio/prsense/issues",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
-    "@prsense/config": "workspace:*",
-    "@prsense/reporters": "workspace:*",
-    "@prsense/workflows": "workspace:*",
-    "@prsense/preflight": "workspace:*",
-    "@prsense/logging": "workspace:*",
-    "@prsense/core": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
-    "@prsense/context": "workspace:*",
+    "@prsense/config": "workspace:^",
+    "@prsense/reporters": "workspace:^",
+    "@prsense/workflows": "workspace:^",
+    "@prsense/preflight": "workspace:^",
+    "@prsense/logging": "workspace:^",
+    "@prsense/core": "workspace:^",
+    "@prsense/runtime-config": "workspace:^",
+    "@prsense/context": "workspace:^",
     "commander": "^14.0.2"
   },
   "devDependencies": {

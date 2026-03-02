@@ -9,7 +9,13 @@ import {
   buildCredentialContext,
   validateCredentialContext,
 } from "@prsense/runtime-config";
-import { loadUserConfig, loadEnvConfig } from "@prsense/config";
+import {
+  loadGlobalConfig,
+  loadRepoConfig,
+  mergeUserConfigs,
+  loadEnvConfig,
+} from "@prsense/config";
+
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
@@ -58,7 +64,9 @@ export const reviewCommand = new Command("review")
       // Load Config
       // -------------------------------------------------
 
-      const user = loadUserConfig(process.cwd());
+      const globalConfig = loadGlobalConfig();
+      const repoConfig = loadRepoConfig(process.cwd());
+      const user = mergeUserConfigs(globalConfig, repoConfig);
       const env = loadEnvConfig();
 
       const credentialContext = buildCredentialContext(env);

@@ -6,7 +6,13 @@ import {
   validateResolvedConfig,
   buildCredentialContext,
 } from "@prsense/runtime-config";
-import { loadUserConfig, loadEnvConfig } from "@prsense/config";
+import {
+  loadGlobalConfig,
+  loadRepoConfig,
+  mergeUserConfigs,
+  loadEnvConfig,
+} from "@prsense/config";
+
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
@@ -59,12 +65,12 @@ export const setupCommand = new Command("setup")
       // -------------------------------------------------
 
       const cwd = process.cwd();
-      const user = loadUserConfig(cwd);
+      const globalConfig = loadGlobalConfig();
+      const repoConfig = loadRepoConfig(cwd);
+      const user = mergeUserConfigs(globalConfig, repoConfig);
       const env = loadEnvConfig();
 
-      const credentialContext = buildCredentialContext(env, {
-        mode: "self-hosted",
-      });
+      const credentialContext = buildCredentialContext(env);
 
       const resolved = resolveConfig({
         mode: "cli",
