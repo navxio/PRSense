@@ -1,5 +1,7 @@
-import type { ReviewSignal } from "@prsense/core";
 import type { Reporter } from "./types.js";
+import type { ReviewSignal } from "@prsense/core";
+
+const BOT_MARKER = "<!-- PRSENSE:REVIEW -->";
 
 export class GitLabReporter implements Reporter {
   constructor(private token: string) {}
@@ -9,15 +11,68 @@ export class GitLabReporter implements Reporter {
       /gitlab\.com\/(.+?)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
     );
 
-    if (!match) {
-      throw new Error("Invalid GitLab MR URL");
-    }
+    if (!match) throw new Error("Invalid GitLab MR URL");
 
     const [, group, project, mr] = match;
-
     const encodedProject = encodeURIComponent(`${group}/${project}`);
 
-    const body = signals
+    const body = this.buildBody(signals);
+
+    const headers = {
+      "PRIVATE-TOKEN": this.token,
+      "Content-Type": "application/json",
+    };
+
+    // -------------------------------------------------
+    // 1️⃣ Fetch existing notes
+    // -------------------------------------------------
+
+    const notesRes = await fetch(
+      `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${mr}/notes`,
+      { headers },
+    );
+
+    const notes = await notesRes.json();
+
+    const existing = notes.find(
+      (n: any) => typeof n.body === "string" && n.body.includes(BOT_MARKER),
+    );
+
+    if (existing) {
+      // -------------------------------------------------
+      // 2️⃣ Update note
+      // -------------------------------------------------
+      await fetch(
+        `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${mr}/notes/${existing.id}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ body }),
+        },
+      );
+    } else {
+      // -------------------------------------------------
+      // 3️⃣ Create note
+      // -------------------------------------------------
+      await fetch(
+        `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${mr}/notes`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ body }),
+        },
+      );
+    }
+  }
+
+  private buildBody(signals: ReviewSignal[]) {
+    if (signals.length === 0) {
+      return `${BOT_MARKER}
+
+✅ No significant issues detected.`;
+    }
+
+    const content = signals
       .map(
         (s) =>
           `### ${s.severity.toUpperCase()} — ${s.file}
@@ -30,16 +85,11 @@ ${s.suggestedFix ? `\n💡 ${s.suggestedFix}` : ""}
       )
       .join("\n---\n");
 
-    await fetch(
-      `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${mr}/notes`,
-      {
-        method: "POST",
-        headers: {
-          "PRIVATE-TOKEN": this.token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ body }),
-      },
-    );
+    return `${BOT_MARKER}
+
+## PRSense Review
+
+${content}
+`;
   }
 }

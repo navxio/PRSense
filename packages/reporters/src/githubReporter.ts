@@ -1,10 +1,20 @@
+import { Octokit } from "@octokit/rest";
 import type { Reporter } from "./types.js";
 import type { ReviewSignal } from "@prsense/core";
 
-export class GitHubReporter implements Reporter {
-  constructor(private token: string) {}
+const BOT_MARKER = "<!-- PRSENSE:REVIEW -->";
 
-  async deliver(signals: ReviewSignal[], context: { targetUrl: string }) {
+export class GitHubReporter implements Reporter {
+  private octokit: Octokit;
+
+  constructor(token: string) {
+    this.octokit = new Octokit({ auth: token });
+  }
+
+  async deliver(
+    signals: ReviewSignal[],
+    context: { targetUrl: string },
+  ): Promise<void> {
     const match = context.targetUrl.match(
       /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
     );
@@ -13,9 +23,67 @@ export class GitHubReporter implements Reporter {
       throw new Error("Invalid GitHub PR URL");
     }
 
-    const [, owner, repo, pr] = match;
+    const owner = match[1];
+    const repo = match[2];
+    const prNumber = Number(match[3]);
 
-    const body = signals
+    if (!owner || !repo || Number.isNaN(prNumber)) {
+      throw new Error("Invalid GitHub PR URL");
+    }
+
+    const body = this.buildBody(signals);
+
+    // -------------------------------------------------
+    // Fetch existing comments
+    // -------------------------------------------------
+
+    const { data: comments } = await this.octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: prNumber,
+      per_page: 100,
+    });
+
+    const existing = comments.find(
+      (c) => typeof c.body === "string" && c.body.includes(BOT_MARKER),
+    );
+
+    if (existing) {
+      // -------------------------------------------------
+      // Update existing bot comment
+      // -------------------------------------------------
+
+      await this.octokit.issues.updateComment({
+        owner,
+        repo,
+        comment_id: existing.id,
+        body,
+      });
+    } else {
+      // -------------------------------------------------
+      // Create new bot comment
+      // -------------------------------------------------
+
+      await this.octokit.issues.createComment({
+        owner,
+        repo,
+        issue_number: prNumber,
+        body,
+      });
+    }
+  }
+
+  private buildBody(signals: ReviewSignal[]): string {
+    if (signals.length === 0) {
+      return `${BOT_MARKER}
+
+## PRSense Review
+
+✅ No significant issues detected.
+`;
+    }
+
+    const content = signals
       .map(
         (s) =>
           `### ${s.severity.toUpperCase()} — ${s.file}
@@ -28,17 +96,11 @@ ${s.suggestedFix ? `\n💡 ${s.suggestedFix}` : ""}
       )
       .join("\n---\n");
 
-    await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/issues/${pr}/comments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ body }),
-      },
-    );
+    return `${BOT_MARKER}
+
+## PRSense Review
+
+${content}
+`;
   }
 }
