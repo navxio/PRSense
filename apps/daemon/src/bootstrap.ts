@@ -1,34 +1,45 @@
-//apps/daemon/src/bootstrap.ts
-import { loadUserConfig, loadEnvConfig } from "@prsense/config";
+// apps/daemon/src/bootstrap.ts
+
+import { loadGlobalConfig, loadEnvConfig } from "@prsense/config";
 import {
   resolveConfig,
   validateResolvedConfig,
   buildCredentialContext,
   validateCredentialContext,
+  type ResolvedConfig,
+  type CredentialContext,
 } from "@prsense/runtime-config";
 
 export type DaemonContext = {
-  config: any;
-  credentials: any;
+  config: ResolvedConfig;
+  credentials: CredentialContext;
 };
 
 export function bootstrapDaemon(): DaemonContext {
   const cwd = process.cwd();
 
-  const user = loadUserConfig(cwd);
+  // 1️⃣ Load global-only user config
+  const globalConfig = loadGlobalConfig();
+
+  // 2️⃣ Load env config
   const env = loadEnvConfig();
 
+  // 3️⃣ Resolve into daemon-mode config
   const resolved = resolveConfig({
     mode: "daemon",
     repoRoot: cwd,
-    repoProvider: "filesystem", // default — webhook will override per job
-    user,
+    repoProvider: "filesystem", // placeholder — job-level override later
+    user: globalConfig,
     env,
   });
 
+  // 4️⃣ Build credential context
   const credentials = buildCredentialContext(env);
 
+  // 5️⃣ Validate domain config
   const domainValidation = validateResolvedConfig(resolved);
+
+  // 6️⃣ Validate credentials
   const credentialIssues = validateCredentialContext(resolved, credentials);
 
   const issues = [...domainValidation.issues, ...credentialIssues];
@@ -36,7 +47,7 @@ export function bootstrapDaemon(): DaemonContext {
   const errors = issues.filter((i) => i.level === "error");
 
   if (errors.length > 0) {
-    console.error("Daemon configuration invalid:\n");
+    console.error("❌ PRSense daemon configuration invalid:\n");
     for (const err of errors) {
       console.error(`- ${err.message}`);
     }
