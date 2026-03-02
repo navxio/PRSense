@@ -3,7 +3,7 @@ import { reviewCommand } from "./commands/review.js";
 import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
-import daemonCommand from "./commands/daemon/index.js";
+import { configCommand } from "./commands/config.js";
 
 export const program = new Command()
   .name("prsense")
@@ -14,4 +14,4 @@ program.addCommand(reviewCommand);
 program.addCommand(indexCommand);
 program.addCommand(doctorCommand);
 program.addCommand(setupCommand);
-program.addCommand(daemonCommand);
+program.addCommand(configCommand);
