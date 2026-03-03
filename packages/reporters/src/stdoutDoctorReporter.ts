@@ -1,7 +1,7 @@
 import type { DoctorWorkflowResult } from "@prsense/core";
-import type { Reporter } from "./types.js";
+import type { OutputReporter } from "./types.js";
 
-export const stdoutDoctorReporter: Reporter<DoctorWorkflowResult> = {
+export const stdoutDoctorReporter: OutputReporter<DoctorWorkflowResult> = {
   async report(result) {
     const results = result.checks;
 

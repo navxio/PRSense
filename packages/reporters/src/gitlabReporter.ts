@@ -1,9 +1,9 @@
-import type { Reporter } from "./types.js";
+import type { DeliveryReporter } from "./types.js";
 import type { ReviewSignal } from "@prsense/core";
 
 const BOT_MARKER = "<!-- PRSENSE:REVIEW -->";
 
-export class GitLabReporter implements Reporter {
+export class GitLabReporter implements DeliveryReporter {
   constructor(private token: string) {}
 
   async deliver(signals: ReviewSignal[], context: { targetUrl: string }) {

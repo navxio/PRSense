@@ -1,11 +1,11 @@
 import type { ConfigValidationIssue } from "@prsense/runtime-config";
-import type { Reporter } from "./types.js";
+import type { OutputReporter } from "./types.js";
 
 export type ConfigValidationResult = {
   issues: ConfigValidationIssue[];
 };
 
-export const stdoutConfigReporter: Reporter<ConfigValidationResult> = {
+export const stdoutConfigReporter: OutputReporter<ConfigValidationResult> = {
   async report(result) {
     const issues = result.issues;
 

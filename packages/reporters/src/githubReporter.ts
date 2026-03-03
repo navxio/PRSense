@@ -1,10 +1,10 @@
 import { Octokit } from "@octokit/rest";
-import type { Reporter } from "./types.js";
+import type { DeliveryReporter } from "./types.js";
 import type { ReviewSignal } from "@prsense/core";
 
 const BOT_MARKER = "<!-- PRSENSE:REVIEW -->";
 
-export class GitHubReporter implements Reporter {
+export class GitHubReporter implements DeliveryReporter {
   private octokit: Octokit;
 
   constructor(token: string) {
