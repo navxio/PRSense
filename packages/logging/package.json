@@ -17,7 +17,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },

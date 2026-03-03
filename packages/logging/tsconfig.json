@@ -13,7 +13,9 @@
     /*
      * Logging is consumed as a package, not an app
      */
-    "noEmit": false
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true
   },
 
   "include": ["src"],
