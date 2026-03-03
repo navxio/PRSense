@@ -1,3 +1,4 @@
+//apps/daemon/src/http/webhooks/github.ts
 import crypto from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import type { JobStore } from "../../jobs/store.js";
@@ -77,7 +78,7 @@ export function registerGitHubWebhook(
         createdAt: Date.now(),
       });
 
-      runJob(store, jobId, async () =>
+      runJob(store, logger, jobId, async () =>
         runReviewJob({ target: prUrl }, config, credentials, logger),
       );
 

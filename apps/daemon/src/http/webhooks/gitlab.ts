@@ -1,3 +1,4 @@
+//apps/daemon/src/http/webhooks/gitlab.ts
 import type { FastifyInstance } from "fastify";
 import type { JobStore } from "../../jobs/store.js";
 import { randomUUID } from "node:crypto";
@@ -62,7 +63,7 @@ export function registerGitLabWebhook(
       createdAt: Date.now(),
     });
 
-    runJob(store, jobId, async () =>
+    runJob(store, logger, jobId, async () =>
       runReviewJob({ target: mrUrl }, config, credentials, logger),
     );
 

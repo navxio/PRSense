@@ -8,6 +8,7 @@ export async function runJob<TResult>(
   fn: () => Promise<TResult>,
 ) {
   const promise = (async () => {
+    logger.info("job.execution.started", { jobId });
     store.update(jobId, {
       state: "running",
       startedAt: Date.now(),
@@ -22,6 +23,7 @@ export async function runJob<TResult>(
         finishedAt: Date.now(),
       });
 
+      logger.info("job.execution.completed", { jobId });
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
