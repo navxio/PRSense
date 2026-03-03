@@ -2,7 +2,7 @@
   "name": "@prsense/logging",
   "version": "0.0.1",
   "description": "Structured logging primitives for PRSense",
-  "private": true,
+  "private": false,
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist *.tsbuildinfo",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
