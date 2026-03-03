@@ -1,6 +1,5 @@
 // apps/cli/src/commands/daemon/index.ts
 import { Command } from "commander";
-import { startDaemon, stopDaemon, daemonStatus } from "@prsense/daemon";
 
 const daemonCommand = new Command("daemon").description(
   "Manage the PRsense daemon",
@@ -9,10 +8,10 @@ const daemonCommand = new Command("daemon").description(
 daemonCommand
   .command("start")
   .option("--foreground", "Run in foreground")
-  .action((opts) => startDaemon(opts));
+  .action((opts) => console.log("start"));
 
-daemonCommand.command("stop").action(() => stopDaemon());
+daemonCommand.command("stop").action(() => console.log("stop"));
 
-daemonCommand.command("status").action(() => daemonStatus());
+daemonCommand.command("status").action(() => console.log("status"));
 
 export default daemonCommand;

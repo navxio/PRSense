@@ -2,14 +2,10 @@
 
 import { Command } from "commander";
 import { runDoctorWorkflow } from "@prsense/workflows";
-import { stdoutDoctorReporter } from "../reporting/stdoutDoctorReporter.js";
+import { stdoutDoctorReporter, stdoutConfigReporter } from "@prsense/reporters";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import {
-  resolveConfig,
-  validateResolvedConfig,
-  buildCredentialContext,
-} from "@prsense/runtime-config";
+import { resolveConfig, validateResolvedConfig } from "@prsense/runtime-config";
 import {
   loadGlobalConfig,
   loadRepoConfig,
@@ -19,7 +15,6 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
 
 const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "info";
 
@@ -58,7 +53,6 @@ export const doctorCommand = new Command("doctor")
       const repoConfig = loadRepoConfig(process.cwd());
       const user = mergeUserConfigs(globalConfig, repoConfig);
       const env = loadEnvConfig();
-      const credentialContext = buildCredentialContext(env);
       const resolved = resolveConfig({
         mode: "cli",
         repoRoot: process.cwd(),
@@ -67,24 +61,28 @@ export const doctorCommand = new Command("doctor")
         env,
       });
 
-      const validation = validateResolvedConfig(resolved, credentialContext);
+      const validation = validateResolvedConfig(resolved);
       if (!validation.valid) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter(validation.issues);
+        await stdoutConfigReporter.report({
+          issues: validation.issues,
+        });
         process.exit(1);
       }
       const result = await runDoctorWorkflow({ config: resolved, eventBus });
 
-      await stdoutDoctorReporter(result.payload.checks);
+      await stdoutDoctorReporter.report(result);
+
+      const hasFailures = result.checks.some((c) => c.status === "fail");
 
       eventBus.emit(CoreEvents.RunFinished, {
-        outcome: result.outcome,
+        outcome: hasFailures ? "failure" : "success",
       });
 
-      process.exit(result.outcome === "failure" ? 1 : 0);
+      process.exit(hasFailures ? 1 : 0);
     } catch (err) {
       eventBus.emit(CoreEvents.RunFailed, {
         error: String(err),

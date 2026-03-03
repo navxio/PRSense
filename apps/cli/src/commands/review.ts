@@ -18,7 +18,7 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
+import { stdoutConfigReporter } from "@prsense/reporters";
 import path from "node:path";
 import {
   LocalGitDiffProvider,
@@ -106,7 +106,7 @@ export const reviewCommand = new Command("review")
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter(issues);
+        await stdoutConfigReporter.report({ issues });
         process.exit(1);
       }
 

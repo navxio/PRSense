@@ -1,11 +1,7 @@
 import { Command } from "commander";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import {
-  resolveConfig,
-  validateResolvedConfig,
-  buildCredentialContext,
-} from "@prsense/runtime-config";
+import { resolveConfig, validateResolvedConfig } from "@prsense/runtime-config";
 import {
   loadGlobalConfig,
   loadRepoConfig,
@@ -15,7 +11,7 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
+import { stdoutConfigReporter } from "@prsense/reporters";
 
 import { runSetupWorkflow } from "@prsense/workflows";
 import type { Capability } from "@prsense/preflight";
@@ -70,8 +66,6 @@ export const setupCommand = new Command("setup")
       const user = mergeUserConfigs(globalConfig, repoConfig);
       const env = loadEnvConfig();
 
-      const credentialContext = buildCredentialContext(env);
-
       const resolved = resolveConfig({
         mode: "cli",
         repoRoot: cwd,
@@ -80,14 +74,14 @@ export const setupCommand = new Command("setup")
         env,
       });
 
-      const validation = validateResolvedConfig(resolved, credentialContext);
+      const validation = validateResolvedConfig(resolved);
 
       if (!validation.valid) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter(validation.issues);
+        await stdoutConfigReporter.report({ issues: validation.issues });
         process.exit(1);
       }
 

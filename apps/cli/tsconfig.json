@@ -13,11 +13,11 @@
     { "path": "../../packages/config" },
     { "path": "../../packages/core" },
     { "path": "../../packages/context" },
-    { "path": "../../packages/reporters" }
+    { "path": "../../packages/reporters" },
+    { "path": "../../packages/logging" },
+    { "path": "../../packages/workflows" },
+    { "path": "../../packages/preflight" },
+    { "path": "../../packages/runtime-config" }
   ],
-  "include": [
-    "src",
-    "../../packages/context/src/diff.ts",
-    "../../packages/context/src/diff.ts"
-  ]
+  "include": ["src"]
 }

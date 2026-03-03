@@ -19,7 +19,7 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "../reporting/stdoutConfigReporter.js";
+import { stdoutConfigReporter } from "@prsense/reporters";
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")
@@ -131,7 +131,7 @@ export const indexCommand = new Command("index")
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter(issues);
+        await stdoutConfigReporter.report({ issues });
         process.exit(1);
       }
 
