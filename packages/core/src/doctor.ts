@@ -1,15 +1,15 @@
-export type DoctorOutcome = "success" | "failure";
+export type DoctorCheckStatus = "ok" | "warn" | "fail";
 
-export type DoctorPayload = {
-  checks: DiagnosticCheck[];
+export type DoctorCheckResult = {
+  name: string;
+  status: DoctorCheckStatus;
+  message?: string;
+  fix?: string;
 };
 
 export type DoctorWorkflowResult = {
-  outcome: DoctorOutcome;
-  payload: DoctorPayload;
+  checks: DoctorCheckResult[];
 };
-
-export type CheckStatus = "pass" | "warn" | "fail";
 
 /**
  * A single diagnostic check.
@@ -22,7 +22,7 @@ export type DiagnosticCheck = {
   /** Human-readable label */
   label: string;
 
-  status: CheckStatus;
+  status: DoctorCheckStatus;
 
   /** Optional short explanation */
   message?: string;

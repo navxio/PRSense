@@ -1,7 +1,7 @@
 // packages/workflows/src/doctor/workflow.ts
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import type { EventBus } from "@prsense/core";
-import type { DoctorWorkflowResult, DiagnosticCheck } from "./types.js";
+import type { DoctorWorkflowResult, DiagnosticCheck } from "@prsense/core";
 
 import type { Capability, CapabilityContext } from "@prsense/preflight";
 import {
@@ -56,7 +56,7 @@ export async function runDoctorWorkflow({
         check = {
           id: cap.id,
           label: cap.description,
-          status: "pass",
+          status: "ok",
         };
         break;
 

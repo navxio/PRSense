@@ -1,5 +1,6 @@
 // packages/core/src/types.ts
 
+//TODO: convert it to a discriminated union
 export type DomainEvent<T extends string = string> = {
   event: T;
   fields?: Record<string, unknown>;
