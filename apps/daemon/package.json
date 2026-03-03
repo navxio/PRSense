@@ -1,7 +1,7 @@
 {
   "name": "@prsense/daemon",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "PRsense long-lived daemon (HTTP API + job scheduler)",
   "license": "Apache-2.0",
@@ -10,9 +10,10 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b",
     "start": "node dist/index.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "clean": "rm -rf dist/ *.tsbuildinfo"
   },
   "dependencies": {
     "@prsense/config": "workspace:^",
