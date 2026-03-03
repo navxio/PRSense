@@ -1,16 +1,5 @@
 export type DoctorCheckStatus = "ok" | "warn" | "fail";
 
-export type DoctorCheckResult = {
-  name: string;
-  status: DoctorCheckStatus;
-  message?: string;
-  fix?: string;
-};
-
-export type DoctorWorkflowResult = {
-  checks: DoctorCheckResult[];
-};
-
 /**
  * A single diagnostic check.
  * Domain-neutral, execution-neutral.
@@ -29,4 +18,8 @@ export type DiagnosticCheck = {
 
   /** Optional structured details */
   details?: unknown;
+};
+
+export type DoctorWorkflowResult = {
+  checks: DiagnosticCheck[];
 };

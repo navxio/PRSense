@@ -1,4 +1,3 @@
-export * from "./doctor/types.js";
 export * from "./doctor/workflow.js";
 
 export * from "./index/index.js";

@@ -94,9 +94,6 @@ export async function runDoctorWorkflow({
   });
 
   return {
-    outcome: hasFailure ? "failure" : "success",
-    payload: {
-      checks,
-    },
+    checks,
   };
 }

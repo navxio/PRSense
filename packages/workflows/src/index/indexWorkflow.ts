@@ -325,6 +325,8 @@ export async function runIndexWorkflow({
 
     const allRows = [];
 
+    //PERF: different batch size for openai based embedding
+    //PERF: multi threaded?
     const BATCH_SIZE = 16;
 
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {

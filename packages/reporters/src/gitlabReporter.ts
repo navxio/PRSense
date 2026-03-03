@@ -32,7 +32,17 @@ export class GitLabReporter implements DeliveryReporter {
       { headers },
     );
 
-    const notes = await notesRes.json();
+    const raw = await notesRes.json();
+
+    if (!Array.isArray(raw)) {
+      throw new Error("Unexpected GitLab API response");
+    }
+    type GitLabNote = {
+      id: number;
+      body: string;
+    };
+
+    const notes = raw as GitLabNote[];
 
     const existing = notes.find(
       (n: any) => typeof n.body === "string" && n.body.includes(BOT_MARKER),

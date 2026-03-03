@@ -12,23 +12,20 @@ export const stdoutDoctorReporter: OutputReporter<DoctorWorkflowResult> = {
     for (const check of results) {
       switch (check.status) {
         case "ok":
-          console.log(`[OK]   ${check.name}`);
+          console.log(`[OK]   ${check.label}`);
           break;
 
         case "warn":
-          console.log(`[WARN] ${check.name}`);
+          console.log(`[WARN] ${check.label}`);
           if (check.message) {
             console.log(`       ${check.message}`);
           }
           break;
 
         case "fail":
-          console.log(`[FAIL] ${check.name}`);
+          console.log(`[FAIL] ${check.label}`);
           if (check.message) {
             console.log(`       ${check.message}`);
-          }
-          if (check.fix) {
-            console.log(`       Fix: ${check.fix}`);
           }
           break;
       }

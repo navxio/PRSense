@@ -201,7 +201,7 @@ export async function runReviewWorkflow({
       });
       throw new Error("LLM returned invalid JSON");
     }
-    let validated: any;
+    let validated: ReturnType<typeof validateReviewOutput>;
 
     try {
       validated = validateReviewOutput(parsed);
@@ -253,7 +253,7 @@ ${cleaned}
 
     const normalized = rawSignals
       .map(normalizeSignal)
-      .filter((s): s is ReviewSignal => Boolean(s));
+      .filter((s): s is ReviewSignal => s != null);
 
     const thresholded = normalized.filter(
       (s) => s.confidence >= config.review.confidenceThreshold,
