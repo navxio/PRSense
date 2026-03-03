@@ -1,6 +1,6 @@
 {
   "name": "@prsense/workflows",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "PRsense workflow orchestration (environment-agnostic)",
