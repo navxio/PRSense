@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,7 +15,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -p tsconfig.json && cp src/migrations/*.sql dist/migrations/",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {

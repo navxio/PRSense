@@ -1,7 +1,7 @@
 // packages/preflight/src/capabilities/schema.ts
-import fs from "node:fs/promises";
-import path from "node:path";
+
 import pg from "pg";
+import { ensureDatabaseSchema } from "@prsense/context";
 import type {
   Capability,
   CapabilityContext,
@@ -30,25 +30,6 @@ async function hasTables(url: string): Promise<boolean> {
   }
 }
 
-async function applySchema(url: string): Promise<void> {
-  const client = new pg.Client({ connectionString: url });
-
-  try {
-    await client.connect();
-
-    const schemaPath = path.resolve(
-      process.cwd(),
-      "packages/context/migrations/0001_init.sql",
-    );
-
-    const sql = await fs.readFile(schemaPath, "utf8");
-
-    await client.query(sql);
-  } finally {
-    await client.end().catch(() => {});
-  }
-}
-
 export const schemaCapability: Capability = {
   id: "schema",
   description: "Database schema is initialized",
@@ -65,6 +46,7 @@ export const schemaCapability: Capability = {
 
     try {
       const ok = await hasTables(db.url);
+
       return ok
         ? { kind: "ready" }
         : {
@@ -86,6 +68,6 @@ export const schemaCapability: Capability = {
       throw new Error("No database configured");
     }
 
-    await applySchema(db.url);
+    await ensureDatabaseSchema(db.url);
   },
 };
