@@ -52,8 +52,9 @@ export function createGeminiClient(config: {
 
         return { text };
       } catch (err) {
-        console.log("Error with gemini: ", err.toString());
-        throw new LlmError("Gemini request failed", err);
+        const message = err instanceof Error ? err.message : String(err);
+
+        throw new Error(`Gemini provider error: ${message}`);
       }
     },
   };

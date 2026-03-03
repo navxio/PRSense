@@ -1,3 +1,4 @@
+//packages/llm/src/providers/openaiEmbeddings.ts
 import OpenAI from "openai";
 import type { EmbeddingClient } from "../types.js";
 
@@ -22,6 +23,9 @@ export function createOpenAiEmbeddingClient(opts: {
     if (cachedDimension !== null) return cachedDimension;
 
     const vectors = await embed(["dimension test"]);
+    if (!vectors.length || !vectors[0]) {
+      throw new Error("Failed to detect embedding dimension: empty response");
+    }
     cachedDimension = vectors[0].length;
     return cachedDimension;
   }
