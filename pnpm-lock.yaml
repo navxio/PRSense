@@ -209,11 +209,14 @@ importers:
 
   packages/preflight:
     dependencies:
+      '@prsense/context':
+        specifier: workspace:^
+        version: link:../context
       '@prsense/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@prsense/runtime-config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../runtime-config
       pg:
         specifier: ^8.17.1
