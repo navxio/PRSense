@@ -39,7 +39,7 @@ export const indexCommand = new Command("index")
       const env = loadEnvConfig();
 
       const logger = createPinoLogger({
-        level: env.PRSENSE_LOG_LEVEL,
+        level: env.PRSENSE_LOG_LEVEL ?? "warn",
         pretty: true,
       });
 

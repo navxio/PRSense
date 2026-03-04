@@ -38,7 +38,7 @@ async function installVectorExtension(url: string): Promise<void> {
 
 export const pgVectorCapability: Capability = {
   id: "pgvector",
-  description: "pgvector extension is installed",
+  description: "pgvector extension is available",
 
   async check(ctx: CapabilityContext): Promise<CapabilityStatus> {
     const db = ctx.config.database;
@@ -75,12 +75,6 @@ export const pgVectorCapability: Capability = {
 
     if (!db) {
       throw new Error("No database configured");
-    }
-
-    if (db.mode === "external") {
-      throw new Error(
-        "pgvector must be installed manually for external Postgres",
-      );
     }
 
     await installVectorExtension(db.url);
