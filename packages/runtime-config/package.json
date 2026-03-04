@@ -18,7 +18,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@prsense/config": "workspace:*"
+    "@prsense/config": "workspace:^"
   },
   "devDependencies": {},
   "sideEffects": false

@@ -138,7 +138,7 @@ importers:
   packages/context:
     dependencies:
       '@prsense/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       pg:
         specifier: ^8.17.1
@@ -269,28 +269,28 @@ importers:
   packages/runtime-config:
     dependencies:
       '@prsense/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config
 
   packages/workflows:
     dependencies:
       '@prsense/context':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../context
       '@prsense/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@prsense/llm':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../llm
       '@prsense/preflight':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../preflight
       '@prsense/reporters':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../reporters
       '@prsense/runtime-config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../runtime-config
       pg:
         specifier: ^8.17.1
