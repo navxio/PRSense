@@ -18,31 +18,31 @@ importers:
   apps/cli:
     dependencies:
       '@prsense/config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/config
       '@prsense/context':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/context
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
       '@prsense/daemon':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../daemon
       '@prsense/logging':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/logging
       '@prsense/preflight':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/preflight
       '@prsense/reporters':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/reporters
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/runtime-config
       '@prsense/workflows':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/workflows
       commander:
         specifier: ^14.0.2
@@ -61,25 +61,25 @@ importers:
   apps/daemon:
     dependencies:
       '@prsense/config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/config
       '@prsense/context':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/context
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
       '@prsense/logging':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/logging
       '@prsense/reporters':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/reporters
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/runtime-config
       '@prsense/workflows':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/workflows
       fastify:
         specifier: ^4.26.2
@@ -107,10 +107,10 @@ importers:
   packages/bench:
     dependencies:
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runtime-config
       '@prsense/workflows':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../workflows
     devDependencies:
       '@types/node':
@@ -148,7 +148,7 @@ importers:
   packages/context:
     dependencies:
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       pg:
         specifier: ^8.17.1
@@ -220,13 +220,13 @@ importers:
   packages/preflight:
     dependencies:
       '@prsense/context':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../context
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runtime-config
       pg:
         specifier: ^8.17.1
@@ -254,10 +254,10 @@ importers:
         specifier: ^22.0.1
         version: 22.0.1
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runtime-config
       chalk:
         specifier: ^5.6.2
@@ -279,28 +279,28 @@ importers:
   packages/runtime-config:
     dependencies:
       '@prsense/config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../config
 
   packages/workflows:
     dependencies:
       '@prsense/context':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../context
       '@prsense/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@prsense/llm':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../llm
       '@prsense/preflight':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../preflight
       '@prsense/reporters':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../reporters
       '@prsense/runtime-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runtime-config
       pg:
         specifier: ^8.17.1

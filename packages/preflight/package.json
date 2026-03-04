@@ -1,6 +1,6 @@
 {
   "name": "@prsense/preflight",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "pg": "^8.17.1",
-    "@prsense/core": "workspace:^",
-    "@prsense/runtime-config": "workspace:^",
-    "@prsense/context": "workspace:^"
+    "@prsense/core": "workspace:*",
+    "@prsense/runtime-config": "workspace:*",
+    "@prsense/context": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

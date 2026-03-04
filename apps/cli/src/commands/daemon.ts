@@ -62,7 +62,9 @@ daemonCommand
       }
     }
 
-    const child = spawn("prsense-daemon", [], {
+    const daemonBin = require.resolve("@prsense/daemon/dist/index.js");
+
+    const child = spawn(process.execPath, [daemonBin], {
       detached: !opts.foreground,
       stdio: opts.foreground ? "inherit" : "ignore",
     });

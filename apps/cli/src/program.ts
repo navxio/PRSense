@@ -4,7 +4,7 @@ import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
 import { configCommand } from "./commands/config.js";
-import { PRSENSE_VERSION } from "./version.js";
+import { PRSENSE_VERSION } from "@prsense/core";
 
 export const program = new Command()
   .name("prsense")

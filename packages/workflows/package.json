@@ -1,6 +1,6 @@
 {
   "name": "@prsense/workflows",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "PRsense workflow orchestration (environment-agnostic)",
@@ -13,12 +13,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@prsense/preflight": "workspace:^",
-    "@prsense/context": "workspace:^",
-    "@prsense/core": "workspace:^",
-    "@prsense/reporters": "workspace:^",
-    "@prsense/runtime-config": "workspace:^",
-    "@prsense/llm": "workspace:^",
+    "@prsense/preflight": "workspace:*",
+    "@prsense/context": "workspace:*",
+    "@prsense/core": "workspace:*",
+    "@prsense/reporters": "workspace:*",
+    "@prsense/runtime-config": "workspace:*",
+    "@prsense/llm": "workspace:*",
     "pg": "^8.17.1"
   },
   "devDependencies": {
