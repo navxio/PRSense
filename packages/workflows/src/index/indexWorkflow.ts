@@ -8,7 +8,6 @@ import {
   PostgresIndexMetadataRepository,
   GitLabRepositorySource,
 } from "@prsense/context";
-import { PRSENSE_VERSION } from "@prsense/core";
 import type { IndexWorkflowResult } from "./types.js";
 import type {
   ResolvedConfig,
@@ -33,6 +32,7 @@ export async function runIndexWorkflow({
   force,
   dryRun,
   eventBus,
+  version,
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
@@ -40,6 +40,7 @@ export async function runIndexWorkflow({
   force?: boolean;
   dryRun?: boolean;
   eventBus: EventBus;
+  version: string;
 }): Promise<IndexWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
@@ -384,7 +385,7 @@ export async function runIndexWorkflow({
         strategy: "default",
         version: 1,
       },
-      prsenseVersion: PRSENSE_VERSION,
+      prsenseVersion: version,
       createdAt: new Date().toISOString(),
     });
 
