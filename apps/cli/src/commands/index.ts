@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent } from "@prsense/logging";
-import { createEventBus, CoreEvents } from "@prsense/core";
+import { createEventBus, CoreEvents, PRSENSE_VERSION } from "@prsense/core";
 import {
   resolveConfig,
   validateResolvedConfig,
@@ -20,7 +20,6 @@ import {
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 import { stdoutConfigReporter } from "@prsense/reporters";
-import { PRSENSE_VERSION } from "../version.js";
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")

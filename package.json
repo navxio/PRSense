@@ -21,7 +21,8 @@
     "dev:cli": "pnpm --filter @prsense/cli dev",
     "cli:doctor": "pnpm --filter @prsense/cli start -- doctor",
     "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev",
-    "daemon": "pnpm --filter @prsense/daemon dev"
+    "daemon": "pnpm --filter @prsense/daemon dev",
+    "prebuild": "tsx scripts/generate-version.ts"
   },
   "keywords": [
     "cli",
@@ -41,5 +42,9 @@
   "engines": {
     "node": ">=22"
   },
-  "bugs": "https://github.com/navxio/prsense/issues"
+  "bugs": "https://github.com/navxio/prsense/issues",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0"
+  }
 }

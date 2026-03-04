@@ -1,5 +1,5 @@
 import { runIndexWorkflow } from "@prsense/workflows";
-import { createEventBus } from "@prsense/core";
+import { createEventBus, PRSENSE_VERSION } from "@prsense/core";
 import type {
   ResolvedConfig,
   CredentialContext,
@@ -27,5 +27,6 @@ export async function runIndexJob(
     ...(input.force !== undefined ? { force: input.force } : {}),
     ...(input.dryRun !== undefined ? { dryRun: input.dryRun } : {}),
     eventBus,
+    version: PRSENSE_VERSION,
   });
 }

@@ -11,8 +11,9 @@ export * from "./diff/DiffProvider.js";
 export * from "./context/index.js";
 export * from "./index/IndexMetadata.js";
 
-export * from "./version.js";
 export * from "./prompt/ReviewPrompt.js";
 export * from "./repository/identity.js";
 
 export * from "./doctor.js";
+
+export * from "./generated/version.js";
