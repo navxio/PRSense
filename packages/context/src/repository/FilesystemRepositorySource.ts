@@ -13,7 +13,7 @@ export class FileSystemRepositorySource implements RepositorySource {
   async listFiles(): Promise<string[]> {
     // Try authoritative git listing first
     try {
-      const output = execSync("git ls-files", {
+      const output = execSync("git -c core.quotepath=false ls-files -z", {
         cwd: this.root,
         encoding: "utf8",
       });
