@@ -1,9 +1,9 @@
 const OTHER_CHANNELS = ["jira", "slack"] as const;
 export type OtherChannel = (typeof OTHER_CHANNELS)[number];
-export type VCSDeliveryChannel = "github" | "gitlab";
+export type PlatformDeliveryChannel = "github" | "gitlab";
 
 export type Delivery = {
-  vcs: VCSDeliveryChannel;
+  platform: PlatformDeliveryChannel;
   other: readonly OtherChannel[];
 };
 

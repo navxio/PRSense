@@ -64,12 +64,12 @@ export function validateCredentialContext(
   /* ------------------------------------------------- */
 
   if (config.mode === "daemon") {
-    if (config.delivery.vcs === "github") {
+    if (config.delivery.platform === "github") {
       if (!creds.github?.available) {
         issues.push({
           level: "error",
           message: "GitHub delivery enabled but credentials missing",
-          path: "delivery.vcs",
+          path: "delivery.platform",
         });
       }
 
@@ -78,17 +78,17 @@ export function validateCredentialContext(
           level: "error",
           message:
             "GitHub webhook secret missing (PRSENSE_GITHUB_WEBHOOK_SECRET)",
-          path: "delivery.vcs",
+          path: "delivery.platform",
         });
       }
     }
 
-    if (config.delivery.vcs === "gitlab") {
+    if (config.delivery.platform === "gitlab") {
       if (!creds.gitlab?.token) {
         issues.push({
           level: "error",
           message: "GitLab delivery enabled but token missing",
-          path: "delivery.vcs",
+          path: "delivery.platform",
         });
       }
 
@@ -97,7 +97,7 @@ export function validateCredentialContext(
           level: "error",
           message:
             "GitLab webhook secret missing (PRSENSE_GITLAB_WEBHOOK_SECRET)",
-          path: "delivery.vcs",
+          path: "delivery.platform",
         });
       }
     }

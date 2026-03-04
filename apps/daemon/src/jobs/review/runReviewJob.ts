@@ -97,28 +97,28 @@ export async function runReviewJob(
     "delivery" in config &&
     result.payload.signals.length > 0
   ) {
-    const vcs = config.delivery.vcs;
+    const platform = config.delivery.platform;
 
-    const reporter = createReporter(vcs, credentials);
+    const reporter = createReporter(platform, credentials);
 
     if (!reporter) {
       logger.warn("delivery.reporter_not_available", {
-        provider: vcs,
+        provider: platform,
       });
     } else {
       try {
         await reporter.deliver(result.payload.signals, {
           targetUrl: input.target,
-          repositoryProvider: vcs,
+          repositoryProvider: platform,
         });
 
         logger.info("delivery.completed", {
-          provider: vcs,
+          provider: platform,
           signalCount: result.payload.signals.length,
         });
       } catch (err) {
         logger.error("delivery.failed", {
-          provider: vcs,
+          provider: platform,
           error: err instanceof Error ? err.message : String(err),
         });
       }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const VcsChannelSchema = z.enum(["github", "gitlab"]);
+const PlatformChannelSchema = z.enum(["github", "gitlab"]);
 const OtherChannelSchema = z.enum(["slack", "jira"]);
 
 export const UserConfigSchema = z.object({
@@ -38,7 +38,7 @@ export const UserConfigSchema = z.object({
 
   delivery: z
     .object({
-      vcs: VcsChannelSchema,
+      platform: PlatformChannelSchema,
       other: z.array(OtherChannelSchema).default([]),
     })
     .optional(),

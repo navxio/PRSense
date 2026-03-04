@@ -16,7 +16,7 @@ import {
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
 
-const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "info";
+const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
 
 const logger = createPinoLogger({
   level: logLevel,

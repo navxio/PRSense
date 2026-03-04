@@ -23,6 +23,4 @@ git:
   baseBranch: trunk
 
 delivery:
-  # used for daemon outputs
-  - github
-  - slack
+  platform: github

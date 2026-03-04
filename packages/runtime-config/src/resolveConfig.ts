@@ -81,13 +81,13 @@ export function resolveConfig(input: ResolveConfigInput): ResolvedConfig {
     return cliConfig;
   } else {
     // daemon mode
-    const inferredVcs =
-      user.delivery?.vcs ??
+    const inferredPlatform =
+      user.delivery?.platform ??
       (repoProvider === "github" || repoProvider === "gitlab"
         ? repoProvider
         : undefined);
 
-    if (!inferredVcs) {
+    if (!inferredPlatform) {
       throw new Error(
         "Daemon mode requires an explicit VCS delivery channel (github or gitlab).",
       );
@@ -97,7 +97,7 @@ export function resolveConfig(input: ResolveConfigInput): ResolvedConfig {
       mode: "daemon",
       ...base,
       delivery: {
-        vcs: inferredVcs,
+        platform: inferredPlatform,
         other: user.delivery?.other ?? [],
       },
     };

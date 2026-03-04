@@ -7,7 +7,7 @@ import type {
   CredentialContext,
 } from "@prsense/runtime-config";
 import { retrieveContext } from "./retrieveContext.js";
-import { PostgresIndexMetadataRepository } from "packages/context/dist/index.js";
+import { PostgresIndexMetadataRepository } from "@prsense/context";
 import { buildReviewPrompt } from "@prsense/core";
 import {
   createOpenAiClient,
