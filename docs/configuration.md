@@ -20,8 +20,6 @@ This ensures:
 - Deterministic layering
 - Clear separation of domain vs runtime concerns
 
----
-
 # Global Configuration (Optional)
 
 Location:
@@ -53,8 +51,6 @@ embeddings:
 
 Repository config overrides global config.
 
----
-
 # Repository Configuration (`prsense.yml`)
 
 Placed at the root of your repository.
@@ -67,8 +63,6 @@ This file defines review behavior:
 - Review thresholds
 - Retrieval limits
 - Delivery channels (daemon mode)
-
----
 
 ## Example
 
@@ -103,8 +97,6 @@ delivery:
   - slack
 ```
 
----
-
 # Configuration Sections Explained
 
 ## `llm`
@@ -122,8 +114,6 @@ Supported providers:
 
 Lower values produce more deterministic output.
 
----
-
 ## `embeddings`
 
 Controls vector embeddings used for indexing and retrieval.
@@ -133,8 +123,6 @@ If changed:
 - Re-indexing is required.
 - Embedding dimensions must match the database schema.
 
----
-
 ## `index`
 
 Controls repository chunking.
@@ -143,8 +131,6 @@ Controls repository chunking.
 - `chunkOverlapChars` — overlap between chunks.
 - `maxFileSizeBytes` — skip large files.
 
----
-
 ## `review`
 
 Controls signal filtering.
@@ -152,15 +138,11 @@ Controls signal filtering.
 - `confidenceThreshold` — minimum confidence.
 - `maxSignals` — maximum number of emitted signals.
 
----
-
 ## `context`
 
 Controls retrieval (RAG).
 
 - `maxChunks` — number of chunks retrieved per review.
-
----
 
 ## `delivery` (Daemon Mode Only)
 
@@ -181,15 +163,11 @@ Rules:
 
 Ignored in CLI mode.
 
----
-
 # Environment Variables
 
 Environment variables configure runtime infrastructure and credentials.
 
 They are never stored in `prsense.yml`.
-
----
 
 ## LLM Credentials
 
@@ -200,15 +178,11 @@ They are never stored in `prsense.yml`.
 | Claude   | `PRSENSE_CLAUDE_API_KEY`         |
 | Ollama   | `PRSENSE_OLLAMA_HOST` (optional) |
 
----
-
 ## Embeddings (OpenAI)
 
 ```
 PRSENSE_OPENAI_API_KEY
 ```
-
----
 
 ## Database
 
@@ -229,8 +203,6 @@ Example:
 postgresql://prsense:prsense@localhost:10000/prsense_dev
 ```
 
----
-
 ## GitHub Delivery
 
 ### Personal Access Token
@@ -249,8 +221,6 @@ PRSENSE_GITHUB_INSTALLATION_ID
 PRSENSE_GITHUB_WEBHOOK_SECRET
 ```
 
----
-
 ## GitLab Delivery
 
 ```
@@ -258,23 +228,17 @@ PRSENSE_GITLAB_TOKEN
 PRSENSE_GITLAB_WEBHOOK_SECRET
 ```
 
----
-
 ## Slack Delivery
 
 ```
 PRSENSE_SLACK_BOT_TOKEN
 ```
 
----
-
 ## Logging
 
 ```
 PRSENSE_LOG_LEVEL=debug | info | warn | error
 ```
-
----
 
 # CLI Mode vs Daemon Mode
 
@@ -290,8 +254,6 @@ Example:
 ```sh
 prsense review .
 ```
-
----
 
 ## Daemon Mode
 
@@ -313,8 +275,6 @@ Daemon refuses to start if:
 - Webhook secret missing
 - Required LLM credentials missing
 
----
-
 # Inspecting Effective Configuration
 
 You can inspect merged configuration:
@@ -331,8 +291,6 @@ This shows:
 - Runtime resolved config
 - Credential availability
 
----
-
 # Defaults
 
 If no configuration is provided:
@@ -342,8 +300,6 @@ If no configuration is provided:
 - Safe chunking defaults applied
 - No delivery enabled
 
----
-
 # Security Notes
 
 - Never commit API keys.
@@ -351,8 +307,6 @@ If no configuration is provided:
 - Prefer GitHub App over PAT in production.
 - Use separate credentials for staging/production.
 - Global config should not contain secrets.
-
----
 
 # Configuration Summary
 

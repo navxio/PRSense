@@ -435,13 +435,13 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 ## ToDo
 
 - [ ] incremental indexing with cache
+- [ ] hybrid retrieval strategy
 - [ ] automated tests
 - [ ] codeberg support
 - [ ] README
   - [ ] Quickstart
   - [ ] Self hosted deployment
   - [ ] update manpage
-- [ ] CI mode
 
 ## Contributing
 
