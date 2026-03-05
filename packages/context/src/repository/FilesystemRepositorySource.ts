@@ -1,3 +1,4 @@
+//packages/context/src/repository/FileSystemRepositorySource.ts
 import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -11,19 +12,34 @@ export class FileSystemRepositorySource implements RepositorySource {
   constructor(private readonly root: string) {}
 
   async listFiles(): Promise<string[]> {
-    // Try authoritative git listing first
     try {
-      const output = execSync("git -c core.quotepath=false ls-files -z", {
-        cwd: this.root,
-        encoding: "utf8",
-      });
+      const output = execSync(
+        "git -c core.quotepath=false ls-files -z --cached --others --exclude-standard",
+        { cwd: this.root },
+      );
 
-      return output
-        .split("\n")
+      const candidates = output
+        .toString("utf8")
+        .split("\0")
         .filter(Boolean)
         .map((relative) => path.join(this.root, relative));
+
+      const files: string[] = [];
+
+      for (const filePath of candidates) {
+        try {
+          const stat = await fs.stat(filePath);
+
+          if (stat.isFile()) {
+            files.push(filePath);
+          }
+        } catch {
+          // ignore broken symlinks or transient paths
+        }
+      }
+
+      return files;
     } catch {
-      // Fallback: not a git repository
       return this.walkDirectory(this.root);
     }
   }
@@ -52,6 +68,11 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
+    const stat = await fs.stat(filePath);
+
+    if (!stat.isFile()) {
+      throw new Error("NOT_A_FILE");
+    }
     const buffer = await fs.readFile(filePath);
 
     // Detect binary via NULL byte

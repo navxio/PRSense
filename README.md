@@ -471,7 +471,7 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 ## ToDo
 
 - [ ] setup concurrency
-- [ ] exclude bundled prsense.yml from indexing
+- [ ] incremental indexing with cache
 - [ ] automated tests
 - [ ] codeberg support
 - [ ] README
