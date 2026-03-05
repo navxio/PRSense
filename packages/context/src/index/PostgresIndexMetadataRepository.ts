@@ -1,5 +1,5 @@
 import pg from "pg";
-import { IndexMetadata } from "@prsense/core";
+import { IndexMetadata, IndexedRepository } from "@prsense/core";
 import { IndexMetadataRepository } from "./IndexMetadataRepository.js";
 
 export class PostgresIndexMetadataRepository implements IndexMetadataRepository {
@@ -122,5 +122,37 @@ export class PostgresIndexMetadataRepository implements IndexMetadataRepository 
         [repositoryProvider, repositoryId],
       );
     });
+  }
+
+  async list(): Promise<IndexedRepository[]> {
+    const client = new pg.Client({
+      connectionString: this.connectionString,
+    });
+
+    await client.connect();
+
+    try {
+      const res = await client.query(`
+        SELECT
+        repository_provider,
+        repository_id,
+        commit_sha,
+        created_at,
+        embedding_provider,
+        embedding_model
+        FROM prsense_index_metadata
+    `);
+
+      return res.rows.map((r) => ({
+        provider: r.repository_provider,
+        repository: r.repository_id,
+        commitSha: r.commit_sha,
+        indexedAt: Number(r.created_at),
+        embeddingProvider: r.embedding_provider,
+        embeddingModel: r.embedding_model,
+      }));
+    } finally {
+      await client.end();
+    }
   }
 }

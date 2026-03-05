@@ -4,3 +4,4 @@ export * from "./gitlabReporter.js";
 export * from "./createReporter.js";
 export * from "./stdoutConfigReporter.js";
 export * from "./stdoutDoctorReporter.js";
+export * from "./stdoutIndexedReposReporter.js";

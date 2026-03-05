@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import path from "node:path";
 
-import { runIndexWorkflow } from "@prsense/workflows";
+import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents, PRSENSE_VERSION } from "@prsense/core";
 import {
@@ -19,7 +19,10 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "@prsense/reporters";
+import {
+  stdoutConfigReporter,
+  stdoutIndexedReposReporter,
+} from "@prsense/reporters";
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")
@@ -27,6 +30,7 @@ export const indexCommand = new Command("index")
   .option("--dry-run", "Show what would be indexed without writing")
   .option("--stats", "Print indexing statistics after completion")
   .option("--chunk-size <n>", "Override chunk size (characters)")
+  .option("--list", "List indexed repositories")
   .action(async (target, options) => {
     try {
       /* ------------------------------------------------- */
@@ -114,6 +118,15 @@ export const indexCommand = new Command("index")
         user: effectiveUser,
         env,
       });
+
+      if (options.list) {
+        const repos = await listIndexedRepositories(resolved);
+
+        await stdoutIndexedReposReporter.report(repos);
+        eventBus.emit(CoreEvents.RunFinished);
+
+        return;
+      }
 
       /* ------------------------------------------------- */
       /* Credentials + Validation                          */
