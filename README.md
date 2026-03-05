@@ -46,8 +46,6 @@ PRSense is not a chat interface for code. It is a review system designed to augm
 - [Contributing](#contributing)
 - [License](#license)
 
----
-
 ## Philosophy
 
 PRSense is built around a few core principles:
@@ -60,8 +58,6 @@ PRSense is built around a few core principles:
 - composability over monoliths
 
 PRSense treats LLMs as reasoning engines, not authorities.
-
----
 
 ## Features
 
@@ -77,8 +73,6 @@ PRSense treats LLMs as reasoning engines, not authorities.
   - terminal summaries
   - GitHub/GitLab pull request comments
 
----
-
 ## Requirements
 
 - Node.Js (22.x) + npm
@@ -86,13 +80,9 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - Ollama(optional)
 - PostgreSQL + pgvector(optional)
 
----
-
 ## Installation
 
 `npm i -g @prsense/cli`
-
----
 
 ## What PRSense Does Not Do
 
@@ -103,10 +93,6 @@ PRSense intentionally avoids actions that reduce developer agency:
 - It does not enforce opinions or style choices
 - It does not act autonomously
 
-PRSense makes reasoning visible, not automatic.
-
----
-
 ## Usage
 
 PRSense is an AI-powered code review engine that can run in two modes:
@@ -115,8 +101,6 @@ PRSense is an AI-powered code review engine that can run in two modes:
 - **Daemon mode** — long-lived HTTP service for automation and webhooks
 
 Both modes use the same core review engine and configuration model.
-
----
 
 ### CLI Mode
 
@@ -165,8 +149,6 @@ prsense setup
 ```
 
 Ensures required infrastructure (database, embeddings, etc.) is available.
-
----
 
 ### Daemon Mode
 
@@ -233,8 +215,6 @@ curl -X POST http://localhost:3000/jobs/index \
   -d '{"target":"https://github.com/owner/repo"}'
 ```
 
----
-
 ### Webhook Endpoints
 
 The daemon supports webhook-triggered reviews.
@@ -259,8 +239,6 @@ Requires: `PRSENSE_GITLAB_WEBHOOK_SECRET`
 
 Supports `merge_request` events.
 
----
-
 ### How It All Fits Together
 
 - **CLI mode** is interactive and developer-focused.
@@ -268,8 +246,6 @@ Supports `merge_request` events.
 - Both share the same configuration, indexing system, review workflow, and validation pipeline.
 
 PRSense is delivery-agnostic — the core engine remains the same.
-
----
 
 ### Typical Workflows
 
@@ -284,13 +260,9 @@ PRSense is delivery-agnostic — the core engine remains the same.
 2. Configure GitHub/GitLab webhook
 3. Reviews trigger automatically on PR/MR updates
 
----
-
 ## Configuration
 
 See [Configuration](./docs/configuration.md)
-
----
 
 ## Design
 
@@ -428,8 +400,6 @@ Domain
 
 ```
 
----
-
 ### Monorepo Layout
 
 ```
@@ -450,15 +420,11 @@ packages/
   bench/ # benchmarking primitives
 ```
 
----
-
 ## Command Reference
 
 A complete command reference is available in:
 
 [docs/man/prsense.1](docs/man/prsense.1)
-
----
 
 ## Project Status
 
@@ -466,11 +432,8 @@ PRSense is under active development.
 
 Interfaces and core concepts are stabilizing, while integrations and performance improvements continue.
 
----
-
 ## ToDo
 
-- [ ] setup concurrency
 - [ ] incremental indexing with cache
 - [ ] automated tests
 - [ ] codeberg support
@@ -480,8 +443,6 @@ Interfaces and core concepts are stabilizing, while integrations and performance
   - [ ] update manpage
 - [ ] CI mode
 
----
-
 ## Contributing
 
 PRs are welcome
@@ -489,8 +450,6 @@ PRs are welcome
 ## Similar Projects
 
 - [pr-agent](https://github.com/<>/<>)
-
----
 
 ## License
 
