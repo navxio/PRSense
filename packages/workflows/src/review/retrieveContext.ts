@@ -62,7 +62,8 @@ export async function retrieveContext(params: {
     chunks: rows.length,
     repoProvider,
     repoName,
-    ...(repoRef ? { repoRef } : {}),
+    minDistance: rows[0]?.distance,
+    maxDistance: rows[rows.length - 1]?.distance,
   });
 
   // -------------------------------------------------

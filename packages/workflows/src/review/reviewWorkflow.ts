@@ -112,25 +112,21 @@ export async function runReviewWorkflow({
         query: retrievalQuery,
         repoProvider: repositoryIdentity.provider,
         repoName: repositoryIdentity.id,
-        ...(revision ? { repoRef: revision } : {}),
         limit: config.context.maxChunks,
         eventBus,
       });
 
-      eventBus.emit(CoreEvents.WorkflowReviewContextRetrieved, {
-        chunks: retrieved.chunks.length,
-      });
+      // context size guard
+      const MAX_CONTEXT_CHARS = 20000;
 
+      let accumulated = "";
       for (const chunk of retrieved.chunks) {
-        eventBus.emit(CoreEvents.WorkflowReviewContextChunkRetrieved, {
-          file: chunk?.metadata?.path,
-          startLine: chunk?.metadata?.lineStart,
-          endLine: chunk?.metadata?.lineEnd,
-          kind: chunk?.metadata?.kind,
-        });
+        if (accumulated.length + chunk.content.length > MAX_CONTEXT_CHARS)
+          break;
+        accumulated += chunk.content + "\n\n";
       }
 
-      contextText = retrieved.chunks.map((c) => c.content).join("\n\n");
+      contextText = accumulated;
 
       eventBus.emit(CoreEvents.WorkflowReviewContextRetrieved, {
         chunks: retrieved.stats.totalChunks,
