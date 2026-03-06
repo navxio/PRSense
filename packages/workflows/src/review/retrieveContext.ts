@@ -1,6 +1,7 @@
 // packages/workflows/src/review/retrieveContext.ts
 
-import type { RetrievedContext } from "@prsense/core";
+import type { RetrievedContext, EventBus, ContextChunk } from "@prsense/core";
+import { CoreEvents } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/runtime-config";
 import { PostgresRagChunkRepository } from "@prsense/context";
 import {
@@ -15,6 +16,7 @@ export async function retrieveContext(params: {
   repoName: string;
   repoRef?: string;
   limit: number;
+  eventBus?: EventBus;
 }): Promise<RetrievedContext> {
   const { config, query, repoProvider, repoName, repoRef, limit } = params;
 
@@ -34,6 +36,10 @@ export async function retrieveContext(params: {
 
   const [queryEmbedding] = await embeddingClient.embed([query]);
 
+  params.eventBus?.emit(CoreEvents.WorkflowReviewContextEmbeddingGenerated, {
+    dimension: queryEmbedding?.length,
+  });
+
   if (!queryEmbedding) {
     throw new Error("Failed to generate query embedding");
   }
@@ -52,12 +58,19 @@ export async function retrieveContext(params: {
     limit,
   });
 
+  params.eventBus?.emit(CoreEvents.WorkflowReviewContextRetrieved, {
+    chunks: rows.length,
+    repoProvider,
+    repoName,
+    ...(repoRef ? { repoRef } : {}),
+  });
+
   // -------------------------------------------------
   // Map to domain objects
   // -------------------------------------------------
 
-  return {
-    chunks: rows.map((row) => ({
+  const chunks: ContextChunk[] = rows.map((row) => {
+    const chunk: ContextChunk = {
       id: row.id,
       source: {
         kind: "file",
@@ -70,7 +83,19 @@ export async function retrieveContext(params: {
         ...(row.lineEnd != null ? { lineEnd: row.lineEnd } : {}),
         ...(row.language != null ? { language: row.language } : {}),
       },
-    })),
+    };
+
+    params.eventBus?.emit(CoreEvents.WorkflowReviewContextChunkRetrieved, {
+      source: chunk.source,
+      metadata: chunk.metadata,
+      distance: row.distance,
+    });
+
+    return chunk;
+  });
+
+  return {
+    chunks,
     stats: {
       totalChunks: rows.length,
       truncated: rows.length === limit,

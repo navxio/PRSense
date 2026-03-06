@@ -103,6 +103,9 @@ export async function runReviewWorkflow({
         ...(metadata?.title ? { title: metadata.title } : {}),
         ...(metadata?.description ? { description: metadata.description } : {}),
       });
+      eventBus.emit(CoreEvents.WorkflowReviewContextQueryBuilt, {
+        preview: retrievalQuery.slice(0, 500),
+      });
 
       const retrieved = await retrieveContext({
         config,
@@ -111,9 +114,29 @@ export async function runReviewWorkflow({
         repoName: repositoryIdentity.id,
         ...(revision ? { repoRef: revision } : {}),
         limit: config.context.maxChunks,
+        eventBus,
       });
 
+      eventBus.emit(CoreEvents.WorkflowReviewContextRetrieved, {
+        chunks: retrieved.chunks.length,
+      });
+
+      for (const chunk of retrieved.chunks) {
+        eventBus.emit(CoreEvents.WorkflowReviewContextChunkRetrieved, {
+          file: chunk?.metadata?.path,
+          startLine: chunk?.metadata?.lineStart,
+          endLine: chunk?.metadata?.lineEnd,
+          kind: chunk?.metadata?.kind,
+        });
+      }
+
       contextText = retrieved.chunks.map((c) => c.content).join("\n\n");
+
+      eventBus.emit(CoreEvents.WorkflowReviewContextRetrieved, {
+        chunks: retrieved.stats.totalChunks,
+        truncated: retrieved.stats.truncated,
+        contextChars: contextText.length,
+      });
     }
 
     // -------------------------------------------------
