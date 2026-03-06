@@ -1,4 +1,5 @@
 // packages/llm/src/providers/claude.ts
+// TODO: rename this to anthropic.ts
 import Anthropic from "@anthropic-ai/sdk";
 import type { TextBlock } from "@anthropic-ai/sdk/resources/messages/messages";
 import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";

@@ -436,8 +436,8 @@ They are never stored in `prsense.yml`.
 | Provider | Variable                         |
 | -------- | -------------------------------- |
 | OpenAI   | `PRSENSE_OPENAI_API_KEY`         |
-| Gemini   | `PRSENSE_GEMINI_API_KEY`         |
-| Claude   | `PRSENSE_CLAUDE_API_KEY`         |
+| Gemini   | `PRSENSE_GOOGLE_API_KEY`         |
+| Claude   | `PRSENSE_ANTHROPIC_API_KEY`      |
 | Ollama   | `PRSENSE_OLLAMA_HOST` (optional) |
 
 ## Embeddings (OpenAI)

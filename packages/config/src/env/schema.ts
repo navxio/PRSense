@@ -5,8 +5,8 @@ export const EnvConfigSchema = z.object({
   PRSENSE_GITHUB_WEBHOOK_SECRET: z.string().optional(),
   PRSENSE_GITLAB_TOKEN: z.string().optional(),
   PRSENSE_DATABASE_URL: z.url().optional(),
-  PRSENSE_GEMINI_API_KEY: z.string().optional(),
-  PRSENSE_CLAUDE_API_KEY: z.string().optional(),
+  PRSENSE_GOOGLE_API_KEY: z.string().optional(),
+  PRSENSE_ANTHROPIC_API_KEY: z.string().optional(),
 
   PRSENSE_GITHUB_TOKEN: z.string().optional(),
   PRSENSE_OPENAI_API_KEY: z.string().optional(),

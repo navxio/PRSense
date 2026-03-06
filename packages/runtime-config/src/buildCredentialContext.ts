@@ -13,17 +13,17 @@ export function buildCredentialContext(env: EnvConfig): CredentialContext {
         }
       : { available: false },
 
-    gemini: env.PRSENSE_GEMINI_API_KEY
+    gemini: env.PRSENSE_GOOGLE_API_KEY
       ? {
           available: true,
-          apiKey: env.PRSENSE_GEMINI_API_KEY,
+          apiKey: env.PRSENSE_GOOGLE_API_KEY,
         }
       : { available: false },
 
-    claude: env.PRSENSE_CLAUDE_API_KEY
+    claude: env.PRSENSE_ANTHROPIC_API_KEY
       ? {
           available: true,
-          apiKey: env.PRSENSE_CLAUDE_API_KEY,
+          apiKey: env.PRSENSE_ANTHROPIC_API_KEY,
         }
       : { available: false },
 
