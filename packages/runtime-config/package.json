@@ -20,6 +20,8 @@
   "dependencies": {
     "@prsense/config": "workspace:*"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
   "sideEffects": false
 }
