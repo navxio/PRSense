@@ -1,8 +1,6 @@
-import { execSync } from "node:child_process";
-import os from "node:os";
-import path from "node:path";
-import fs from "node:fs/promises";
+import { Octokit } from "@octokit/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
+
 import type {
   DiffProvider,
   UnifiedDiff,
@@ -10,72 +8,49 @@ import type {
 } from "@prsense/core";
 
 export class GitHubPrDiffProvider implements DiffProvider {
+  private readonly octokit: Octokit;
+
   constructor(
     private readonly owner: string,
     private readonly repo: string,
     private readonly prNumber: string,
-    private readonly token?: string,
-  ) {}
+    token?: string,
+  ) {
+    this.octokit = new Octokit({
+      auth: token,
+    });
+  }
 
-  private async fetchMetadata(): Promise<{
-    title?: string;
-    description?: string;
-    baseRef?: string;
-  }> {
+  private async fetchMetadata() {
     try {
-      const res = await fetch(
-        `https://api.github.com/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}`,
-        {
-          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
-        },
-      );
+      const { data } = await this.octokit.rest.pulls.get({
+        owner: this.owner,
+        repo: this.repo,
+        pull_number: Number(this.prNumber),
+      });
 
-      if (!res.ok) {
-        return {};
-      }
-
-      const json = (await res.json()) as {
-        title?: string;
-        body?: string;
-        base?: { ref?: string };
+      return {
+        title: data.title ?? undefined,
+        description: data.body ?? undefined,
+        revision: data.head?.sha,
       };
-
-      const metadata: {
-        title?: string;
-        description?: string;
-        baseRef?: string;
-      } = {};
-
-      if (json.title !== undefined) {
-        metadata.title = json.title;
-      }
-
-      if (json.body !== undefined) {
-        metadata.description = json.body;
-      }
-
-      if (json.base?.ref !== undefined) {
-        metadata.baseRef = json.base.ref;
-      }
-
-      return metadata;
     } catch {
       return {};
     }
   }
 
-  private async cloneTemp(): Promise<string> {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "prsense-pr-"));
-
-    const cloneUrl = this.token
-      ? `https://${this.token}@github.com/${this.owner}/${this.repo}.git`
-      : `https://github.com/${this.owner}/${this.repo}.git`;
-
-    execSync(`git clone --depth 50 ${cloneUrl} ${tempDir}`, {
-      stdio: "ignore",
+  private async fetchDiff(): Promise<string> {
+    const { data } = await this.octokit.rest.pulls.get({
+      owner: this.owner,
+      repo: this.repo,
+      pull_number: Number(this.prNumber),
+      mediaType: {
+        format: "diff",
+      },
     });
 
-    return tempDir;
+    // Octokit types this as `unknown` in this case
+    return data as unknown as string;
   }
 
   async load(): Promise<{
@@ -87,33 +62,10 @@ export class GitHubPrDiffProvider implements DiffProvider {
       description?: string;
     };
   }> {
-    const repoRoot = await this.cloneTemp();
-
-    // Fetch PR branch
-    execSync(
-      `git fetch origin pull/${this.prNumber}/head:prsense-pr-${this.prNumber}`,
-      { cwd: repoRoot, stdio: "ignore" },
-    );
-
-    const metadata = await this.fetchMetadata();
-
-    const baseBranch = metadata.baseRef ?? "main";
-
-    // fetch base branch explicitly
-    execSync(`git fetch origin ${baseBranch}`, {
-      cwd: repoRoot,
-      stdio: "ignore",
-    });
-
-    const diffText = execSync(
-      `git diff origin/${baseBranch}...prsense-pr-${this.prNumber}`,
-      { cwd: repoRoot, encoding: "utf8" },
-    );
-
-    const revision = execSync(`git rev-parse prsense-pr-${this.prNumber}`, {
-      cwd: repoRoot,
-      encoding: "utf8",
-    }).trim();
+    const [metadata, diffText] = await Promise.all([
+      this.fetchMetadata(),
+      this.fetchDiff(),
+    ]);
 
     const identity: RepositoryIdentity = {
       provider: "github",
@@ -122,9 +74,14 @@ export class GitHubPrDiffProvider implements DiffProvider {
 
     return {
       diff: parseUnifiedDiff(diffText),
-      revision,
+      revision: metadata.revision ?? "unknown",
       repositoryIdentity: identity,
-      metadata,
+      metadata: {
+        ...(metadata.title !== undefined && { title: metadata.title }),
+        ...(metadata.description !== undefined && {
+          description: metadata.description,
+        }),
+      },
     };
   }
 }

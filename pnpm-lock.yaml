@@ -147,6 +147,9 @@ importers:
 
   packages/context:
     dependencies:
+      '@octokit/rest':
+        specifier: ^22.0.1
+        version: 22.0.1
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
