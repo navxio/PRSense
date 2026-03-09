@@ -1,77 +1,88 @@
-import { execSync } from "node:child_process";
-import os from "node:os";
-import path from "node:path";
-import fs from "node:fs/promises";
+import { Gitlab } from "@gitbeaker/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
+
 import type {
   DiffProvider,
   UnifiedDiff,
   RepositoryIdentity,
 } from "@prsense/core";
 
+type GitLabChange = {
+  old_path: string | null;
+  new_path: string | null;
+  diff: string;
+};
+
 export class GitLabMrDiffProvider implements DiffProvider {
+  private readonly api: InstanceType<typeof Gitlab>;
+
   constructor(
     private readonly group: string,
     private readonly project: string,
     private readonly mrNumber: string,
-    private readonly token?: string,
-  ) {}
-
-  private async cloneTemp(): Promise<string> {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "prsense-mr-"));
-
-    const cloneUrl = this.token
-      ? `https://${this.token}@gitlab.com/${this.group}/${this.project}.git`
-      : `https://gitlab.com/${this.group}/${this.project}.git`;
-
-    execSync(`git clone --depth 1 ${cloneUrl} ${tempDir}`, {
-      stdio: "ignore",
+    token?: string,
+  ) {
+    this.api = new Gitlab({
+      host: "https://gitlab.com",
+      token,
     });
-
-    return tempDir;
   }
+
+  private projectId(): string {
+    return encodeURIComponent(`${this.group}/${this.project}`);
+  }
+
   private async fetchMetadata(): Promise<{
     title?: string;
     description?: string;
+    revision?: string;
   }> {
     try {
-      const encodedProject = encodeURIComponent(
-        `${this.group}/${this.project}`,
+      const mr = await this.api.MergeRequests.show(
+        this.projectId(),
+        Number(this.mrNumber),
       );
-
-      const res = await fetch(
-        `https://gitlab.com/api/v4/projects/${encodedProject}/merge_requests/${this.mrNumber}`,
-        {
-          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
-        },
-      );
-
-      if (!res.ok) {
-        return {};
-      }
-
-      const json = (await res.json()) as {
-        title?: string;
-        description?: string;
-      };
 
       const metadata: {
         title?: string;
         description?: string;
+        revision?: string;
       } = {};
 
-      if (json.title !== undefined) {
-        metadata.title = json.title;
-      }
-
-      if (json.description !== undefined) {
-        metadata.description = json.description;
-      }
+      // GitLab returns string | null
+      if (mr.title != null) metadata.title = mr.title;
+      if (mr.description != null) metadata.description = mr.description;
+      if (mr.sha != null) metadata.revision = mr.sha;
 
       return metadata;
     } catch {
       return {};
     }
+  }
+
+  private async fetchDiff(): Promise<string> {
+    const res = await this.api.MergeRequests.showChanges(
+      this.projectId(),
+      Number(this.mrNumber),
+    );
+
+    const changes = (res.changes ?? []) as GitLabChange[];
+
+    const unified = changes
+      .map((c: GitLabChange) => {
+        const oldPath = c.old_path ?? c.new_path ?? "unknown";
+        const newPath = c.new_path ?? c.old_path ?? "unknown";
+
+        return [
+          `diff --git a/${oldPath} b/${newPath}`,
+          `--- a/${oldPath}`,
+          `+++ b/${newPath}`,
+          c.diff,
+        ].join("\n");
+      })
+      .join("\n");
+
+    return unified;
   }
 
   async load(): Promise<{
@@ -83,36 +94,26 @@ export class GitLabMrDiffProvider implements DiffProvider {
       description?: string;
     };
   }> {
-    const repoRoot = await this.cloneTemp();
-
-    // Fetch MR branch
-    execSync(
-      `git fetch origin merge-requests/${this.mrNumber}/head:prsense-mr-${this.mrNumber}`,
-      { cwd: repoRoot, stdio: "ignore" },
-    );
-
-    // Diff against default branch (origin/HEAD)
-    const diffText = execSync(
-      `git diff origin/HEAD...prsense-mr-${this.mrNumber}`,
-      { cwd: repoRoot, encoding: "utf8" },
-    );
-
-    const revision = execSync(`git rev-parse prsense-mr-${this.mrNumber}`, {
-      cwd: repoRoot,
-      encoding: "utf8",
-    }).trim();
+    const [metadata, diffText] = await Promise.all([
+      this.fetchMetadata(),
+      this.fetchDiff(),
+    ]);
 
     const identity: RepositoryIdentity = {
       provider: "gitlab",
       id: `${this.group}/${this.project}`,
     };
-    const metadata = await this.fetchMetadata();
 
     return {
       diff: parseUnifiedDiff(diffText),
-      revision,
+      revision: metadata.revision ?? "unknown",
       repositoryIdentity: identity,
-      metadata,
+      metadata: {
+        ...(metadata.title !== undefined && { title: metadata.title }),
+        ...(metadata.description !== undefined && {
+          description: metadata.description,
+        }),
+      },
     };
   }
 }

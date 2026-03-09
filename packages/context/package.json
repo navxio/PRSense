@@ -19,6 +19,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@gitbeaker/rest": "^43.8.0",
     "@octokit/rest": "^22.0.1",
     "@prsense/core": "workspace:*",
     "pg": "^8.17.1"
