@@ -67,7 +67,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
   - Idempotent job creation
 - **Diff-first intelligence**, understanding:
   - local changes
-  - pull request diffs
+  - pull request diffs from GitHub, GitLab
 - **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
 - **Flexible outputs** for humans and machines:
   - terminal summaries

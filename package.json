@@ -22,7 +22,7 @@
     "cli:doctor": "pnpm --filter @prsense/cli start -- doctor",
     "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev",
     "daemon": "pnpm --filter @prsense/daemon dev",
-    "prebuild": "tsx scripts/generate-version.ts"
+    "prebuild": "tsx scripts/generateVersion.ts"
   },
   "keywords": [
     "cli",

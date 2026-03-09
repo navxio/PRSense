@@ -4,7 +4,7 @@ import type { Capability } from "../types.js";
 
 export const gitRepositoryCapability: Capability = {
   id: "git-repository",
-  description: "Inside a Git repository",
+  description: "Inside Git repository?",
 
   async check(ctx) {
     // 1️⃣ Check if git is available at all
