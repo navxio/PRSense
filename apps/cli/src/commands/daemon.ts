@@ -1,5 +1,6 @@
 // apps/cli/src/commands/daemon/index.ts
 import { Command } from "commander";
+import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -56,26 +57,53 @@ daemonCommand
 
     if (fs.existsSync(PID_FILE)) {
       const pid = Number(fs.readFileSync(PID_FILE, "utf8"));
+
       if (isProcessRunning(pid)) {
         console.log("Daemon already running.");
         return;
       }
+
+      fs.unlinkSync(PID_FILE);
     }
 
+    const require = createRequire(import.meta.url);
     const daemonBin = require.resolve("@prsense/daemon/dist/index.js");
+
+    const logFile = path.join(STATE_DIR, "daemon.log");
 
     const child = spawn(process.execPath, [daemonBin], {
       detached: !opts.foreground,
-      stdio: opts.foreground ? "inherit" : "ignore",
+      cwd: process.cwd(),
+      stdio: opts.foreground
+        ? "inherit"
+        : ["ignore", fs.openSync(logFile, "a"), fs.openSync(logFile, "a")],
     });
 
     if (!opts.foreground) {
       child.unref();
       fs.writeFileSync(PID_FILE, String(child.pid));
-      console.log("Daemon started.");
+
+      // wait for daemon health
+      for (let i = 0; i < 15; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+
+        if (await checkHealth()) {
+          console.log("Daemon started.");
+          return;
+        }
+
+        if (!isProcessRunning(child.pid!)) {
+          console.error("Daemon failed to start. See logs:");
+          console.error(logFile);
+          fs.unlinkSync(PID_FILE);
+          return;
+        }
+      }
+
+      console.error("Daemon did not become healthy.");
+      console.error("Check logs:", logFile);
     }
   });
-
 daemonCommand.command("stop").action(() => {
   if (!fs.existsSync(PID_FILE)) {
     console.log("Daemon not running.");
