@@ -20,7 +20,6 @@
     "@prsense/context": "workspace:*",
     "@prsense/core": "workspace:*",
     "@prsense/logging": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
     "@prsense/workflows": "workspace:*",
     "@prsense/reporters": "workspace:*",
     "fastify": "^4.26.2",

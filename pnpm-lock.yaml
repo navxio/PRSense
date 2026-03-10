@@ -38,9 +38,6 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../../packages/runtime-config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows
@@ -75,9 +72,6 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../../packages/runtime-config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows
@@ -106,9 +100,6 @@ importers:
 
   packages/bench:
     dependencies:
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../runtime-config
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../workflows
@@ -231,9 +222,6 @@ importers:
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../runtime-config
       pg:
         specifier: ^8.17.1
         version: 8.17.1
@@ -262,9 +250,6 @@ importers:
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../runtime-config
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -280,16 +265,6 @@ importers:
         version: 4.21.0
       typescript:
         specifier: ^5.9.3
-        version: 5.9.3
-
-  packages/runtime-config:
-    dependencies:
-      '@prsense/config':
-        specifier: workspace:*
-        version: link:../config
-    devDependencies:
-      typescript:
-        specifier: ^5.4.0
         version: 5.9.3
 
   packages/workflows:
@@ -309,9 +284,6 @@ importers:
       '@prsense/reporters':
         specifier: workspace:*
         version: link:../reporters
-      '@prsense/runtime-config':
-        specifier: workspace:*
-        version: link:../runtime-config
       pg:
         specifier: ^8.17.1
         version: 8.17.1

@@ -15,8 +15,7 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
-    "@prsense/workflows": "workspace:*",
-    "@prsense/runtime-config": "workspace:*"
+    "@prsense/workflows": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

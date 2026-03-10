@@ -19,7 +19,6 @@
     "@gitbeaker/node": "^35.8.1",
     "@octokit/rest": "^22.0.1",
     "@prsense/core": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
     "chalk": "^5.6.2",
     "ora": "^9.0.0"
   },

@@ -21,7 +21,6 @@
   "dependencies": {
     "pg": "^8.17.1",
     "@prsense/core": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
     "@prsense/context": "workspace:*"
   },
   "devDependencies": {

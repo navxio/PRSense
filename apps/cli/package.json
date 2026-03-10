@@ -39,7 +39,6 @@
     "@prsense/preflight": "workspace:*",
     "@prsense/logging": "workspace:*",
     "@prsense/core": "workspace:*",
-    "@prsense/runtime-config": "workspace:*",
     "@prsense/context": "workspace:*",
     "@prsense/daemon": "workspace:*",
     "commander": "^14.0.2"
