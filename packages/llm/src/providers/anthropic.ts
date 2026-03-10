@@ -1,10 +1,9 @@
-// packages/llm/src/providers/claude.ts
-// TODO: rename this to anthropic.ts
+// packages/llm/src/providers/anthropic.ts
 import Anthropic from "@anthropic-ai/sdk";
 import type { TextBlock } from "@anthropic-ai/sdk/resources/messages/messages";
 import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
 
-export function createClaudeClient(config: {
+export function createAnthropicClient(config: {
   apiKey: string;
   model: string;
   temperature?: number;

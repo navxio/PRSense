@@ -1,12 +1,12 @@
-// packages/llm/src/providers/gemini.ts
+// packages/llm/src/providers/google.ts
 import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
-import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
+import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
 
-export function createGeminiClient(config: {
+export function createGoogleClient(config: {
   apiKey: string;
   model: string;
   temperature?: number;

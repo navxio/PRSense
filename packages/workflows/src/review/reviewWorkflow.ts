@@ -12,8 +12,8 @@ import { buildReviewPrompt } from "@prsense/core";
 import {
   createOpenAiClient,
   createOllamaClient,
-  createGeminiClient,
-  createClaudeClient,
+  createGoogleClient,
+  createAnthropicClient,
   LlmClient,
 } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
@@ -172,7 +172,7 @@ export async function runReviewWorkflow({
           throw new Error("Gemini credentials missing");
         }
 
-        llmClient = createGeminiClient({
+        llmClient = createGoogleClient({
           apiKey,
           model: config.llm.model,
           temperature: config.llm.temperature,
@@ -186,7 +186,7 @@ export async function runReviewWorkflow({
           throw new Error("Claude credentials missing");
         }
 
-        llmClient = createClaudeClient({
+        llmClient = createAnthropicClient({
           apiKey,
           model: config.llm.model,
           temperature: config.llm.temperature,
