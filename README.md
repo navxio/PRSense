@@ -264,6 +264,22 @@ PRSense is delivery-agnostic — the core engine remains the same.
 
 ## Configuration
 
+```
+defaults
+   ↓
+global config
+   ↓
+repo config
+   ↓
+environment variables
+   ↓
+derive runtime fields
+   ↓
+validate
+   ↓
+Resolved Environment
+```
+
 PRSense separates **review behavior** from **runtime infrastructure configuration**.
 
 Configuration is layered and deterministic.
@@ -735,7 +751,6 @@ packages/
   workflows/ # all workflows (cli+daemon)
   preflight/ #executable infa truths and enforcement
   logging/ # structured logging
-  runtime-config/ # runtime config primitives
   bench/ # benchmarking primitives
 ```
 
