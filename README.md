@@ -42,6 +42,7 @@ PRSense is not a chat interface for code. It is a review system designed to augm
 - [Design](#design)
 - [Architecture](#architecture)
 - [Command Reference](#command-reference)
+- [Benchmarks](#benchmarks)
 - [Project Status](#project-status)
 - [Contributing](#contributing)
 - [License](#license)
@@ -72,6 +73,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
+- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See Benchmarks)
 
 ## Requirements
 
@@ -355,8 +357,7 @@ git:
 
 # Daemon mode only
 delivery:
-  - github
-  - slack
+  platform: github # github | gitlab
 ```
 
 ## Configuration Sections Explained
@@ -744,6 +745,8 @@ A complete command reference is available in:
 
 [docs/man/prsense.1](docs/man/prsense.1)
 
+## Benchmarks
+
 ## Project Status
 
 PRSense is under active development.
@@ -757,10 +760,6 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 - [ ] ast based chunking
 - [ ] automated tests
 - [ ] codeberg support
-- [ ] README
-  - [ ] Quickstart
-  - [ ] Self hosted deployment
-  - [ ] update manpage
 
 ## Contributing
 
