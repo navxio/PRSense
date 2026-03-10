@@ -9,6 +9,9 @@ import type {
   CredentialContext,
 } from "@prsense/runtime-config";
 import type { Logger } from "@prsense/logging";
+import { createDeliveryRegistry } from "../../idempotency/deliveryRegistry.js";
+
+type DeliveryRegistry = ReturnType<typeof createDeliveryRegistry>;
 
 export function registerGitLabWebhook(
   app: FastifyInstance,
@@ -16,6 +19,7 @@ export function registerGitLabWebhook(
   config: ResolvedConfig,
   credentials: CredentialContext,
   logger: Logger,
+  deliveryRegistry: DeliveryRegistry,
 ) {
   app.post("/webhooks/gitlab", async (req, reply) => {
     const secret = credentials.gitlab?.webhookSecret;
@@ -31,6 +35,22 @@ export function registerGitLabWebhook(
       reply.status(401).send({ error: "Invalid token" });
       return;
     }
+
+    const deliveryId =
+      (req.headers["x-gitlab-event-uuid"] as string) ?? undefined;
+
+    if (!deliveryId) {
+      reply.status(400).send({ error: "Missing delivery UUID" });
+      return;
+    }
+
+    if (deliveryRegistry.has(deliveryId)) {
+      logger.info("gitlab.webhook.duplicate", { deliveryId });
+      reply.status(200).send({ duplicate: true });
+      return;
+    }
+
+    deliveryRegistry.register(deliveryId);
 
     const payload = req.body as any;
 

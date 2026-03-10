@@ -10,6 +10,9 @@ import type {
   CredentialContext,
 } from "@prsense/runtime-config";
 import type { Logger } from "@prsense/logging";
+import { createDeliveryRegistry } from "../../idempotency/deliveryRegistry.js";
+
+type DeliveryRegistry = ReturnType<typeof createDeliveryRegistry>;
 
 export function registerGitHubWebhook(
   app: FastifyInstance,
@@ -17,6 +20,7 @@ export function registerGitHubWebhook(
   config: ResolvedConfig,
   credentials: CredentialContext,
   logger: Logger,
+  deliveryRegistry: DeliveryRegistry,
 ) {
   app.post(
     "/webhooks/github",
@@ -47,6 +51,21 @@ export function registerGitHubWebhook(
         reply.status(401).send({ error: "Invalid signature" });
         return;
       }
+
+      const deliveryId = req.headers["x-github-delivery"] as string;
+
+      if (!deliveryId) {
+        reply.status(400).send({ error: "Missing delivery id" });
+        return;
+      }
+
+      if (deliveryRegistry.has(deliveryId)) {
+        logger.info("github.webhook.duplicate", { deliveryId });
+        reply.status(200).send({ duplicate: true });
+        return;
+      }
+
+      deliveryRegistry.register(deliveryId);
 
       const event = req.headers["x-github-event"];
 

@@ -9,6 +9,9 @@ import { registerHealthRoutes } from "./http/health.js";
 import { setupGracefulShutdown } from "./shutdown.js";
 import { registerGitHubWebhook } from "./http/webhooks/github.js";
 import { registerGitLabWebhook } from "./http/webhooks/gitlab.js";
+import { createDeliveryRegistry } from "./idempotency/deliveryRegistry.js";
+
+const deliveryRegistry = createDeliveryRegistry();
 
 async function main() {
   const logger = createDaemonLogger();
@@ -43,8 +46,22 @@ async function main() {
 
   registerHealthRoutes(app, logger, config);
   registerJobRoutes(app, jobStore, config, credentials, logger);
-  registerGitHubWebhook(app, jobStore, config, credentials, logger);
-  registerGitLabWebhook(app, jobStore, config, credentials, logger);
+  registerGitHubWebhook(
+    app,
+    jobStore,
+    config,
+    credentials,
+    logger,
+    deliveryRegistry,
+  );
+  registerGitLabWebhook(
+    app,
+    jobStore,
+    config,
+    credentials,
+    logger,
+    deliveryRegistry,
+  );
 
   await app.listen({ port: 3000 });
 
