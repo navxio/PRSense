@@ -2,11 +2,8 @@ import path from "node:path";
 import os from "node:os";
 
 import { loadYamlConfig } from "./loadYamlConfig.js";
-import { loadEnv } from "./loadEnv.js";
 import { deepMerge } from "./merge.js";
 import { defaults } from "./defaults.js";
-import { RuntimeConfigSchema } from "./schema.js";
-import { buildResolvedConfig } from "./buildResolvedConfig.js";
 
 function getGlobalConfigPath(): string {
   const base =
@@ -20,14 +17,7 @@ export function resolveConfig() {
 
   const repoConfig = loadYamlConfig("prsense.yml");
 
-  const env = loadEnv();
+  const merged = deepMerge(deepMerge(defaults, globalConfig), repoConfig);
 
-  const merged = deepMerge(
-    deepMerge(deepMerge(defaults, globalConfig), repoConfig),
-    env,
-  );
-
-  const validated = RuntimeConfigSchema.parse(merged);
-
-  return buildResolvedConfig(validated);
+  return merged;
 }

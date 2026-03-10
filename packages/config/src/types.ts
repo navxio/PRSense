@@ -6,12 +6,12 @@ export type CredentialContext = {
     apiKey?: string;
   };
 
-  gemini?: {
+  google?: {
     available: boolean;
     apiKey?: string;
   };
 
-  claude?: {
+  anthropic?: {
     available: boolean;
     apiKey?: string;
   };
@@ -104,8 +104,9 @@ export type DaemonResolvedConfig = BaseResolvedConfig & {
 export type ResolvedConfig = CliResolvedConfig | DaemonResolvedConfig;
 
 export type ValidationIssue = {
-  severity: "error" | "warning";
+  level: "error" | "warning";
   message: string;
+  path?: string;
 };
 
 export type RuntimeEnvironment = {
