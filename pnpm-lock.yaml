@@ -100,6 +100,15 @@ importers:
 
   packages/bench:
     dependencies:
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
+      '@prsense/context':
+        specifier: workspace:*
+        version: link:../context
+      '@prsense/core':
+        specifier: workspace:*
+        version: link:../core
       '@prsense/workflows':
         specifier: workspace:*
         version: link:../workflows
