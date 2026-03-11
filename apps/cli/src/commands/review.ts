@@ -1,20 +1,9 @@
 // apps/cli/src/commands/review.ts
 import { Command } from "commander";
 import { runReviewWorkflow } from "@prsense/workflows";
-import { createPinoLogger, logEvent } from "@prsense/logging";
+import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import {
-  resolveConfig,
-  validateResolvedConfig,
-  buildCredentialContext,
-  validateCredentialContext,
-} from "@prsense/runtime-config";
-import {
-  loadGlobalConfig,
-  loadRepoConfig,
-  mergeUserConfigs,
-  loadEnvConfig,
-} from "@prsense/config";
+import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -30,10 +19,8 @@ export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
   .action(async (target, options) => {
-    const env = loadEnvConfig();
-
     const logger = createPinoLogger({
-      level: env.PRSENSE_LOG_LEVEL ?? "warn",
+      level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
       pretty: true,
     });
 
@@ -64,13 +51,6 @@ export const reviewCommand = new Command("review")
       // Load Config
       // -------------------------------------------------
 
-      const globalConfig = loadGlobalConfig();
-      const repoConfig = loadRepoConfig(process.cwd());
-      const user = mergeUserConfigs(globalConfig, repoConfig);
-      const env = loadEnvConfig();
-
-      const credentialContext = buildCredentialContext(env);
-
       const repoRoot = path.resolve(target);
 
       const githubPrMatch = target.match(
@@ -85,28 +65,18 @@ export const reviewCommand = new Command("review")
         : gitlabMrMatch
           ? "gitlab"
           : "filesystem";
-      const resolved = resolveConfig({
-        mode: "cli",
-        repoRoot,
-        repoProvider,
-        user,
-        env,
+
+      const env = resolveEnvironment("cli", {
+        root: repoRoot,
+        provider: repoProvider,
       });
 
-      const domainValidation = validateResolvedConfig(resolved);
-      const credentialIssues = validateCredentialContext(
-        resolved,
-        credentialContext,
-      );
-
-      const issues = [...domainValidation.issues, ...credentialIssues];
-
-      if (issues.some((i) => i.level === "error")) {
+      if (env.issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter.report({ issues });
+        await stdoutConfigReporter.report({ issues: env.issues });
         process.exit(1);
       }
 
@@ -141,8 +111,8 @@ export const reviewCommand = new Command("review")
       // -------------------------------------------------
 
       const result = await runReviewWorkflow({
-        config: resolved,
-        credentials: credentialContext,
+        config: env.config,
+        credentials: env.credentials,
         diffProvider,
         eventBus,
       });

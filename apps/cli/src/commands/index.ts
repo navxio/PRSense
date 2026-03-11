@@ -2,20 +2,9 @@ import { Command } from "commander";
 import path from "node:path";
 
 import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
-import { createPinoLogger, logEvent } from "@prsense/logging";
+import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents, PRSENSE_VERSION } from "@prsense/core";
-import {
-  resolveConfig,
-  validateResolvedConfig,
-  buildCredentialContext,
-  validateCredentialContext,
-} from "@prsense/runtime-config";
-import {
-  loadGlobalConfig,
-  loadRepoConfig,
-  mergeUserConfigs,
-  loadEnvConfig,
-} from "@prsense/config";
+import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -37,13 +26,8 @@ export const indexCommand = new Command("index")
       /* Load Config                                       */
       /* ------------------------------------------------- */
 
-      const globalConfig = loadGlobalConfig();
-      const repoConfig = loadRepoConfig(process.cwd());
-      const user = mergeUserConfigs(globalConfig, repoConfig);
-      const env = loadEnvConfig();
-
       const logger = createPinoLogger({
-        level: env.PRSENSE_LOG_LEVEL ?? "warn",
+        level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
         pretty: true,
       });
 
@@ -85,39 +69,15 @@ export const indexCommand = new Command("index")
       const repoRoot =
         repoProvider === "filesystem" ? path.resolve(target) : target;
 
+      const env = resolveEnvironment("cli", {
+        root: repoRoot,
+        provider: repoProvider,
+      });
+      const resolved = env.config;
+
       /* ------------------------------------------------- */
       /* CLI Overrides (Before Resolve)                    */
       /* ------------------------------------------------- */
-
-      let effectiveUser = user;
-
-      if (options.chunkSize) {
-        const chunkSize = Number(options.chunkSize);
-        if (Number.isNaN(chunkSize) || chunkSize <= 0) {
-          console.error("--chunk-size must be a positive number");
-          process.exit(1);
-        }
-
-        effectiveUser = {
-          ...user,
-          index: {
-            ...user.index,
-            chunkSizeChars: chunkSize,
-          },
-        };
-      }
-
-      /* ------------------------------------------------- */
-      /* Resolve Config                                    */
-      /* ------------------------------------------------- */
-
-      const resolved = resolveConfig({
-        mode: "cli",
-        repoRoot,
-        repoProvider,
-        user: effectiveUser,
-        env,
-      });
 
       if (options.list) {
         const repos = await listIndexedRepositories(resolved);
@@ -128,23 +88,12 @@ export const indexCommand = new Command("index")
         return;
       }
 
-      /* ------------------------------------------------- */
-      /* Credentials + Validation                          */
-      /* ------------------------------------------------- */
-
-      const credentials = buildCredentialContext(env);
-
-      const domainValidation = validateResolvedConfig(resolved);
-      const credentialIssues = validateCredentialContext(resolved, credentials);
-
-      const issues = [...domainValidation.issues, ...credentialIssues];
-
-      if (issues.some((i) => i.level === "error")) {
+      if (env.issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter.report({ issues });
+        await stdoutConfigReporter.report({ issues: env.issues });
         process.exit(1);
       }
 
@@ -154,7 +103,7 @@ export const indexCommand = new Command("index")
 
       const result = await runIndexWorkflow({
         config: resolved,
-        credentials,
+        credentials: env.credentials,
         target,
         force: Boolean(options.force),
         dryRun: Boolean(options.dryRun),

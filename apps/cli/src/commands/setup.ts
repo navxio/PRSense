@@ -1,13 +1,6 @@
 import { Command } from "commander";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveConfig, validateResolvedConfig } from "@prsense/runtime-config";
-import {
-  loadGlobalConfig,
-  loadRepoConfig,
-  mergeUserConfigs,
-  loadEnvConfig,
-} from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -15,6 +8,7 @@ import { stdoutConfigReporter } from "@prsense/reporters";
 
 import { runSetupWorkflow } from "@prsense/workflows";
 import type { Capability } from "@prsense/preflight";
+import { resolveEnvironment } from "@prsense/config";
 
 import {
   postgresCapability,
@@ -61,27 +55,17 @@ export const setupCommand = new Command("setup")
       // -------------------------------------------------
 
       const cwd = process.cwd();
-      const globalConfig = loadGlobalConfig();
-      const repoConfig = loadRepoConfig(cwd);
-      const user = mergeUserConfigs(globalConfig, repoConfig);
-      const env = loadEnvConfig();
-
-      const resolved = resolveConfig({
-        mode: "cli",
-        repoRoot: cwd,
-        repoProvider: "filesystem",
-        user,
-        env,
+      const env = resolveEnvironment("cli", {
+        root: cwd,
+        provider: "filesystem",
       });
 
-      const validation = validateResolvedConfig(resolved);
-
-      if (!validation.valid) {
+      if (env.issues.length > 0) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
-        await stdoutConfigReporter.report({ issues: validation.issues });
+        await stdoutConfigReporter.report({ issues: env.issues });
         process.exit(1);
       }
 
@@ -99,7 +83,7 @@ export const setupCommand = new Command("setup")
       const result = await runSetupWorkflow({
         capabilities,
         ctx: {
-          config: resolved,
+          config: env.config,
           env: process.env,
           cwd,
         },

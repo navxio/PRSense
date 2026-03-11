@@ -5,13 +5,7 @@ import { runDoctorWorkflow } from "@prsense/workflows";
 import { stdoutDoctorReporter, stdoutConfigReporter } from "@prsense/reporters";
 import { createPinoLogger, logEvent } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveConfig, validateResolvedConfig } from "@prsense/runtime-config";
-import {
-  loadGlobalConfig,
-  loadRepoConfig,
-  mergeUserConfigs,
-  loadEnvConfig,
-} from "@prsense/config";
+import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -49,30 +43,21 @@ export const doctorCommand = new Command("doctor")
     });
 
     try {
-      const globalConfig = loadGlobalConfig();
-      const repoConfig = loadRepoConfig(process.cwd());
-      const user = mergeUserConfigs(globalConfig, repoConfig);
-      const env = loadEnvConfig();
-      const resolved = resolveConfig({
-        mode: "cli",
-        repoRoot: process.cwd(),
-        repoProvider: "filesystem",
-        user,
-        env,
+      const env = resolveEnvironment("cli", {
+        root: ".",
+        provider: "filesystem",
       });
-
-      const validation = validateResolvedConfig(resolved);
-      if (!validation.valid) {
+      if (env.issues.length > 0) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
 
         await stdoutConfigReporter.report({
-          issues: validation.issues,
+          issues: env.issues,
         });
         process.exit(1);
       }
-      const result = await runDoctorWorkflow({ config: resolved, eventBus });
+      const result = await runDoctorWorkflow({ config: env.config, eventBus });
 
       await stdoutDoctorReporter.report(result);
 
