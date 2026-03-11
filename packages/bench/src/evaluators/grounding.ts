@@ -1,18 +1,17 @@
-import type { BenchResult } from "../types.js";
+import type { BenchRun } from "../types.js";
 
-export function evaluateGrounding(
-  validFiles: Set<string>,
-  results: BenchResult[],
-) {
+export function evaluateGrounding(validFiles: Set<string>, runs: BenchRun[]) {
   let hallucinated = 0;
 
-  for (const r of results) {
-    for (const s of r.signals) {
-      if (!validFiles.has(s.file)) {
+  for (const run of runs) {
+    for (const signal of run.signals) {
+      if (!validFiles.has(signal.file)) {
         hallucinated++;
       }
     }
   }
 
-  return { hallucinated };
+  return {
+    hallucinated,
+  };
 }

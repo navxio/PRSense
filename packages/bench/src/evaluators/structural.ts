@@ -1,12 +1,15 @@
-import type { BenchResult } from "../types.js";
+import type { BenchRun } from "../types.js";
 
-export function evaluateStructural(results: BenchResult[]) {
+export function evaluateStructural(runs: BenchRun[]) {
   let failures = 0;
   let empty = 0;
 
-  for (const r of results) {
-    if (r.outcome === "failure") failures++;
-    if (r.signals.length === 0) empty++;
+  for (const run of runs) {
+    if (run.outcome !== "success") failures++;
+
+    if (run.signals.length === 0) {
+      empty++;
+    }
   }
 
   return {
