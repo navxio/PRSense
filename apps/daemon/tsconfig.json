@@ -28,7 +28,6 @@
     { "path": "../../packages/core" },
     { "path": "../../packages/config" },
     { "path": "../../packages/context" },
-    { "path": "../../packages/runtime-config" },
     { "path": "../../packages/workflows" },
     { "path": "../../packages/preflight" },
     { "path": "../../packages/logging" },

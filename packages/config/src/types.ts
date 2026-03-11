@@ -114,3 +114,5 @@ export type RuntimeEnvironment = {
   credentials: CredentialContext;
   issues: ValidationIssue[];
 };
+
+export type RuntimeMode = "cli" | "daemon";

@@ -2,10 +2,7 @@ import { randomUUID } from "crypto";
 import type { FastifyInstance } from "fastify";
 
 import type { JobStore } from "../jobs/store.js";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import type { Logger } from "@prsense/logging";
 
 import { runJob } from "../jobs/runJob.js";

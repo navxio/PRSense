@@ -1,9 +1,6 @@
 import { runIndexWorkflow } from "@prsense/workflows";
 import { createEventBus, PRSENSE_VERSION } from "@prsense/core";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import type { Logger } from "@prsense/logging";
 import type { IndexJobInput } from "./types.js";
 

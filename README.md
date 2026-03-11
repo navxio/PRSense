@@ -773,8 +773,9 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 - [ ] incremental indexing with cache
 - [ ] hybrid retrieval strategy
 - [ ] ast based chunking
-- [ ] automated tests
 - [ ] codeberg support
+- [ ] multiple embedding dimensions
+- [ ] automated tests
 
 ## Contributing
 

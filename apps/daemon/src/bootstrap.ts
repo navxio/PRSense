@@ -8,7 +8,7 @@ import {
   validateCredentialContext,
   type ResolvedConfig,
   type CredentialContext,
-} from "@prsense/runtime-config";
+} from "@prsense/config;
 
 export type DaemonContext = {
   config: ResolvedConfig;

@@ -6,10 +6,7 @@ import {
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
 } from "@prsense/context";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import type { Logger } from "@prsense/logging";
 import type { ReviewJobInput } from "./types.js";
 import { createReporter } from "@prsense/reporters";

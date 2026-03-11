@@ -4,10 +4,7 @@ import type { JobStore } from "../../jobs/store.js";
 import { randomUUID } from "node:crypto";
 import { runJob } from "../../jobs/runJob.js";
 import { runReviewJob } from "../../jobs/review/runReviewJob.js";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import type { Logger } from "@prsense/logging";
 import { createDeliveryRegistry } from "../../idempotency/deliveryRegistry.js";
 

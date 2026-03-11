@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { Logger } from "@prsense/logging";
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type { ResolvedConfig } from "@prsense/config";
 import pg from "pg";
 
 export function registerHealthRoutes(
