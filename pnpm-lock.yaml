@@ -216,6 +216,9 @@ importers:
 
   packages/preflight:
     dependencies:
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
       '@prsense/context':
         specifier: workspace:*
         version: link:../context
@@ -247,6 +250,9 @@ importers:
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
       '@prsense/core':
         specifier: workspace:*
         version: link:../core
@@ -269,6 +275,9 @@ importers:
 
   packages/workflows:
     dependencies:
+      '@prsense/config':
+        specifier: workspace:*
+        version: link:../config
       '@prsense/context':
         specifier: workspace:*
         version: link:../context

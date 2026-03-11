@@ -1,4 +1,4 @@
-import type { ConfigValidationIssue } from "@prsense/runtime-config";
+import type { ValidationIssue as ConfigValidationIssue } from "@prsense/config";
 import type { OutputReporter } from "./types.js";
 
 export type ConfigValidationResult = {

@@ -1,7 +1,7 @@
 import type { DeliveryReporter } from "./types.js";
 import { GitHubReporter } from "./githubReporter.js";
 import { GitLabReporter } from "./gitlabReporter.js";
-import type { CredentialContext } from "@prsense/runtime-config";
+import type { CredentialContext } from "@prsense/config";
 
 export function createReporter(
   provider: "github" | "gitlab",

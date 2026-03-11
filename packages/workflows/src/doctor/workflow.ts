@@ -1,5 +1,5 @@
 // packages/workflows/src/doctor/workflow.ts
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type { ResolvedConfig } from "@prsense/config";
 import type { EventBus } from "@prsense/core";
 import type { DoctorWorkflowResult, DiagnosticCheck } from "@prsense/core";
 

@@ -7,22 +7,17 @@ import {
   GitHubRepositorySource,
   PostgresIndexMetadataRepository,
   GitLabRepositorySource,
-} from "@prsense/context";
-import type { IndexWorkflowResult } from "./types.js";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
-import {
-  createOpenAiEmbeddingClient,
-  createOllamaEmbeddingClient,
-} from "@prsense/llm";
-import { PostgresRagChunkRepository } from "@prsense/context";
-import {
+  PostgresRagChunkRepository,
   createCharChunker,
   detectKind,
   detectLanguage,
 } from "@prsense/context";
+import type { IndexWorkflowResult } from "./types.js";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
+import {
+  createOpenAiEmbeddingClient,
+  createOllamaEmbeddingClient,
+} from "@prsense/llm";
 
 //TODO: modularise this
 export async function runIndexWorkflow({

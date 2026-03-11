@@ -2,7 +2,7 @@
 
 import type { RetrievedContext, EventBus, ContextChunk } from "@prsense/core";
 import { CoreEvents } from "@prsense/core";
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type { ResolvedConfig } from "@prsense/config";
 import { PostgresRagChunkRepository } from "@prsense/context";
 import {
   createOpenAiEmbeddingClient,

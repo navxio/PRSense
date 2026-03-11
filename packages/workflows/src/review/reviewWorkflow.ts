@@ -1,14 +1,9 @@
 // packages/workflows/src/review/reviewWorkflow.ts
 
-import { CoreEvents, EventBus } from "@prsense/core";
+import { CoreEvents, EventBus, buildReviewPrompt } from "@prsense/core";
 import type { ReviewSignal, DiffProvider } from "@prsense/core";
-import type {
-  ResolvedConfig,
-  CredentialContext,
-} from "@prsense/runtime-config";
-import { retrieveContext } from "./retrieveContext.js";
+import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import { PostgresIndexMetadataRepository } from "@prsense/context";
-import { buildReviewPrompt } from "@prsense/core";
 import {
   createOpenAiClient,
   createOllamaClient,
@@ -20,6 +15,7 @@ import type { ReviewWorkflowResult } from "./types.js";
 import { validateReviewOutput } from "./validateReviewOutput.js";
 import { buildDiffEmbeddingQuery } from "./buildDiffEmbeddingQuery.js";
 import { dedupeSignals } from "./dedupeSignals.js";
+import { retrieveContext } from "./retrieveContext.js";
 import { normalizeSignal } from "./normalizeSignal.js";
 import { extractJson } from "./extractJson.js";
 
@@ -167,9 +163,9 @@ export async function runReviewWorkflow({
       }
 
       case "google": {
-        const apiKey = credentials.gemini?.apiKey;
+        const apiKey = credentials.google?.apiKey;
         if (!apiKey) {
-          throw new Error("Gemini credentials missing");
+          throw new Error("Google credentials missing");
         }
 
         llmClient = createGoogleClient({
@@ -181,9 +177,9 @@ export async function runReviewWorkflow({
       }
 
       case "anthropic": {
-        const apiKey = credentials.claude?.apiKey;
+        const apiKey = credentials.anthropic?.apiKey;
         if (!apiKey) {
-          throw new Error("Claude credentials missing");
+          throw new Error("Anthropic credentials missing");
         }
 
         llmClient = createAnthropicClient({

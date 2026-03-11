@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from "@prsense/runtime-config";
+import type { ResolvedConfig } from "@prsense/config";
 import { PostgresIndexMetadataRepository } from "@prsense/context";
 import type { IndexedRepository } from "@prsense/core";
 

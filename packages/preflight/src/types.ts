@@ -1,5 +1,5 @@
 // packages/preflight/src/types.ts
-import { ResolvedConfig } from "@prsense/runtime-config";
+import { ResolvedConfig } from "@prsense/config";
 
 export type CapabilityStatus =
   | { kind: "ready" }
