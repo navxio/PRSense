@@ -35,7 +35,7 @@ export const benchConfig: ResolvedConfig = {
   },
 
   database: {
-    url: "abcd",
+    url: "postgresql://prsense:prsense@localhost:10000/prsense_dev",
     mode: "bundled",
   },
 };

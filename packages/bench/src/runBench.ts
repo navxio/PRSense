@@ -71,4 +71,5 @@ export async function runBench() {
 
   console.log("\nBenchmark Complete");
   console.log(`Results written to: ${file}`);
+  process.exit(0);
 }
