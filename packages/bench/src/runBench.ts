@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { modelMatrix } from "./models.js";
 import { runScenario } from "./runner/runScenario.js";
 import { writeResults } from "./persistence/writeResults.js";
+import { asyncPool } from "./utils/asyncPool.js";
 
 import type { BenchReport, BenchmarkScenario } from "./types.js";
 
@@ -36,6 +37,8 @@ async function loadScenarios(): Promise<BenchmarkScenario[]> {
   return scenarios;
 }
 
+const MODEL_CONCURRENCY = Number(process.env.PRSENSE_BENCH_CONCURRENCY) || 3;
+
 export async function runBench() {
   const scenarios = await loadScenarios();
 
@@ -46,12 +49,17 @@ export async function runBench() {
   for (const scenario of scenarios) {
     console.log(`\nScenario: ${scenario.id}`);
 
-    for (const model of modelMatrix) {
-      console.log(`Running ${scenario.id} → ${model.model}`);
+    const scenarioResults = await asyncPool(
+      MODEL_CONCURRENCY,
+      modelMatrix,
+      async (model) => {
+        console.log(`Running ${scenario.id} → ${model.model}`);
 
-      const result = await runScenario(scenario, model);
-      results.push(result);
-    }
+        return runScenario(scenario, model);
+      },
+    );
+
+    results.push(...scenarioResults);
   }
 
   const report: BenchReport = {

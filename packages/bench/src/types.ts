@@ -1,3 +1,5 @@
+// packages/bench/src/types.ts
+
 export type BenchmarkScenario = {
   id: string;
   description: string;
@@ -23,6 +25,8 @@ export type BenchRun = {
   outcome: "success" | "failure" | "timeout";
   signals: BenchSignal[];
   error?: string;
+  tokensPrompt?: number;
+  tokensCompletion?: number;
 };
 
 export type ModelScenarioResult = {
@@ -38,3 +42,8 @@ export type BenchReport = {
   gitSha?: string;
   results: ModelScenarioResult[];
 };
+
+/**
+ * Backward-compatible alias used by earlier benchmark utilities.
+ */
+export type BenchResult = ModelScenarioResult;
