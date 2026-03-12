@@ -7,12 +7,19 @@ export type LlmPrompt = {
   user: string;
 };
 
+export type LlmUsage = {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+};
+
 /**
  * Raw LLM output.
  * Parsing happens in the engine.
  */
 export type LlmResponse = {
   text: string;
+  usage?: LlmUsage;
 };
 
 export type OllamaConfig = {

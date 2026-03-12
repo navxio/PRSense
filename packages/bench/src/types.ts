@@ -25,8 +25,12 @@ export type BenchRun = {
   outcome: "success" | "failure" | "timeout";
   signals: BenchSignal[];
   error?: string;
-  tokensPrompt?: number;
-  tokensCompletion?: number;
+
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 };
 
 export type ModelScenarioResult = {
