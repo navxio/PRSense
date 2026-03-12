@@ -7,8 +7,20 @@ import type {
   RepositoryIdentity,
 } from "@prsense/core";
 
+type LoadResult = {
+  diff: UnifiedDiff;
+  revision: string;
+  repositoryIdentity: RepositoryIdentity;
+  metadata?: {
+    title?: string;
+    description?: string;
+  };
+};
+
 export class GitHubPrDiffProvider implements DiffProvider {
   private readonly octokit: Octokit;
+
+  private cachedLoad?: Promise<LoadResult>;
 
   constructor(
     private readonly owner: string,
@@ -16,18 +28,41 @@ export class GitHubPrDiffProvider implements DiffProvider {
     private readonly prNumber: string,
     token?: string,
   ) {
-    this.octokit = new Octokit({
-      auth: token,
-    });
+    this.octokit = new Octokit({ auth: token });
+  }
+
+  private async retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+    let lastError: unknown;
+
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        lastError = err;
+
+        const status = err?.status;
+
+        if (![502, 503, 504].includes(status)) {
+          throw err;
+        }
+
+        const delay = 300 * 2 ** i;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    throw lastError;
   }
 
   private async fetchMetadata() {
     try {
-      const { data } = await this.octokit.rest.pulls.get({
-        owner: this.owner,
-        repo: this.repo,
-        pull_number: Number(this.prNumber),
-      });
+      const { data } = await this.retry(() =>
+        this.octokit.rest.pulls.get({
+          owner: this.owner,
+          repo: this.repo,
+          pull_number: Number(this.prNumber),
+        }),
+      );
 
       return {
         title: data.title ?? undefined,
@@ -40,28 +75,27 @@ export class GitHubPrDiffProvider implements DiffProvider {
   }
 
   private async fetchDiff(): Promise<string> {
-    const { data } = await this.octokit.rest.pulls.get({
-      owner: this.owner,
-      repo: this.repo,
-      pull_number: Number(this.prNumber),
-      mediaType: {
-        format: "diff",
-      },
-    });
+    const { data } = await this.retry(() =>
+      this.octokit.rest.pulls.get({
+        owner: this.owner,
+        repo: this.repo,
+        pull_number: Number(this.prNumber),
+        mediaType: { format: "diff" },
+      }),
+    );
 
-    // Octokit types this as `unknown` in this case
     return data as unknown as string;
   }
 
-  async load(): Promise<{
-    diff: UnifiedDiff;
-    revision: string;
-    repositoryIdentity: RepositoryIdentity;
-    metadata?: {
-      title?: string;
-      description?: string;
-    };
-  }> {
+  async load(): Promise<LoadResult> {
+    if (!this.cachedLoad) {
+      this.cachedLoad = this._load();
+    }
+
+    return this.cachedLoad;
+  }
+
+  private async _load(): Promise<LoadResult> {
     const [metadata, diffText] = await Promise.all([
       this.fetchMetadata(),
       this.fetchDiff(),
