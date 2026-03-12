@@ -24,7 +24,6 @@ PRSense separates review logic from delivery. The same core engine can run:
 - Locally via CLI
 - As a long-lived daemon
 - Behind webhooks
-- Inside CI pipelines
 
 This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
 
@@ -73,7 +72,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
-- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See Benchmarks)
+- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks))
 
 ## Requirements
 
@@ -154,7 +153,7 @@ Ensures required infrastructure (database, embeddings, etc.) is available.
 
 ### Daemon Mode
 
-The daemon runs PRSense as a long-lived HTTP service, intended for automation, CI integration, and webhook-based review.
+The daemon runs PRSense as a long-lived HTTP service, intended for automation, and webhook-based review.
 
 #### Start the daemon
 
@@ -674,7 +673,7 @@ The shell is free to be messy. The core is not.
 
 This architecture allows PRSense to:
 
-- run locally, in CI, or as a service
+- run locally, or as a service
 - swap LLM providers without touching review logic
 - add new retrieval strategies without rewriting the engine
 - remain understandable as complexity grows
@@ -723,7 +722,7 @@ PRSense follows a hexagonal architecture:
 ```
 
 
-CLI / Daemon / CI / GitHub App
+CLI / Daemon / GitHub App
 ─────────────── execution environments
 Workflows
 ─────────────── orchestration

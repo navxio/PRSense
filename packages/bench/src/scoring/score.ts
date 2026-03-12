@@ -1,3 +1,4 @@
+// packages/bench/src/scoring/score.ts
 export function computeScore(metrics: Record<string, number>) {
   const failures = metrics.failures ?? 0;
   const hallucinated = metrics.hallucinated ?? 0;

@@ -1,3 +1,4 @@
+// packages/bench/src/runner/runScenario.ts
 import type {
   BenchmarkScenario,
   ModelConfig,

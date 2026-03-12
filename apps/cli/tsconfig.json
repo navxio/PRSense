@@ -16,8 +16,7 @@
     { "path": "../../packages/reporters" },
     { "path": "../../packages/logging" },
     { "path": "../../packages/workflows" },
-    { "path": "../../packages/preflight" },
-    { "path": "../../packages/runtime-config" }
+    { "path": "../../packages/preflight" }
   ],
   "include": ["src"]
 }
