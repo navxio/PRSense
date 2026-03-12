@@ -8,7 +8,7 @@ export type BenchmarkScenario = {
 };
 
 export type ModelConfig = {
-  provider: "ollama";
+  provider: "ollama" | "anthropic" | "openai" | "google";
   model: string;
   temperature: number;
 };

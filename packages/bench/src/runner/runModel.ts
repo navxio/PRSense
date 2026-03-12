@@ -19,6 +19,7 @@ export async function runModelOnScenario(
 ): Promise<BenchRun> {
   const start = Date.now();
 
+  const GH_TOKEN = process.env.PRSENSE_GITHUB_BENCH_TOKEN;
   try {
     const runtimeEnv = resolveEnvironment("cli", {
       root: ".",
@@ -41,6 +42,7 @@ export async function runModelOnScenario(
       PRData.owner,
       PRData.repo,
       String(PRData.prNumber),
+      GH_TOKEN,
     );
 
     const workflowPromise = runReviewWorkflow({
