@@ -13,49 +13,54 @@ export function createGoogleClient(config: {
 }): LlmClient {
   const genAI = new GoogleGenerativeAI(config.apiKey);
 
-  const model = genAI.getGenerativeModel({
-    model: config.model,
-    safetySettings: [
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_NONE,
-      },
-    ],
-  });
-
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
       const { prompt, temperature = 0.05 } = req;
 
-      try {
-        const res = await model.generateContent({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `${prompt.system}\n\n${prompt.user}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature,
+      const model = genAI.getGenerativeModel({
+        model: config.model,
+        systemInstruction: prompt.system,
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
           },
-        });
+        ],
+      });
 
-        const text = res.response.text();
+      const res = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt.user }],
+          },
+        ],
+        generationConfig: {
+          temperature,
+          maxOutputTokens: 1024,
+        },
+      });
 
-        if (!text) {
-          throw new Error("Gemini returned empty response");
-        }
+      const candidate = res.response.candidates?.[0];
 
-        return { text };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+      const text =
+        candidate?.content?.parts
+          ?.map((p) => ("text" in p ? p.text : ""))
+          .join("") ?? "";
 
-        throw new Error(`Gemini provider error: ${message}`);
+      if (!text) {
+        throw new Error("Gemini returned empty response");
       }
+
+      return {
+        text,
+        usage: {
+          promptTokens: res.response.usageMetadata?.promptTokenCount ?? 0,
+          completionTokens:
+            res.response.usageMetadata?.candidatesTokenCount ?? 0,
+          totalTokens: res.response.usageMetadata?.totalTokenCount ?? 0,
+        },
+      };
     },
   };
 }
