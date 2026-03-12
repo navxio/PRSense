@@ -1,11 +1,17 @@
+// packages/bench/src/runner/runModel.ts
 import type { BenchmarkScenario, ModelConfig, BenchRun } from "../types.js";
+import { resolveEnvironment } from "@prsense/config";
 
 import { runReviewWorkflow } from "@prsense/workflows";
-import { loadConfig } from "@prsense/config";
-import { makeDiffProvider } from "@prsense/context";
-import { silentEventBus } from "@prsense/runtime-config";
+import { GitHubPrDiffProvider } from "@prsense/context";
+
+import { benchConfig } from "../benchConfig.js";
+import { silentEventBus } from "../utils/silentEventBus.js";
+import { extractPRDetails, type PRDetails } from "../utils/PR.js";
 
 const TIMEOUT_MS = 60_000;
+
+const eventBus = silentEventBus();
 
 export async function runModelOnScenario(
   model: ModelConfig,
@@ -14,63 +20,64 @@ export async function runModelOnScenario(
   const start = Date.now();
 
   try {
-    // 1️⃣ Load base config
-    const baseConfig = await loadConfig({
-      cwd: process.cwd(),
+    const runtimeEnv = resolveEnvironment("cli", {
+      root: ".",
+      provider: "github",
     });
 
-    // 2️⃣ Override model deterministically
     const config = {
-      ...baseConfig,
+      ...benchConfig,
       llm: {
-        ...baseConfig.llm,
+        ...benchConfig.llm,
         provider: model.provider,
         model: model.model,
         temperature: model.temperature,
       },
     };
 
-    // 3️⃣ Build diff provider
-    const diffProvider = await makeDiffProvider({
-      target: scenario.reviewTarget,
-      cwd: process.cwd(),
+    const PRData: PRDetails = extractPRDetails(scenario.reviewTarget);
+
+    const diffProvider = new GitHubPrDiffProvider(
+      PRData.owner,
+      PRData.repo,
+      String(PRData.prNumber),
+    );
+
+    const workflowPromise = runReviewWorkflow({
+      config,
+      credentials: runtimeEnv.credentials,
+      diffProvider,
+      eventBus,
     });
 
-    const eventBus = silentEventBus();
-
-    // 4️⃣ Execute with timeout
     const result = await Promise.race([
-      runReviewWorkflow({
-        config,
-        diffProvider,
-        eventBus,
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS),
-      ),
+      workflowPromise,
+      timeoutPromise(TIMEOUT_MS),
     ]);
 
     const duration = Date.now() - start;
 
-    // 🔐 Fix for "result is unknown"
-    const typed = result as {
-      outcome: string;
-      payload?: { signals?: any[] };
-    };
-
     return {
       durationMs: duration,
-      outcome: typed.outcome === "success" ? "success" : "failure",
-      signals: typed.payload?.signals ?? [],
+      outcome: result.outcome === "success" ? "success" : "failure",
+      signals: result.payload?.signals ?? [],
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     const duration = Date.now() - start;
 
+    const message = err instanceof Error ? err.message : String(err);
+
     return {
       durationMs: duration,
-      outcome: err?.message === "timeout" ? "timeout" : "failure",
+      outcome: message === "timeout" ? "timeout" : "failure",
       signals: [],
-      error: String(err),
+      error: message,
     };
   }
+}
+
+function timeoutPromise(ms: number): Promise<never> {
+  return new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("timeout")), ms),
+  );
 }
