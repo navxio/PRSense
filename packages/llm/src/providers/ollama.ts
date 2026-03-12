@@ -1,5 +1,17 @@
 import fetch from "node-fetch";
-import { LlmClient, LlmRequest, LlmResponse, OllamaConfig } from "../types.js";
+import {
+  LlmClient,
+  LlmRequest,
+  LlmResponse,
+  OllamaConfig,
+  LlmUsage,
+} from "../types.js";
+
+type OllamaResponse = {
+  response: string;
+  prompt_eval_count?: number;
+  eval_count?: number;
+};
 
 export function createOllamaClient(config: OllamaConfig): LlmClient {
   const baseUrl = config.baseUrl ?? "http://localhost:11434";
@@ -39,9 +51,27 @@ Return ONLY JSON.
         throw new Error(`Ollama error: ${res.statusText}`);
       }
 
-      const json = (await res.json()) as { response: string };
+      const json = (await res.json()) as OllamaResponse;
 
-      return { text: json.response };
+      const usage: LlmUsage | undefined =
+        json.prompt_eval_count !== undefined && json.eval_count !== undefined
+          ? {
+              promptTokens: json.prompt_eval_count,
+              completionTokens: json.eval_count,
+              totalTokens: json.prompt_eval_count + json.eval_count,
+            }
+          : undefined;
+
+      if (usage) {
+        return {
+          text: json.response,
+          usage,
+        };
+      }
+
+      return {
+        text: json.response,
+      };
     },
   };
 }

@@ -1,7 +1,13 @@
 // packages/llm/src/providers/anthropic.ts
 import Anthropic from "@anthropic-ai/sdk";
 import type { TextBlock } from "@anthropic-ai/sdk/resources/messages/messages";
-import { LlmClient, LlmRequest, LlmResponse, LlmError } from "../types.js";
+import {
+  LlmClient,
+  LlmRequest,
+  LlmResponse,
+  LlmError,
+  LlmUsage,
+} from "../types.js";
 
 export function createAnthropicClient(config: {
   apiKey: string;
@@ -19,7 +25,7 @@ export function createAnthropicClient(config: {
       try {
         const res = await client.messages.create({
           model: config.model,
-          max_tokens: 4096,
+          max_tokens: req.maxTokens ?? 4096,
           temperature,
           system: prompt.system,
           messages: [
@@ -37,6 +43,23 @@ export function createAnthropicClient(config: {
 
         if (!text) {
           throw new Error("Claude returned empty response");
+        }
+
+        const usage: LlmUsage | undefined =
+          res.usage && res.usage.input_tokens !== undefined
+            ? {
+                promptTokens: res.usage.input_tokens,
+                completionTokens: res.usage.output_tokens ?? 0,
+                totalTokens:
+                  res.usage.input_tokens + (res.usage.output_tokens ?? 0),
+              }
+            : undefined;
+
+        if (usage) {
+          return {
+            text,
+            usage,
+          };
         }
 
         return { text };
