@@ -1,4 +1,4 @@
-# PRSense
+<h1 align="center">PRSense</h1>
 
 PRSense is an open-source, AI-powered code review engine that surfaces high-confidence review signals from pull request changes.
 
@@ -79,7 +79,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - Node.Js (22.x) + npm
 - Docker
 - Ollama(optional)
-- PostgreSQL + pgvector(optional)
+- (optional)PostgreSQL 15 + pgvector
 
 ## Installation
 
