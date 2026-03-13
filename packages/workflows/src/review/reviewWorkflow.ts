@@ -9,7 +9,8 @@ import {
   createOllamaClient,
   createGoogleClient,
   createAnthropicClient,
-  LlmClient,
+  type LlmClient,
+  type LlmUsage,
 } from "@prsense/llm";
 import type { ReviewWorkflowResult } from "./types.js";
 import { validateReviewOutput } from "./validateReviewOutput.js";
@@ -205,6 +206,7 @@ export async function runReviewWorkflow({
     const response = await llmClient.generate({ prompt });
 
     const cleaned = extractJson(response.text);
+    const usage: LlmUsage | undefined = response.usage;
 
     let parsed: any;
 
@@ -282,6 +284,12 @@ ${cleaned}
 
     eventBus.emit(CoreEvents.WorkflowReviewFinished);
 
+    if (usage) {
+      return {
+        outcome: "success",
+        payload: { signals, usage },
+      };
+    }
     return {
       outcome: "success",
       payload: { signals },
