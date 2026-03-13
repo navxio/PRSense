@@ -9,14 +9,13 @@ import { benchConfig } from "../benchConfig.js";
 import { silentEventBus } from "../utils/silentEventBus.js";
 import { extractPRDetails, type PRDetails } from "../utils/PR.js";
 
-const TIMEOUT_MS = 60_000;
-
 const eventBus = silentEventBus();
 
 export async function runModelOnScenario(
   model: ModelConfig,
   scenario: BenchmarkScenario,
 ): Promise<BenchRun> {
+  const TIMEOUT_MS = model.provider === "ollama" ? 120_000 : 60_000;
   const start = Date.now();
 
   const GH_TOKEN = process.env.PRSENSE_GITHUB_BENCH_TOKEN;
@@ -59,6 +58,14 @@ export async function runModelOnScenario(
 
     const duration = Date.now() - start;
 
+    if (result.payload.usage) {
+      return {
+        durationMs: duration,
+        outcome: result.outcome === "success" ? "success" : "failure",
+        signals: result.payload?.signals ?? [],
+        usage: result.payload.usage,
+      };
+    }
     return {
       durationMs: duration,
       outcome: result.outcome === "success" ? "success" : "failure",
