@@ -63,9 +63,10 @@ async function main() {
     deliveryRegistry,
   );
 
-  await app.listen({ port: 3000 });
+  const port = parseInt(process.env.PRSENSE_DAEMON_PORT ?? "11000");
+  await app.listen({ port: port });
 
-  logger.info("daemon.started", { port: 3000 });
+  logger.info("daemon.started", { port });
 }
 
 main().catch((err) => {
