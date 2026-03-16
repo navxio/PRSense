@@ -221,9 +221,13 @@ export async function runReviewWorkflow({
     });
     eventBus.emit(CoreEvents.WorkflowReviewLlmRawResponse, {
       preview: response.text.slice(0, 1000),
+      fullLength: response.text.length,
     });
 
     const cleaned = extractJson(response.text);
+    if (!cleaned.trim().endsWith("}")) {
+      throw new Error("LLM response truncated");
+    }
     const usage: LlmUsage | undefined = response.usage;
 
     let parsed: any;

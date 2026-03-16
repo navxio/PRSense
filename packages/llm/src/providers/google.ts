@@ -6,6 +6,19 @@ import {
 } from "@google/generative-ai";
 import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
 
+function stripMarkdownJson(text: string): string {
+  const trimmed = text.trim();
+
+  if (!trimmed.startsWith("```")) return trimmed;
+
+  const lines = trimmed.split("\n");
+
+  if (lines[0]?.startsWith("```")) lines.shift();
+  if (lines.at(-1)?.startsWith("```")) lines.pop();
+
+  return lines.join("\n").trim();
+}
+
 export function createGoogleClient(config: {
   apiKey: string;
   model: string;
@@ -38,19 +51,22 @@ export function createGoogleClient(config: {
         generationConfig: {
           temperature,
           maxOutputTokens: 1024,
+          responseMimeType: "application/json",
         },
       });
 
       const candidate = res.response.candidates?.[0];
 
-      const text =
+      const raw =
         candidate?.content?.parts
           ?.map((p) => ("text" in p ? p.text : ""))
           .join("") ?? "";
 
-      if (!text) {
+      if (!raw) {
         throw new Error("Gemini returned empty response");
       }
+
+      const text = stripMarkdownJson(raw);
 
       return {
         text,
