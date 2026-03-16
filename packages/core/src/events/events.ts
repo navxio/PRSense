@@ -66,6 +66,17 @@ export const CoreEvents = {
   ContextTruncated: "context.truncated",
   ContextFileSkipped: "context.file.skipped",
 
+  /*
+   * llm
+   */
+  WorkflowReviewPromptBuilt: "workflow.review.prompt.built",
+
+  WorkflowReviewLlmRequestStarted: "workflow.review.llm.request.started",
+
+  WorkflowReviewLlmResponseReceived: "workflow.review.llm.response.received",
+
+  WorkflowReviewLlmRawResponse: "workflow.review.llm.raw.response",
+
   /* -------------------------------------------------
    * Signal lifecycle (domain findings)
    * ------------------------------------------------- */

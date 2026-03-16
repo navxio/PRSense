@@ -139,7 +139,7 @@ export async function runReviewWorkflow({
     const prompt = buildReviewPrompt({
       diff,
       context: contextText,
-      ...(metadata ? metadata : null),
+      ...(metadata ?? {}),
     });
 
     // -------------------------------------------------
@@ -203,7 +203,25 @@ export async function runReviewWorkflow({
     // Generate review
     // -------------------------------------------------
 
+    eventBus.emit(CoreEvents.WorkflowReviewPromptBuilt, {
+      model: config.llm.model,
+      provider: config.llm.provider,
+      promptChars: JSON.stringify(prompt).length,
+      preview: JSON.stringify(prompt).slice(0, 2000),
+    });
+    eventBus.emit(CoreEvents.WorkflowReviewLlmRequestStarted);
+
+    const start = Date.now();
+
     const response = await llmClient.generate({ prompt });
+    eventBus.emit(CoreEvents.WorkflowReviewLlmResponseReceived, {
+      outputChars: response.text.length,
+      usage: response.usage,
+      durationMs: Date.now() - start,
+    });
+    eventBus.emit(CoreEvents.WorkflowReviewLlmRawResponse, {
+      preview: response.text.slice(0, 1000),
+    });
 
     const cleaned = extractJson(response.text);
     const usage: LlmUsage | undefined = response.usage;
