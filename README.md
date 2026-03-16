@@ -164,7 +164,7 @@ prsense-daemon
 By default, it listens on:
 
 ```
-http://localhost:3000
+http://localhost:11000
 ```
 
 #### Health & Readiness
@@ -177,7 +177,7 @@ GET /ready
 Example:
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:11000/health
 ```
 
 #### Trigger Review via API
@@ -189,7 +189,7 @@ POST /jobs/review
 Example:
 
 ```bash
-curl -X POST http://localhost:3000/jobs/review \
+curl -X POST http://localhost:11000/jobs/review \
   -H "Content-Type: application/json" \
   -d '{"target":"https://github.com/owner/repo/pull/123"}'
 ```
@@ -211,7 +211,7 @@ POST /jobs/index
 Example:
 
 ```bash
-curl -X POST http://localhost:3000/jobs/index \
+curl -X POST http://localhost:11000/jobs/index \
   -H "Content-Type: application/json" \
   -d '{"target":"https://github.com/owner/repo"}'
 ```
