@@ -15,7 +15,6 @@
     "build:workflows": "pnpm --filter @prsense/workflows build",
     "build:preflight": "pnpm --filter @prsense/preflight build",
     "build:logging": "pnpm --filter @prsense/logging build",
-    "build:runtime-config": "pnpm --filter @prsense/runtime-config build",
     "build:daemon": "pnpm --filter @prsense/daemon build",
     "cli:review": "pnpm --filter @prsense/cli dev:review",
     "dev:cli": "pnpm --filter @prsense/cli dev",

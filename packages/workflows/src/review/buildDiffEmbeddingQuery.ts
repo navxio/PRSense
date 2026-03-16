@@ -1,3 +1,4 @@
+// packages/workflows/src/review/buildDiffEmbeddingQuery
 import type { UnifiedDiff } from "@prsense/core";
 
 export function buildDiffEmbeddingQuery(params: {

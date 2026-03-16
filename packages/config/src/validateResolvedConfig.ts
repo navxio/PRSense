@@ -1,4 +1,4 @@
-// packages/runtime-config/src/validateResolvedConfig.ts
+// packages/config/src/validateResolvedConfig.ts
 
 import type { ResolvedConfig } from "./types.js";
 

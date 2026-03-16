@@ -1,4 +1,4 @@
-// packages/runtime-config/src/buildCredentialContext.ts
+// packages/config/src/buildCredentialContext.ts
 import type { CredentialContext } from "./types.js";
 
 export function resolveCredentials(): CredentialContext {

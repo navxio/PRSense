@@ -1,11 +1,8 @@
-import { createPinoLogger, type Logger } from "@prsense/logging";
-import { loadEnvConfig } from "@prsense/config";
+import { createPinoLogger, type Logger, type LogLevel } from "@prsense/logging";
 
 export function createDaemonLogger(): Logger {
-  const env = loadEnvConfig();
-
   return createPinoLogger({
-    level: env.PRSENSE_LOG_LEVEL,
+    level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
     pretty: false,
   });
 }

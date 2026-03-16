@@ -1,4 +1,4 @@
-// packages/runtime-config/src/validateCredentialContex.ts
+// packages/config/src/validateCredentialContex.ts
 import type {
   CredentialContext,
   ResolvedConfig,
