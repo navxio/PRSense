@@ -133,16 +133,6 @@ export async function runReviewWorkflow({
     }
 
     // -------------------------------------------------
-    // Build LLM prompt
-    // -------------------------------------------------
-
-    const prompt = buildReviewPrompt({
-      diff,
-      context: contextText,
-      ...(metadata ?? {}),
-    });
-
-    // -------------------------------------------------
     // Create LLM client
     // -------------------------------------------------
 
@@ -203,49 +193,91 @@ export async function runReviewWorkflow({
     // Generate review
     // -------------------------------------------------
 
-    eventBus.emit(CoreEvents.WorkflowReviewPromptBuilt, {
-      model: config.llm.model,
-      provider: config.llm.provider,
-      promptChars: JSON.stringify(prompt).length,
-      preview: JSON.stringify(prompt).slice(0, 2000),
-    });
-    eventBus.emit(CoreEvents.WorkflowReviewLlmRequestStarted);
+    const allSignals: ReviewSignal[] = [];
+    let totalUsage: LlmUsage | undefined;
 
-    const start = Date.now();
+    for (const file of diff.files) {
+      // Skip empty or trivial patches
+      if (!file.patch || file.patch.length < 40) {
+        continue;
+      }
 
-    const response = await llmClient.generate({ prompt });
-    eventBus.emit(CoreEvents.WorkflowReviewLlmResponseReceived, {
-      outputChars: response.text.length,
-      usage: response.usage,
-      durationMs: Date.now() - start,
-    });
-    eventBus.emit(CoreEvents.WorkflowReviewLlmRawResponse, {
-      preview: response.text.slice(0, 1000),
-      fullLength: response.text.length,
-    });
+      // skip binary/non code files
+      if (
+        file.path.endsWith(".png") ||
+        file.path.endsWith(".jpg") ||
+        file.path.endsWith(".svg") ||
+        file.path.endsWith(".lock")
+      ) {
+        continue;
+      }
 
-    const cleaned = extractJson(response.text);
-    if (!cleaned.trim().endsWith("}")) {
-      throw new Error("LLM response truncated");
-    }
-    const usage: LlmUsage | undefined = response.usage;
-
-    let parsed: any;
-
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      eventBus.emit(CoreEvents.WorkflowReviewInvalidJson, {
-        rawResponsePreview: response.text.slice(0, 2000),
+      eventBus.emit(CoreEvents.WorkflowReviewFileStarted, {
+        file: file.path,
       });
-      throw new Error("LLM returned invalid JSON");
-    }
-    let validated: ReturnType<typeof validateReviewOutput>;
+      const fileDiff = {
+        files: [file],
+      };
+      const prompt = buildReviewPrompt({
+        diff: fileDiff,
+        context: contextText,
+        ...(metadata ?? {}),
+      });
 
-    try {
-      validated = validateReviewOutput(parsed);
-    } catch {
-      const correctionPrompt = `
+      eventBus.emit(CoreEvents.WorkflowReviewPromptBuilt, {
+        model: config.llm.model,
+        provider: config.llm.provider,
+        promptChars: JSON.stringify(prompt).length,
+        preview: JSON.stringify(prompt).slice(0, 2000),
+      });
+      eventBus.emit(CoreEvents.WorkflowReviewLlmRequestStarted);
+
+      const start = Date.now();
+
+      const response = await llmClient.generate({ prompt });
+
+      eventBus.emit(CoreEvents.WorkflowReviewLlmResponseReceived, {
+        outputChars: response.text.length,
+        usage: response.usage,
+        durationMs: Date.now() - start,
+      });
+      eventBus.emit(CoreEvents.WorkflowReviewLlmRawResponse, {
+        preview: response.text.slice(0, 1000),
+        fullLength: response.text.length,
+      });
+
+      if (response.usage) {
+        if (!totalUsage) {
+          totalUsage = { ...response.usage };
+        } else {
+          totalUsage.promptTokens += response.usage.promptTokens;
+          totalUsage.completionTokens += response.usage.completionTokens;
+          totalUsage.totalTokens += response.usage.totalTokens;
+        }
+      }
+
+      const cleaned = extractJson(response.text);
+      const trimmed = cleaned.trim();
+      if (!(trimmed.endsWith("}") || trimmed.endsWith("]}"))) {
+        throw new Error("LLM response truncated");
+      }
+
+      let parsed: any;
+
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        eventBus.emit(CoreEvents.WorkflowReviewInvalidJson, {
+          rawResponsePreview: response.text.slice(0, 2000),
+        });
+        throw new Error("LLM returned invalid JSON");
+      }
+      let validated: ReturnType<typeof validateReviewOutput>;
+
+      try {
+        validated = validateReviewOutput(parsed);
+      } catch {
+        const correctionPrompt = `
 The previous output did not match the required schema.
 
 Convert the following into valid JSON matching this schema:
@@ -272,23 +304,26 @@ Previous output:
 ${cleaned}
 `;
 
-      const retry = await llmClient.generate({
-        prompt: {
-          system: "You are correcting malformed JSON output.",
-          user: correctionPrompt,
-        },
-      });
+        const retry = await llmClient.generate({
+          prompt: {
+            system: "You are correcting malformed JSON output.",
+            user: correctionPrompt,
+          },
+        });
 
-      const retryCleaned = extractJson(retry.text);
-      parsed = JSON.parse(retryCleaned);
-      validated = validateReviewOutput(parsed);
+        const retryCleaned = extractJson(retry.text);
+        parsed = JSON.parse(retryCleaned);
+        validated = validateReviewOutput(parsed);
+      }
+
+      allSignals.push(...validated.signals);
     }
 
     // -------------------------------------------------
     // Normalize + filter signals
     // -------------------------------------------------
 
-    const rawSignals = validated.signals;
+    const rawSignals = allSignals;
 
     const normalized = rawSignals
       .map(normalizeSignal)
@@ -306,10 +341,10 @@ ${cleaned}
 
     eventBus.emit(CoreEvents.WorkflowReviewFinished);
 
-    if (usage) {
+    if (totalUsage) {
       return {
         outcome: "success",
-        payload: { signals, usage },
+        payload: { signals, usage: totalUsage },
       };
     }
     return {
