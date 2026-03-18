@@ -1,3 +1,4 @@
+// packages/bench/src/evaluators/stability.ts
 import type { BenchRun } from "../types.js";
 
 export function evaluateStability(runs: BenchRun[]) {

@@ -9,6 +9,7 @@ import { evaluateStructural } from "../evaluators/structural.js";
 import { evaluateGrounding } from "../evaluators/grounding.js";
 import { evaluateStability } from "../evaluators/stability.js";
 import { evaluateTokens } from "../evaluators/tokens.js";
+import { evaluateTime } from "../evaluators/time.js";
 import { computeScore } from "../scoring/score.js";
 
 export async function runScenario(
@@ -30,12 +31,14 @@ export async function runScenario(
   const grounding = evaluateGrounding(validFiles, runs);
 
   const tokens = evaluateTokens(runs);
+  const times = evaluateTime(runs);
 
   const metrics = {
     ...structural,
     ...stability,
     ...grounding,
     ...tokens,
+    ...times,
   };
 
   const score = computeScore(metrics);

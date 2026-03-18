@@ -1,3 +1,4 @@
+// packages/bench/src/evaluators/structural.ts
 import type { BenchRun } from "../types.js";
 
 export function evaluateStructural(runs: BenchRun[]) {
