@@ -57,8 +57,6 @@ PRSense is built around a few core principles:
 - inspectable reasoning
 - composability over monoliths
 
-PRSense treats LLMs as reasoning engines, not authorities.
-
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
@@ -72,7 +70,7 @@ PRSense treats LLMs as reasoning engines, not authorities.
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
-- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks))
+- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Examples](docs/raw_signals.md))
 
 ## Requirements
 
@@ -760,6 +758,7 @@ A complete command reference is available in:
 [docs/man/prsense.1](docs/man/prsense.1)
 
 ## Benchmarks
+
 ToDo
 
 ## Project Status

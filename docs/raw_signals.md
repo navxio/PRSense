@@ -1,6 +1,6 @@
 # Raw Signals
 
-Generated on real world PRs
+Model: GPT-5.4
 
 <https://github.com/libuv/libuv/pull/5037>
 
