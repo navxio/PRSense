@@ -1,6 +1,6 @@
 # Raw Signals
 
-Model: GPT-5.4
+Using the default [config](../prsense.yml) and model=GPT-5.4
 
 <https://github.com/libuv/libuv/pull/5037>
 
