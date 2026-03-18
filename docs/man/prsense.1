@@ -11,8 +11,6 @@ prsense — AI-assisted pull request and repository review engine
 SYNOPSIS
 prsense [command] [options] [target]
 
-prsense-daemon
-
 ⸻
 
 DESCRIPTION
@@ -22,7 +20,6 @@ PRSense is an open-source AI-powered code review engine that surfaces high-confi
 It is delivery-agnostic. The same review engine can run:
 
 • As an interactive CLI
-• As a long-lived HTTP daemon
 • Behind webhooks
 • Inside CI pipelines
 
@@ -36,7 +33,7 @@ PRSense focuses on structured review signals rather than autonomous modification
 
 PRSense operates on diffs and optionally surrounding repository context using retrieval-augmented generation (RAG). Output is validated, normalized, deduplicated, and filtered by confidence before being emitted.
 
-The CLI and daemon are delivery surfaces over the same core review engine.
+The CLI is a delivery surface over the same core review engine.
 
 ⸻
 
@@ -46,7 +43,6 @@ review      Review a code change and emit structured review signals
 index       Index a repository for contextual retrieval (RAG)
 doctor      Diagnose PRSense installation and runtime environment
 setup       Perform setup readiness checks
-daemon      Manage daemon lifecycle (if installed)
 help        Show help for a command
 
 ⸻
@@ -64,47 +60,58 @@ DESCRIPTION
 Reviews a code change and produces structured ReviewSignal objects.
 
 The review process:
-	1.	Computes a diff
-	2.	Retrieves relevant repository context (if indexed)
-	3.	Constructs a structured review prompt
-	4.	Invokes the configured LLM provider
-	5.	Validates and normalizes output
-	6.	Filters by confidence threshold
-	7.	Deduplicates signals
+    1. Computes a diff
+    2. Retrieves relevant repository context (if indexed)
+    3. Constructs a structured review prompt
+    4. Invokes the configured LLM provider
+    5. Validates and normalizes output
+    6. Filters by confidence threshold
+    7. Deduplicates signals
 
 If no index exists, review falls back to diff-only mode.
+
+When --stats is provided, PRSense prints a structured summary including:
+
+• Model and provider
+• Indexing configuration
+• Signal counts and hallucination rate
+• Token usage (prompt, completion, total, per signal)
+• Performance metrics (latency, throughput)
 
 TARGETS
 
 .
-Current repository (default)
+    Current repository (default)
 
-<path>  
+<path>
     Path to a local repository
 
-
 https://github.com/…/pull/
-GitHub Pull Request
+    GitHub Pull Request
 
 https://gitlab.com/…/-/merge_requests/
-GitLab Merge Request
+    GitLab Merge Request
 
 OPTIONS
 
-–base-branch 
-Override base branch for diff comparison.
+--base-branch <branch>
+    Override base branch for diff comparison.
 
-–format <text|json>
-Output format (default: text).
+--format <text|json>
+    Output format (default: text).
 
-–no-context
-Disable contextual retrieval (diff-only review).
+--no-context
+    Disable contextual retrieval (diff-only review).
+
+--stats
+    Print structured review statistics alongside results.
 
 EXAMPLES
 
 prsense review .
-prsense review –base-branch origin/main
+prsense review --base-branch origin/main
 prsense review https://github.com/org/repo/pull/42
+prsense review https://github.com/org/repo/pull/42 --stats
 
 ⸻
 
@@ -142,28 +149,48 @@ Re-indexing is triggered when:
 TARGETS
 
 .
-Current repository (default)
+    Current repository (default)
 
-<path>  
+<path>
     Path to local repository
-
 
 https://github.com/org/repo
 https://gitlab.com/group/project
 
 OPTIONS
 
-–force
-Rebuild index even if up-to-date.
+--force
+    Rebuild index even if up-to-date.
 
-–dry-run
-Evaluate index state without writing.
+--dry-run
+    Evaluate index state without writing.
 
-–stats
-Print indexing statistics.
+--stats
+    Print indexing statistics.
 
-–chunk-size 
-Override chunk size in characters.
+--list
+    List indexed repositories and their metadata.
+
+--chunk-size <chars>
+    Override chunk size in characters.
+
+OUTPUT (--list)
+
+Lists indexed repositories with:
+
+• Repository identifier (provider/owner/repo)
+• Indexed commit SHA
+• Embedding provider and model
+• Index timestamp
+
+EXAMPLE OUTPUT
+
+Indexed repositories:
+
+github/django-extensions/django-extensions
+  commit: cfcb9112fbe5b451def0866047f183e24c794d8c
+  embeddings: ollama/nomic-embed-text
+  indexed: 2026-03-04T04:36:30.569Z
 
 NOTES
 
@@ -178,7 +205,8 @@ Embedding dimension must match database schema.
 EXAMPLES
 
 prsense index .
-prsense index . –force
+prsense index . --force
+prsense index --list
 prsense index https://github.com/org/repo
 
 ⸻
@@ -231,58 +259,11 @@ prsense setup
 
 ⸻
 
-DAEMON
-
-NAME
-prsense-daemon — run PRSense as a long-lived HTTP service
-
-SYNOPSIS
-prsense-daemon
-
-DESCRIPTION
-
-Starts the PRSense HTTP daemon.
-
-The daemon exposes endpoints for:
-
-• Review job creation
-• Index job creation
-• Webhook-triggered reviews
-• Health and readiness checks
-
-DEFAULT LISTEN ADDRESS
-
-http://localhost:3000
-
-ENDPOINTS
-
-GET /health
-Liveness probe
-
-GET /ready
-Readiness probe
-
-POST /jobs/review
-Trigger review job
-
-POST /jobs/index
-Trigger indexing job
-
-POST /webhooks/github
-GitHub pull_request webhook endpoint
-
-POST /webhooks/gitlab
-GitLab merge_request webhook endpoint
-
-Webhooks require corresponding webhook secrets configured via environment variables.
-
-⸻
-
 CONFIGURATION
 
 PRSense separates:
-	1.	Review behavior configuration (repository-level)
-	2.	Runtime configuration and credentials (environment)
+    1. Review behavior configuration (repository-level)
+    2. Runtime configuration and credentials (environment)
 
 USER CONFIGURATION
 
@@ -291,27 +272,26 @@ A file named prsense.yml may be placed at repository root.
 Example:
 
 llm:
-provider: ollama
-model: qwen2.5-coder
-temperature: 0.1
+  provider: ollama
+  model: qwen2.5-coder
+  temperature: 0.1
 
 embeddings:
-provider: ollama
-model: nomic-embed-text
+  provider: ollama
+  model: nomic-embed-text
 
 review:
-confidenceThreshold: 0.6
-maxSignals: 10
+  confidenceThreshold: 0.6
+  maxSignals: 10
 
 context:
-maxChunks: 5
+  maxChunks: 5
 
 git:
-baseBranch: main
+  baseBranch: main
 
 delivery:
-	•	github
-	•	gitlab
+  platform: github
 
 If absent, sensible defaults are applied.
 
@@ -352,13 +332,13 @@ EXIT STATUS
 FILES
 
 prsense.yml
-Repository-local configuration.
+    Repository-local configuration.
 
 ~/.config/prsense/
-Optional user-level configuration.
+    Optional user-level configuration.
 
 ~/.local/state/prsense/
-Runtime state directory (daemon PID, logs).
+    Runtime state directory.
 
 ⸻
 
