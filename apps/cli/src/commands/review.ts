@@ -7,7 +7,7 @@ import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter } from "@prsense/reporters";
+import { stdoutConfigReporter, printStats } from "@prsense/reporters";
 import path from "node:path";
 import {
   LocalGitDiffProvider,
@@ -18,6 +18,7 @@ import {
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
+  .option("--stats", "Print Stats related to review")
   .action(async (target, options) => {
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
@@ -110,12 +111,41 @@ export const reviewCommand = new Command("review")
       // Run Review Workflow
       // -------------------------------------------------
 
+      const start = Date.now();
+
       const result = await runReviewWorkflow({
         config: env.config,
         credentials: env.credentials,
         diffProvider,
         eventBus,
       });
+
+      const durationMs = Date.now() - start;
+
+      if (options.stats) {
+        const validFiles = new Set(result.payload?.diffSummary?.files ?? []);
+
+        printStats({
+          outcome: result.outcome,
+          signals: result.payload?.signals ?? [],
+          usage: result.payload?.usage,
+          durationMs,
+          model: {
+            provider: env.config.llm.provider,
+            name: env.config.llm.model,
+          },
+          context: {
+            indexing: {
+              enabled: true,
+              provider: env.config.embeddings.provider,
+              model: env.config.embeddings.model,
+            },
+          },
+          diff: {
+            validFiles,
+          },
+        });
+      }
 
       eventBus.emit(CoreEvents.RunFinished, {
         outcome: result.outcome,
