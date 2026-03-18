@@ -26,6 +26,8 @@ export const CoreEvents = {
   WorkflowReviewStarted: "workflow.review.started",
   WorkflowReviewFinished: "workflow.review.finished",
   WorkflowReviewFailed: "workflow.review.failed",
+  WorkflowReviewFileFailed: "workflow.review.file.failed",
+  WorkflowReviewLlmRetry: "workflow.review.llm.retry",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",

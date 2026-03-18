@@ -7,6 +7,9 @@ import { WorkflowResult } from "../types/core.js";
 export type ReviewPayload = {
   signals: ReviewSignal[];
   usage?: LlmUsage;
+  diffSummary?: {
+    files: string[];
+  };
 };
 
 export type ReviewWorkflowResult = WorkflowResult<ReviewPayload>;
