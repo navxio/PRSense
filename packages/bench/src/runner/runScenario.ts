@@ -8,6 +8,7 @@ import { runModelOnScenario } from "./runModel.js";
 import { evaluateStructural } from "../evaluators/structural.js";
 import { evaluateGrounding } from "../evaluators/grounding.js";
 import { evaluateStability } from "../evaluators/stability.js";
+import { evaluateTokens } from "../evaluators/tokens.js";
 import { computeScore } from "../scoring/score.js";
 
 export async function runScenario(
@@ -28,10 +29,13 @@ export async function runScenario(
   const validFiles = new Set<string>();
   const grounding = evaluateGrounding(validFiles, runs);
 
+  const tokens = evaluateTokens(runs);
+
   const metrics = {
     ...structural,
     ...stability,
     ...grounding,
+    ...tokens,
   };
 
   const score = computeScore(metrics);
