@@ -38,7 +38,6 @@ export type ModelScenarioResult = {
   model: string;
   runs: BenchRun[];
   metrics: Record<string, number>;
-  score: number;
 };
 
 export type BenchReport = {

@@ -10,7 +10,6 @@ import { evaluateGrounding } from "../evaluators/grounding.js";
 import { evaluateStability } from "../evaluators/stability.js";
 import { evaluateTokens } from "../evaluators/tokens.js";
 import { evaluateTime } from "../evaluators/time.js";
-import { computeScore } from "../scoring/score.js";
 
 export async function runScenario(
   scenario: BenchmarkScenario,
@@ -41,13 +40,10 @@ export async function runScenario(
     ...times,
   };
 
-  const score = computeScore(metrics);
-
   return {
     scenarioId: scenario.id,
     model: model.model,
     runs,
     metrics,
-    score,
   };
 }
