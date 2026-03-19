@@ -10,6 +10,7 @@ import { evaluateGrounding } from "../evaluators/grounding.js";
 import { evaluateStability } from "../evaluators/stability.js";
 import { evaluateTokens } from "../evaluators/tokens.js";
 import { evaluateTime } from "../evaluators/time.js";
+import { hydrateScenario } from "../hydrateScenario.js";
 
 export async function runScenario(
   scenario: BenchmarkScenario,
@@ -25,8 +26,9 @@ export async function runScenario(
   const structural = evaluateStructural(runs);
   const stability = evaluateStability(runs);
 
-  // You should wire real diff files here
-  const validFiles = new Set<string>();
+  const hydrated = await hydrateScenario(scenario);
+
+  const validFiles = new Set(hydrated.diffSummary.files);
   const grounding = evaluateGrounding(validFiles, runs);
 
   const tokens = evaluateTokens(runs);
