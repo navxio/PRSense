@@ -27,8 +27,6 @@ PRSense separates review logic from delivery. The same core engine can run:
 
 This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
 
-PRSense is not a chat interface for code. It is a review system designed to augment human judgment — not replace it.
-
 ## Table of Contents
 
 - [Philosophy](#philosophy)
@@ -70,13 +68,13 @@ PRSense is built around a few core principles:
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
-- Tested with C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Examples](docs/raw_signals.md))
+- Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Examples Outputs](docs/raw_signals.md))
 
 ## Requirements
 
-- Node.Js (22.x) + npm
-- Docker
-- Ollama(optional)
+- Node.Js >= 22.x + npm
+- (optional)Docker
+- (optional)Ollama
 - (optional)PostgreSQL 15 + pgvector
 
 ## Installation
@@ -156,7 +154,7 @@ The daemon runs PRSense as a long-lived HTTP service, intended for automation, a
 #### Start the daemon
 
 ```bash
-prsense-daemon
+prsense daemon start
 ```
 
 By default, it listens on:
@@ -255,11 +253,13 @@ PRSense is delivery-agnostic — the core engine remains the same.
 
 #### Team Automation
 
-1. Run `prsense-daemon`
+1. Run `prsense daemon start`
 2. Configure GitHub/GitLab webhook
 3. Reviews trigger automatically on PR/MR updates
 
 ## Configuration
+
+This is the configuration structure
 
 ```
 defaults
