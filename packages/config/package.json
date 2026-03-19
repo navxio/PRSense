@@ -1,6 +1,6 @@
 {
   "name": "@prsense/config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "config package for prsense",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,9 +23,9 @@
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "yaml": "^2.8.2",
-    "zod": "^4.3.5",
-    "dotenv": "^17.2.3"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

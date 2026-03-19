@@ -1,6 +1,6 @@
 {
   "name": "@prsense/preflight",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -19,15 +19,15 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "pg": "^8.17.1",
-    "@prsense/core": "workspace:*",
+    "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
-    "@prsense/config": "workspace:*"
+    "@prsense/core": "workspace:*",
+    "pg": "^8.17.1"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "@types/pg": "^8.16.0"
+    "typescript": "^5.9.3"
   }
 }
