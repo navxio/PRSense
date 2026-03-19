@@ -20,6 +20,7 @@ export async function runFileReview({
   const allSignals: ReviewSignal[] = [];
   let totalUsage: LlmUsage | undefined;
 
+  // PERF: concurrency unlocks speed
   for (const file of files) {
     if (!file.patch || file.patch.length < 40) continue;
 
