@@ -1,0 +1,3627 @@
+{
+  "timestamp": "2026-03-19T14:32:19.234Z",
+  "results": [
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 42225,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.92,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 151,
+              "lineEnd": 170,
+              "message": "Unmanaged models (managed=False) are now included in old_model_keys/new_model_keys instead of being tracked separately. This means unmanaged models will now generate field-level operations (AddField for FKs, M2Ms) and other DB-modifying operations that were previously skipped via the `if not model_state.options.get('managed', True): continue` guard that was also removed. This will cause Django to attempt to create/alter database tables and columns for unmanaged models, which is incorrect since unmanaged models should not have their database schema managed by Django.",
+              "rationale": "Previously, unmanaged models were categorized into old_unmanaged_keys/new_unmanaged_keys and the generate_created_models method had an explicit `continue` that skipped generating FK/M2M AddField operations for unmanaged models. With this change, unmanaged models flow through the same code path as managed models, causing Django to generate operations that modify the database for models with managed=False. The `continue` block at the old line 758-760 that prevented DB operations for unmanaged models was also removed.",
+              "suggestedFix": "Either restore the separate tracking of unmanaged models and the guard that prevents DB-modifying operations for them, or add a check in generate_created_models (and generate_deleted_models) to skip FK/M2M/index/constraint operations when the model has managed=False.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.85,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1840,
+              "lineEnd": 1840,
+              "message": "generate_altered_db_table and generate_altered_db_table_comment no longer check kept_unmanaged_keys. Unmanaged models that change db_table or db_table_comment will no longer generate AlterModelTable/AlterModelTableComment operations, since unmanaged models are now in kept_model_keys. However, if an unmanaged model is NOT in old_model_keys (e.g., it was previously excluded from old_model_keys due to being in from_state.real_apps), changes to db_table for unmanaged models could be missed.",
+              "rationale": "The old code explicitly included kept_unmanaged_keys in the union for these checks. Now unmanaged models should be in kept_model_keys, but only if they pass the `app_label not in self.from_state.real_apps` check. If an unmanaged model's app is in real_apps, it won't appear in any key set and db_table changes will be silently ignored.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1867,
+              "message": "generate_altered_options no longer detects transitions between managed and unmanaged states. Previously, `self.old_unmanaged_keys & self.new_model_keys` and `self.old_model_keys & self.new_unmanaged_keys` were included to detect when a model changed its `managed` option. Now these transitions won't generate AlterModelOptions operations for the `managed` option change.",
+              "rationale": "When a model transitions from managed=False to managed=True (or vice versa), it would previously appear in the cross-set intersection and get an AlterModelOptions. Now both states land in old_model_keys/new_model_keys, so the model appears in kept_model_keys and the managed option change may still be detected. However, if the managed option is not in the ALTER_OPTION_KEYS set being compared, this could be a regression. The explicit handling of these transitions suggests they were needed.",
+              "suggestedFix": "Verify that managed=True <-> managed=False transitions still generate correct migrations, and add test coverage for this scenario.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "high",
+              "confidence": 0.9,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 648,
+              "lineEnd": 755,
+              "message": "Missing test coverage for unmanaged model migration generation after this refactor. Need tests verifying: (1) creating an unmanaged model doesn't generate AddField for FK/M2M fields, (2) deleting an unmanaged model doesn't generate RemoveField for FK/M2M, (3) transitioning managed<->unmanaged generates correct operations, (4) db_table changes on unmanaged models are handled correctly.",
+              "rationale": "The change fundamentally alters how unmanaged models are tracked and processed. The removed guard that prevented DB operations for unmanaged models needs equivalent protection or tests proving the new behavior is correct.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "style",
+              "severity": "low",
+              "confidence": 0.9,
+              "file": "docs/releases/6.0.4.txt",
+              "lineStart": 13,
+              "lineEnd": 16,
+              "message": "Continuation lines of the bullet point are indented by 4 spaces instead of 2. Django release notes typically use 2-space indentation for continuation lines within bullet lists (aligned with the text after '* ').",
+              "rationale": "RST bullet list continuation lines should be indented to align with the first line of text (2 spaces after '*'), not 4 spaces. This may cause rendering issues where the continuation is treated as a block quote rather than part of the bullet item.",
+              "suggestedFix": "Change the indentation of continuation lines from 4 spaces to 2 spaces (aligning with the text after '* ').",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 21191,
+            "completionTokens": 1524,
+            "totalTokens": 22715
+          }
+        },
+        {
+          "durationMs": 32543,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.92,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 151,
+              "lineEnd": 170,
+              "message": "Unmanaged models (managed=False) are now included in old_model_keys/new_model_keys instead of being tracked separately. This means the autodetector will now generate field-level operations (AddField, RemoveField, AlterField) and relationship operations (ForeignKey, M2M) for unmanaged models, which previously were skipped. These operations will attempt to modify database tables that Django doesn't manage, causing errors or unintended schema changes.",
+              "rationale": "Previously, the code at line ~758 had `if not model_state.options.get('managed', True): continue` which skipped generating relationship operations for unmanaged models during create. Now that unmanaged models flow through old_model_keys/new_model_keys, all the field-level and relationship operations will be generated for them. The `managed=False` option means Django should not create/modify/delete the database table, but the migration operations generated (e.g., AddField with ForeignKey, CreateModel with all fields) will attempt to do exactly that.",
+              "suggestedFix": "Either keep the separate tracking of unmanaged models and skip database-modifying operations for them, or ensure that operations generated for unmanaged models are appropriately limited (e.g., only AlterModelOptions, not AddField/RemoveField/CreateModel with schema changes).",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1821,
+              "lineEnd": 1822,
+              "message": "generate_altered_db_table and generate_altered_db_table_comment no longer check kept_unmanaged_keys, so changes to db_table on unmanaged models will no longer generate AlterModelTable migrations. Since unmanaged models are now in kept_model_keys this may be partially covered, but if an unmanaged model changes its db_table, the migration will now also generate schema-altering operations that shouldn't apply to unmanaged tables.",
+              "rationale": "Unmanaged models commonly use db_table to point at existing tables. Previously, db_table changes on unmanaged models generated AlterModelTable without other schema operations. Now they're mixed in with managed models and may trigger additional unwanted operations.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.85,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1869,
+              "message": "generate_altered_options no longer handles the case where a model transitions between managed and unmanaged (old_unmanaged_keys & new_model_keys, old_model_keys & new_unmanaged_keys). Toggling managed=True/False will no longer generate an AlterModelOptions migration to reflect this change.",
+              "rationale": "The old code explicitly included models transitioning between managed and unmanaged states. Without this, changing `managed=False` to `managed=True` (or vice versa) won't produce the necessary AlterModelOptions operation.",
+              "suggestedFix": "Ensure that models changing their `managed` option still get AlterModelOptions operations generated.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "style",
+              "severity": "low",
+              "confidence": 0.9,
+              "file": "docs/releases/6.0.4.txt",
+              "lineStart": 13,
+              "lineEnd": 16,
+              "message": "Continuation lines of the bullet point use 4-space indentation instead of the standard 2-space indentation used in Django's release notes RST formatting.",
+              "rationale": "Django release notes typically use 2-space indentation for continuation lines in bullet lists. Using 4-space indentation may cause unexpected RST rendering (e.g., being treated as a block quote rather than a continuation of the list item).",
+              "suggestedFix": "Use 2-space indentation for continuation lines:\n* The :djadmin:`makemigrations` command now properly tracks all changes to\n  unmanaged models, including field additions, removals, alterations,\n  constraints, and model renames. After upgrading, you may see new\n  migrations detected for unmanaged models that have pending changes\n  (:ticket:`35813`).",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 21191,
+            "completionTokens": 1170,
+            "totalTokens": 22361
+          }
+        },
+        {
+          "durationMs": 39807,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.92,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 151,
+              "lineEnd": 170,
+              "message": "Unmanaged models (managed=False) are now included in old_model_keys/new_model_keys instead of being tracked separately. This means the autodetector will now generate field-level operations (AddField, RemoveField, AlterField) and relationship operations (ForeignKey, M2M) for unmanaged models, which previously were skipped. These operations will attempt to modify database tables that Django doesn't manage, causing errors or unintended schema changes.",
+              "rationale": "Previously, the code at line ~758 had `if not model_state.options.get('managed', True): continue` which skipped generating relationship operations for unmanaged models. That guard is removed. Additionally, unmanaged models were in a separate set and excluded from `kept_model_keys`, so field-level change detection didn't apply to them. Now they flow through the same code paths as managed models, meaning Django will generate ALTER TABLE statements for tables it shouldn't be managing.",
+              "suggestedFix": "Either keep the `managed=False` check that skips relationship/field operations for unmanaged models, or ensure that the schema editor properly handles unmanaged models by not executing DDL. The previous behavior of tracking unmanaged models separately and skipping certain operations for them was intentional.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.85,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1840,
+              "lineEnd": 1840,
+              "message": "generate_altered_db_table and generate_altered_db_table_comment no longer check kept_unmanaged_keys, so changes to db_table or db_table_comment on unmanaged models will not be detected. Previously these were explicitly included.",
+              "rationale": "Unmanaged models are no longer tracked in any key set (old_unmanaged_keys/new_unmanaged_keys/kept_unmanaged_keys are removed), but they are now in old_model_keys/new_model_keys/kept_model_keys. So this specific case may still work. However, if an unmanaged model is also a proxy, it would only be in proxy_keys. The concern is that the behavior change is not fully tested for all combinations of managed/proxy states.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1867,
+              "message": "generate_altered_options no longer detects transitions between managed and unmanaged states (old_unmanaged_keys & new_model_keys and old_model_keys & new_unmanaged_keys). Changing a model from managed=True to managed=False or vice versa will no longer generate an AlterModelOptions migration to update the 'managed' option.",
+              "rationale": "Previously, models transitioning between managed and unmanaged states were explicitly included in models_to_check for generate_altered_options. Without this, toggling managed=False won't produce a migration operation for the options change, even though the model will be in kept_model_keys (since unmanaged models are now in model_keys). However, the AlterModelOptions operation needs to detect the change in the 'managed' option, and without the cross-set union, this transition case may be missed if the model wasn't previously in old_model_keys.",
+              "suggestedFix": "Verify that toggling managed=True/False still generates appropriate AlterModelOptions migrations, and add test coverage for this transition.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "high",
+              "confidence": 0.9,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 151,
+              "lineEnd": 170,
+              "message": "Missing test coverage for unmanaged model scenarios: creating/deleting unmanaged models, toggling managed flag, field changes on unmanaged models, and ensuring no DDL is generated for unmanaged model fields/relationships.",
+              "rationale": "This is a significant behavioral change to how unmanaged models are handled in the migration autodetector. Tests should verify that: (1) creating an unmanaged model doesn't generate AddField for FK/M2M, (2) toggling managed=True to managed=False generates correct migration, (3) field changes on unmanaged models don't produce ALTER TABLE operations.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "style",
+              "severity": "low",
+              "confidence": 0.9,
+              "file": "docs/releases/6.0.4.txt",
+              "lineStart": 13,
+              "lineEnd": 16,
+              "message": "Continuation lines are indented by 4 spaces, but Django release notes typically use 2-space indentation for continuation lines in bullet points.",
+              "rationale": "Django's documentation style for release notes uses 2-space indentation for continuation lines within bullet list items. Using 4-space indentation may cause unexpected rendering in reStructuredText (it could be interpreted as a block quote rather than a continuation of the list item).",
+              "suggestedFix": "Use 2-space indentation for continuation lines:\n* The :djadmin:`makemigrations` command now properly tracks all changes to\n  unmanaged models, including field additions, removals, alterations,\n  constraints, and model renames. After upgrading, you may see new\n  migrations detected for unmanaged models that have pending changes\n  (:ticket:`35813`).",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 21191,
+            "completionTokens": 1474,
+            "totalTokens": 22665
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 0,
+        "variance": 0.3333333333333333,
+        "avgSignals": 4.666666666666667,
+        "hallucinated": 0,
+        "avgTokens": 22580.333333333332,
+        "avgPromptTokens": 21191,
+        "avgCompletionTokens": 1389.3333333333333,
+        "tokensPerSignal": 4838.642857142857,
+        "tokensPerSecond": 591.2371808858826,
+        "avgLatencyMs": 38191.666666666664,
+        "maxLatencyMs": 42225
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 25654,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 154,
+              "lineEnd": 168,
+              "message": "Unmanaged models (managed=False) are now silently ignored by the autodetector instead of being tracked separately. Models with managed=False that belong to migrated apps will no longer appear in old_model_keys or new_model_keys, causing the autodetector to miss deletions, creations, and alterations of unmanaged models entirely.",
+              "rationale": "Previously, unmanaged models were tracked in old_unmanaged_keys/new_unmanaged_keys and handled explicitly (e.g., CreateModel was emitted but database operations were skipped). Now the condition `if app_label not in self.from_state.real_apps` is checked first, but unmanaged models are never added to old_model_keys/new_model_keys because the proxy check comes after. The unmanaged model is simply dropped from all tracking sets. This means transitions like managed=False->managed=True or managed=True->managed=False, as well as deletion of unmanaged models, will no longer generate any migration operations.",
+              "suggestedFix": "Unmanaged models that belong to migrated apps still need to be tracked (at minimum in old_model_keys/new_model_keys) so that transitions between managed and unmanaged states, and deletions, are detected. The original separation into unmanaged_keys was intentional to allow CreateModel to be emitted (for state tracking) while skipping actual DDL.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 745,
+              "lineEnd": 750,
+              "message": "The removal of the `if not model_state.options.get('managed', True): continue` guard in generate_created_models means that if unmanaged models somehow reach this code path in the future, DDL operations will be incorrectly generated for them. More critically, the guard was also responsible for skipping FK/M2M relationship operations for unmanaged models, which is now lost.",
+              "rationale": "The guard was a safety net ensuring no database-modifying operations were emitted for unmanaged models. Its removal is only safe if unmanaged models are guaranteed never to reach this code path, but the earlier change to model key tracking makes this assumption fragile.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1875,
+              "message": "generate_altered_options no longer checks for managed->unmanaged or unmanaged->managed transitions (previously handled via `self.old_unmanaged_keys & self.new_model_keys` and `self.old_model_keys & self.new_unmanaged_keys`). If a model changes its managed status, no AlterModelOptions operation will be generated.",
+              "rationale": "The removed lines explicitly handled the case where a model transitions between managed and unmanaged states. Without them, such transitions are invisible to the migration autodetector.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 21191,
+            "completionTokens": 869,
+            "totalTokens": 22060
+          }
+        },
+        {
+          "durationMs": 49552,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 151,
+              "lineEnd": 170,
+              "message": "Unmanaged models (managed=False) are now silently included in old_model_keys and new_model_keys, causing the autodetector to generate CreateModel/DeleteModel operations for unmanaged models that previously were intentionally excluded.",
+              "rationale": "Before this change, models with `managed=False` were tracked separately in `old_unmanaged_keys`/`new_unmanaged_keys` and the `generate_created_models` method explicitly skipped adding database-modifying operations for them (the `continue` at line 755 was removed). Now unmanaged models fall through to `old_model_keys`/`new_model_keys` and will have full CreateModel/DeleteModel/AlterField operations generated, which is incorrect because unmanaged models do not own their database tables.",
+              "suggestedFix": "Restore the `managed=False` check to exclude unmanaged models from `old_model_keys`/`new_model_keys`, or re-introduce the separate unmanaged tracking sets and the `continue` guard in `generate_created_models`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 898,
+              "lineEnd": 920,
+              "message": "generate_deleted_models no longer skips generating DeleteModel operations for unmanaged models, which will cause migrations to attempt to DROP tables that Django does not own.",
+              "rationale": "Previously, unmanaged models in `old_unmanaged_keys` were processed separately and the deletion path did not emit database-level DROP operations for them. Now they are included in `old_model_keys` and `deleted_models`, so a full DeleteModel operation (which issues DROP TABLE) will be generated when an unmanaged model is removed from the project.",
+              "suggestedFix": "Either exclude unmanaged models from `old_model_keys` or add a guard in `generate_deleted_models` to skip models where `managed=False`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1875,
+              "message": "generate_altered_options no longer handles the managed→unmanaged and unmanaged→managed conversion cases, so changing a model's managed attribute will not generate an AlterModelOptions operation.",
+              "rationale": "The removed lines `self.old_unmanaged_keys & self.new_model_keys` and `self.old_model_keys & self.new_unmanaged_keys` covered the case where a model transitions between managed and unmanaged. Without them, toggling `managed` on a model produces no migration operation.",
+              "suggestedFix": "Restore handling for managed/unmanaged transitions in generate_altered_options, or ensure the new unified key sets still cover this case.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1821,
+              "lineEnd": 1845,
+              "message": "generate_altered_db_table and generate_altered_db_table_comment no longer check unmanaged models for db_table changes, so renaming the db_table of an unmanaged model will not generate an AlterModelTable operation.",
+              "rationale": "Previously `kept_unmanaged_keys` was included in `models_to_check`. While unmanaged models don't own their tables, AlterModelTable is a state-only operation for them and is needed to keep the migration state consistent with the model definition.",
+              "suggestedFix": "If unmanaged models are now fully excluded from tracking, this may be intentional; but if unmanaged models can still appear in migrations (e.g. for state tracking), their db_table changes should still be detected.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "tests/migrations/test_autodetector.py",
+              "lineStart": 715,
+              "lineEnd": 722,
+              "message": "author_unmanaged_empty is named 'Author' but author_unmanaged uses 'AuthorUnmanaged'; these are different models and the naming is misleading/inconsistent with the existing fixture pattern.",
+              "rationale": "The existing unmanaged fixtures (author_unmanaged, author_unmanaged_managed) use the model name 'AuthorUnmanaged'. The new fixtures use 'Author' as the model name. While this may be intentional (testing changes to an unmanaged proxy of 'Author'), it creates a naming inconsistency that could confuse future test authors and may cause unexpected interactions if tests share state.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "tests/migrations/test_autodetector.py",
+              "lineStart": 4140,
+              "lineEnd": 4152,
+              "message": "test_unmanaged_alter_field compares author_unmanaged_name_default (CharField with default='Ada Lovelace') to author_unmanaged_name_longer (CharField with max_length=400, no default); asserting preserve_default=True is incorrect because the default is being removed in the transition.",
+              "rationale": "preserve_default=True is set by the autodetector when a field is added with a one-off default that should not be preserved in the model state. When altering a field that already exists (no field addition), the autodetector does not set preserve_default at all (it defaults to True in AlterField). However, the from-state has a default and the to-state does not, so the autodetector may generate an AlterField without preserve_default being meaningful here. The assertion may pass trivially but does not verify the correct semantic.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-6",
+              "type": "test",
+              "severity": "low",
+              "confidence": 1,
+              "file": "tests/migrations/test_autodetector.py",
+              "lineStart": 4107,
+              "lineEnd": 4120,
+              "message": "test_unmanaged_add_constraints does not verify that no migration is generated for other apps, leaving open the possibility of spurious cross-app migrations going undetected.",
+              "rationale": "Other similar tests (e.g. test_unmanaged_rename_model) explicitly assert assertNumberMigrations for related apps. test_unmanaged_add_constraints only checks 'testapp'.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 20933,
+            "completionTokens": 1763,
+            "totalTokens": 22696
+          }
+        },
+        {
+          "durationMs": 40001,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 163,
+              "lineEnd": 170,
+              "message": "Unmanaged models (managed=False) are now silently ignored by the autodetector instead of being tracked separately. Models with managed=False that belong to migrated apps will no longer have their creation, deletion, or option changes detected.",
+              "rationale": "Previously, unmanaged models were tracked in old_unmanaged_keys/new_unmanaged_keys and processed through generate_created_models (skipping DB operations) and generate_deleted_models. Now the condition `if app_label not in self.from_state.real_apps` is checked first, meaning unmanaged models in migrated apps are added to old_model_keys/new_model_keys. However, unmanaged models in real_apps are completely dropped. More critically, the guard `if not model_state.options.get('managed', True): continue` that prevented DB operations for unmanaged models in generate_created_models has been removed (line 748 area), meaning unmanaged models that are now in new_model_keys will have full DB operations generated for them, which is incorrect behavior.",
+              "suggestedFix": "The removal of the `continue` guard at line ~748 (after the CreateModel operation) means that unmanaged models now get AddField/AlterField/etc. database operations generated, which contradicts the managed=False semantics. This guard must be restored or unmanaged models must be excluded from new_model_keys/old_model_keys.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 745,
+              "lineEnd": 750,
+              "message": "The guard `if not model_state.options.get('managed', True): continue` was removed from generate_created_models, causing database-modifying operations (AddField for related fields, AlterField, etc.) to be generated for unmanaged models.",
+              "rationale": "Unmanaged models (managed=False) should never have database schema operations generated. The old code explicitly skipped generating related field operations and other DB operations for unmanaged models. With this guard removed and unmanaged models now falling into new_model_keys, the autodetector will generate AddField/AlterField operations for them, which will fail at migration time since no table exists.",
+              "suggestedFix": "Either restore the `if not model_state.options.get('managed', True): continue` guard, or ensure unmanaged models are excluded from new_model_keys before reaching generate_created_models.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1875,
+              "message": "generate_altered_options no longer handles the case where a model transitions between managed=True and managed=False (or vice versa), losing detection of managed↔unmanaged conversions.",
+              "rationale": "The old code explicitly included `self.old_unmanaged_keys & self.new_model_keys` (unmanaged converted to managed) and `self.old_model_keys & self.new_unmanaged_keys` (managed converted to unmanaged) in models_to_check. These cases are now silently dropped, so changing a model's managed attribute will not generate an AlterModelOptions operation.",
+              "suggestedFix": "Add logic to detect managed↔unmanaged transitions and generate appropriate operations, or document that this is intentionally no longer supported.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "django/db/migrations/autodetector.py",
+              "message": "No tests appear to cover the behavioral change for unmanaged models in migrated apps now being treated as regular managed models by the autodetector.",
+              "rationale": "The change fundamentally alters how unmanaged models are processed. Existing tests for unmanaged model detection (create/delete/alter) may pass if they relied on the old separate tracking, but the new behavior of generating DB operations for unmanaged models would only be caught by integration tests that actually run migrations.",
+              "suggestedFix": "Add tests verifying that: (1) unmanaged models do not get DB-modifying operations generated, (2) managed↔unmanaged transitions are handled correctly, (3) deletion of unmanaged models generates correct operations.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "tests/migrations/test_autodetector.py",
+              "lineStart": 715,
+              "lineEnd": 722,
+              "message": "author_unmanaged_empty is named 'Author' but author_unmanaged (the existing fixture) is named 'AuthorUnmanaged'; these represent different models, which may cause confusion or incorrect test setup when both are used together.",
+              "rationale": "The existing `author_unmanaged` fixture uses model name 'AuthorUnmanaged' and inherits from 'testapp.author'. The new `author_unmanaged_empty` uses model name 'Author' with the same bases tuple ('testapp.author',). If a test uses both fixtures in the same state list, there will be two models with different names but the same base, which could produce unexpected autodetector behavior. More importantly, the naming inconsistency makes it unclear whether `author_unmanaged_empty` is meant to be a proxy/unmanaged version of 'Author' or 'AuthorUnmanaged'.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "tests/migrations/test_autodetector.py",
+              "lineStart": 4145,
+              "lineEnd": 4155,
+              "message": "test_unmanaged_alter_field compares author_unmanaged_name_default (CharField with default) to author_unmanaged_name_longer (CharField without default, max_length=400); asserting preserve_default=True is incorrect because the from-field has a default and the to-field does not, so the autodetector should not set preserve_default=True in this scenario.",
+              "rationale": "preserve_default=True is set by the autodetector when a default is added temporarily just for the migration (i.e., the field in the new state has no default but one was provided interactively). Here the change is from a field WITH a default to a field WITHOUT a default (max_length change only), so the expected preserve_default value needs verification against actual autodetector logic. If the autodetector does not emit preserve_default=True for this case, the assertion will fail or mask a real bug.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 21191,
+            "completionTokens": 1770,
+            "totalTokens": 22961
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 0,
+        "variance": 2.3333333333333335,
+        "avgSignals": 5.333333333333333,
+        "hallucinated": 0,
+        "avgTokens": 22572.333333333332,
+        "avgPromptTokens": 21105,
+        "avgCompletionTokens": 1467.3333333333333,
+        "tokensPerSignal": 4232.3125,
+        "tokensPerSecond": 587.7854644249047,
+        "avgLatencyMs": 38402.333333333336,
+        "maxLatencyMs": 49552
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 16343,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 154,
+              "lineEnd": 169,
+              "message": "Unmanaged models are no longer tracked by the autodetector, so changes involving managed=False models stop generating state-preserving migration operations.",
+              "rationale": "The removed old_unmanaged_keys/new_unmanaged_keys sets were previously used to detect creation, deletion, and option changes for unmanaged models without emitting database-changing operations. With these branches deleted, unmanaged models are excluded from old/new model key sets entirely, so adding/removing an unmanaged model or toggling managed between False/True will not be represented in generated migrations.",
+              "suggestedFix": "Keep separate unmanaged model key tracking and include unmanaged models in state-diff generation paths while continuing to suppress database-altering operations for them.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1874,
+              "message": "Changes to Meta options on unmanaged models, including managed=False↔True transitions, will no longer produce AlterModelOptions operations.",
+              "rationale": "generate_altered_options() previously checked kept_unmanaged_keys and the intersections old_unmanaged_keys & new_model_keys / old_model_keys & new_unmanaged_keys. Removing those sets means option diffs for unmanaged models and managed/unmanaged conversions are skipped entirely, causing migration state to diverge from model definitions.",
+              "suggestedFix": "Restore unmanaged model participation in generate_altered_options(), including the managed/unmanaged transition cases.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.91,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 648,
+              "lineEnd": 745,
+              "message": "This change needs regression coverage for unmanaged model add/remove and managed flag transitions in makemigrations.",
+              "rationale": "The diff removes all autodetector handling for unmanaged models, which is behaviorally significant and historically supported. Without tests covering unmanaged model creation/deletion and managed=False↔True transitions, this regression is likely to go unnoticed.",
+              "suggestedFix": "Add autodetector tests asserting that makemigrations still emits state-only operations for unmanaged model creation/deletion and AlterModelOptions when toggling managed.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 16944,
+            "completionTokens": 487,
+            "totalTokens": 17431
+          }
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 13654,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 154,
+              "lineEnd": 171,
+              "message": "Unmanaged models are no longer tracked by the autodetector, so changes to unmanaged models stop generating state-only migration operations.",
+              "rationale": "The removed old_unmanaged_keys/new_unmanaged_keys sets were previously used to include unmanaged models in create/delete/alter option and db_table detection while skipping database-changing operations. With this change, unmanaged models are excluded entirely from old/new model key sets, so makemigrations will miss additions, deletions, renames, Meta option changes, and managed<->unmanaged transitions for unmanaged models.",
+              "suggestedFix": "Keep separate tracking for unmanaged models and continue generating state-only operations for them, while still suppressing database schema operations where appropriate.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 1867,
+              "lineEnd": 1874,
+              "message": "Transitions between managed and unmanaged models are no longer detected in AlterModelOptions generation.",
+              "rationale": "The removed unions of old_unmanaged_keys & new_model_keys and old_model_keys & new_unmanaged_keys were the explicit paths for emitting option changes when a model flips its managed flag. After this change, those models are excluded from models_to_check, so changing Meta.managed will not produce the required state migration.",
+              "suggestedFix": "Restore unmanaged model participation in generate_altered_options(), including the managed-to-unmanaged and unmanaged-to-managed intersections.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.91,
+              "file": "django/db/migrations/autodetector.py",
+              "lineStart": 648,
+              "lineEnd": 745,
+              "message": "Missing regression tests for unmanaged model autodetection behavior removed by this change.",
+              "rationale": "This patch changes create/delete/alter handling for unmanaged models but no accompanying tests are shown for adding/removing unmanaged models, changing unmanaged model Meta options such as db_table/db_table_comment, or toggling managed=False/True. These cases are directly affected by the removed unmanaged key tracking.",
+              "suggestedFix": "Add autodetector tests covering unmanaged model creation/deletion, Meta option changes, and managed flag transitions to verify state-only migrations are still generated correctly.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 16944,
+            "completionTokens": 494,
+            "totalTokens": 17438
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 1,
+        "avgSignals": 2,
+        "hallucinated": 0,
+        "avgTokens": 17434.5,
+        "avgPromptTokens": 16944,
+        "avgCompletionTokens": 490.5,
+        "tokensPerSignal": 5811.5,
+        "tokensPerSecond": 387.43763819597996,
+        "avgLatencyMs": 29999.666666666668,
+        "maxLatencyMs": 60002
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 3616,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 3880,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2220,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 3238.6666666666665,
+        "maxLatencyMs": 3880
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 2236,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1652,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1486,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 1791.3333333333333,
+        "maxLatencyMs": 2236
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 1511,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1672,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1529,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 1570.6666666666667,
+        "maxLatencyMs": 1672
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120004.33333333333,
+        "maxLatencyMs": 120005
+      }
+    },
+    {
+      "scenarioId": "django_pr_18651",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120002.33333333333,
+        "maxLatencyMs": 120003
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 60007,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 60005.333333333336,
+        "maxLatencyMs": 60007
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 60013,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60013,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 60009.333333333336,
+        "maxLatencyMs": 60013
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 38140,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "test/run-tests.c",
+              "lineStart": 57,
+              "lineEnd": 57,
+              "message": "The new helper is declared with a void return type, but test helpers in this runner are invoked through declarations that match their definitions; if the actual helper returns int, this introduces a conflicting prototype and can fail compilation.",
+              "rationale": "This file uses forward declarations for helper entry points. Adding a mismatched prototype for an existing/implemented helper causes a compile-time type conflict in C when the definition is seen with a different return type.",
+              "suggestedFix": "Change the declaration to match the helper definition's actual signature, likely `int pipe_read_cancel_race_helper(void);` if it follows the other helper conventions.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.97,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 114,
+              "lineEnd": 114,
+              "message": "Writing a terminator at exepath[exepath_size] can write past the end of the fixed buffer when uv_exepath() fills the buffer completely.",
+              "rationale": "uv_exepath() updates exepath_size to the string length. If that length equals sizeof(exepath), indexing exepath[exepath_size] is out of bounds for the 1024-byte array.",
+              "suggestedFix": "Either allocate one extra byte for exepath, or only append the terminator when exepath_size < sizeof(exepath).",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 49,
+              "lineEnd": 49,
+              "message": "The new test is not guarded as Windows-only even though it relies on Windows-specific pipe semantics and APIs described in the test itself.",
+              "rationale": "The helper assumes blocking uv_write() to a pipe preserves chunk boundaries and the parent assumes reads will consistently return exactly CHUNK_SIZE to trigger the race. Those assumptions are specific to the Windows bug path being tested, so running this test on other platforms risks spurious failures or hangs.",
+              "suggestedFix": "Compile or execute this test only on Windows, or add a runtime skip on non-Windows platforms.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 36304,
+            "completionTokens": 503,
+            "totalTokens": 36807
+          }
+        },
+        {
+          "durationMs": 32104,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "test/run-tests.c",
+              "lineStart": 57,
+              "lineEnd": 57,
+              "message": "The new helper is declared with a void return type, but test helpers in this dispatcher are expected to return an int status code.",
+              "rationale": "If the actual helper implementation returns int, this introduces a conflicting prototype and can fail compilation. If it really returns void, the dispatcher cannot propagate failures from the helper process, unlike the surrounding helpers.",
+              "suggestedFix": "Change the declaration to `int pipe_read_cancel_race_helper(void);` and return its result from `maybe_run_test`, or update the implementation and call sites consistently.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.95,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 114,
+              "lineEnd": 114,
+              "message": "Writing a terminator at exepath[exepath_size] can write past the end of the buffer when uv_exepath() fills the buffer completely.",
+              "rationale": "uv_exepath() updates exepath_size to the string length. If that length equals sizeof(exepath), indexing exepath[exepath_size] is out of bounds.",
+              "suggestedFix": "Reserve one byte before calling uv_exepath() or guard the write, e.g. initialize exepath_size = sizeof(exepath) - 1 and then set exepath[exepath_size] = '\\0' after a successful call.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.89,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 49,
+              "lineEnd": 49,
+              "message": "The test is added without any platform guard even though it exercises Windows-specific pipe cancellation behavior and uses Windows-only assumptions about blocking pipe writes preserving chunk boundaries.",
+              "rationale": "The helper comment explicitly relies on Windows pipe semantics, but the test file itself has no #ifdef or skip logic to prevent running on other platforms where the assumptions do not hold and the test may fail or behave differently.",
+              "suggestedFix": "Guard the test/helper with a Windows platform check or skip the test at runtime on non-Windows platforms.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 36304,
+            "completionTokens": 497,
+            "totalTokens": 36801
+          }
+        },
+        {
+          "durationMs": 13664,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "test/run-tests.c",
+              "lineStart": 57,
+              "lineEnd": 57,
+              "message": "The new helper is declared with a void return type, but test helpers in this dispatcher are invoked as standalone entry points and should match their definition exactly; if the implementation returns int, this introduces a conflicting declaration and can fail to compile.",
+              "rationale": "This file uses forward declarations for helper entry points. Introducing a mismatched prototype for pipe_read_cancel_race_helper will cause a compiler error or undefined behavior depending on the actual definition.",
+              "suggestedFix": "Change the declaration to match the helper definition exactly, e.g. `int pipe_read_cancel_race_helper(void);` if the implementation returns int.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 113,
+              "lineEnd": 113,
+              "message": "Writing a terminator at exepath[exepath_size] can write past the end of the fixed buffer when uv_exepath() fills the buffer completely.",
+              "rationale": "uv_exepath() updates exepath_size to the length written. If that length equals sizeof(exepath), indexing exepath[exepath_size] is out of bounds.",
+              "suggestedFix": "Either allocate one extra byte for exepath or guard the write with a bounds check before appending '\\0'.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.92,
+              "file": "test/test-pipe-read-cancel-race.c",
+              "lineStart": 49,
+              "lineEnd": 49,
+              "message": "The test is added without any platform guard even though it relies on Windows-specific pipe cancellation behavior and Windows-only assumptions about blocking pipe writes.",
+              "rationale": "The helper comments and test design explicitly target a Windows-specific CancelIoEx race. Running this on other platforms can make the test meaningless or flaky rather than validating the intended bug.",
+              "suggestedFix": "Compile or execute this test only on Windows, or add an early skip on non-Windows platforms.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 36304,
+            "completionTokens": 471,
+            "totalTokens": 36775
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 0,
+        "variance": 0,
+        "avgSignals": 3,
+        "hallucinated": 0,
+        "avgTokens": 36794.333333333336,
+        "avgPromptTokens": 36304,
+        "avgCompletionTokens": 490.3333333333333,
+        "tokensPerSignal": 12264.777777777777,
+        "tokensPerSecond": 1315.5241454926825,
+        "avgLatencyMs": 27969.333333333332,
+        "maxLatencyMs": 38140
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 60005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 4491,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 3398,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 22631.333333333332,
+        "maxLatencyMs": 60005
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 2458,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2286,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2053,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 2265.6666666666665,
+        "maxLatencyMs": 2458
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 2292,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2131,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2053,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 2158.6666666666665,
+        "maxLatencyMs": 2292
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120007,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120013,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120007.66666666667,
+        "maxLatencyMs": 120013
+      }
+    },
+    {
+      "scenarioId": "libuv_pr_5037",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120003.33333333333,
+        "maxLatencyMs": 120005
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 53619,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.85,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 131,
+              "lineEnd": 148,
+              "message": "When ssr=false and hasParentSuspense=true, no Suspense boundary is created, but BailoutToCSR still throws. The parent Suspense will catch it, but the BailoutToCSR component is only rendered in the non-SSR path and is designed to be caught by the dynamic component's own boundary. Delegating to a parent Suspense means the parent will show its fallback for the CSR bailout, which may cause the entire parent subtree (including other already-rendered children) to be replaced by the parent's fallback, leading to unexpected UI behavior.",
+              "rationale": "With ssr=false, the component renders <BailoutToCSR> which throws a special error to force client-side rendering. Previously this was always caught by the component's own Suspense boundary. Now when a parent Suspense exists and no explicit loading is provided, the BailoutToCSR error propagates to the parent boundary, potentially unmounting sibling components that were already rendered within that parent Suspense. This is a behavioral regression that could cause visible UI flicker or loss of sibling content.",
+              "suggestedFix": "Consider always creating an own Suspense boundary when ssr=false, regardless of parent Suspense presence, to contain the BailoutToCSR side effect. For example, change Rule 2 to only delegate to parent when opts.ssr is true.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.8,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 7,
+              "lineEnd": 7,
+              "message": "SuspenseTrackerContext is only provided by SuspenseTrackerProvider, but there is no evidence in this diff that Next.js wraps user-defined <Suspense> boundaries with <SuspenseTrackerProvider>. Without patching React's Suspense or instrumenting it at the framework level, the context will always be false, making this entire change a no-op.",
+              "rationale": "The exported SuspenseTrackerProvider must be rendered inside every user-defined Suspense boundary for the detection to work. The diff does not show where this provider is injected, so either this is incomplete or relies on changes not shown here. If the provider is never rendered, useHasParentSuspense() always returns false and the behavior is unchanged from before.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "low",
+              "confidence": 0.7,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 143,
+              "lineEnd": 148,
+              "message": "When ssr=true, no parent Suspense exists, and no explicit loading is provided, shouldCreateOwnBoundary returns false. React.lazy() will suspend, and without any ancestor Suspense boundary, React will throw an error in production ('A component suspended while responding to synchronous input'). The previous code created a Suspense boundary with null fallback in this case when opts.loading was set (defaultOptions sets loading to null, so hasSuspenseBoundary was false). Verify this path doesn't regress.",
+              "rationale": "The old code had `hasSuspenseBoundary = !opts.ssr || !!opts.loading`. For ssr=true and loading=null, hasSuspenseBoundary was false, so the old behavior also didn't wrap. This is consistent, but worth verifying that the new Rule 4 comment about 'React will handle it' is actually safe in all cases.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "test/e2e/dynamic-suspense-parent/dynamic-suspense-parent.test.ts",
+              "message": "Test references fixture files (via `files: __dirname`) but no fixture files (e.g., app/page.tsx, app/layout.tsx, next.config.js) are included in this PR. The test will fail at setup because the required app files don't exist.",
+              "rationale": "nextTestSetup({ files: __dirname }) expects the test directory to contain the Next.js app files (layout, page, components, next.config) that define the fixture. None of these files are added in this diff.",
+              "suggestedFix": "Add the necessary fixture files (e.g., next.config.js, app/layout.tsx, app/page.tsx with a dynamic() import wrapped in a parent <Suspense>) to the test/e2e/dynamic-suspense-parent/ directory.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 36872,
+            "completionTokens": 1298,
+            "totalTokens": 38170
+          }
+        },
+        {
+          "durationMs": 49358,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "risk",
+              "severity": "high",
+              "confidence": 0.85,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 130,
+              "lineEnd": 130,
+              "message": "When ssr=false and no parent Suspense exists, the default case (last return) returns false, meaning no Suspense boundary is created. But BailoutToCSR will throw and there's no boundary to catch it, potentially crashing the app.",
+              "rationale": "The logic for Rule 4 only handles `!opts.ssr` (returns true), but the final `return false` is reached when `opts.ssr === true`, no parent Suspense, and no explicit loading. However, the more critical issue is: when `hasParentSuspense` is true AND `opts.ssr` is false, Rule 2/3 returns false (no own boundary). The BailoutToCSR component is rendered inside the `!opts.ssr` branch (line 143-145 in original code). If there's a parent Suspense tracked by the context but it's not actually a React Suspense boundary (it's just a context provider), the BailoutToCSR error won't be caught properly. The SuspenseTrackerProvider must be placed inside actual Suspense boundaries, but the diff doesn't show where it's integrated - if it's placed incorrectly, ssr=false components will crash.",
+              "suggestedFix": "Verify that SuspenseTrackerProvider is only rendered as a direct child of actual React <Suspense> boundaries. Also consider whether delegating BailoutToCSR to a parent Suspense is correct behavior - the parent may not expect to handle that specific error type.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.8,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 99,
+              "lineEnd": 131,
+              "message": "useMemo is unnecessary here and masks the fact that this is a pure derivation with no expensive computation. More importantly, the dependency array [hasParentSuspense] is incomplete - it should also include hasExplicitLoading and opts.ssr, even though they are stable in practice.",
+              "rationale": "hasExplicitLoading is derived from the options closure and opts.ssr is also from the closure, so they won't change between renders. However, using useMemo here is misleading - React docs state useMemo is for expensive computations, not simple boolean logic. A plain variable assignment would be clearer and avoid the incomplete deps issue.",
+              "suggestedFix": "Replace useMemo with a plain const derivation: `const shouldCreateOwnBoundary = hasExplicitLoading ? true : hasParentSuspense ? false : !opts.ssr`",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "high",
+              "confidence": 0.9,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 1,
+              "lineEnd": 155,
+              "message": "This is a significant behavioral change to dynamic() Suspense boundary logic that could break existing apps. No test changes are included in this diff to verify the new behavior (parent Suspense delegation, ssr=false with parent Suspense, etc.).",
+              "rationale": "The change alters when dynamic() creates its own Suspense boundary, which affects loading states across the entire Next.js ecosystem. Tests should cover: (1) dynamic() with parent Suspense and no loading prop delegates upward, (2) dynamic() with explicit loading always creates own boundary, (3) dynamic() with ssr=false and parent Suspense delegates correctly, (4) dynamic() with ssr=false and no parent Suspense still works.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "test/e2e/dynamic-suspense-parent/dynamic-suspense-parent.test.ts",
+              "message": "Test references fixture files via `files: __dirname` but no fixture files (e.g., app/page.tsx, app/layout.tsx, next.config.js) are included in this PR. The test will fail at setup because the required page components and config are missing.",
+              "rationale": "nextTestSetup({ files: __dirname }) expects the test directory to contain the Next.js app files (layout, page, dynamic component, next.config, etc.) that the test exercises. None of these files appear in the diff.",
+              "suggestedFix": "Add the necessary fixture files (e.g., next.config.js, app/layout.tsx, app/page.tsx with a dynamic() import wrapped in a parent <Suspense>) to the test/e2e/dynamic-suspense-parent/ directory.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 36872,
+            "completionTokens": 1302,
+            "totalTokens": 38174
+          }
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 1.3333333333333333,
+        "avgSignals": 2.6666666666666665,
+        "hallucinated": 0,
+        "avgTokens": 38172,
+        "avgPromptTokens": 36872,
+        "avgCompletionTokens": 1300,
+        "tokensPerSignal": 9543,
+        "tokensPerSecond": 468.42844783683785,
+        "avgLatencyMs": 54326.333333333336,
+        "maxLatencyMs": 60002
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 60003.666666666664,
+        "maxLatencyMs": 60004
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 22534,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 123,
+              "lineEnd": 127,
+              "message": "SSR dynamic components without an explicit loading prop no longer create a Suspense boundary when no parent boundary is tracked, which can leave React.lazy suspensions uncaught.",
+              "rationale": "The previous logic wrapped all SSR dynamic components in Suspense unless ssr was false or a loading prop was provided. The new branch returns false for the default ssr=true/no-parent/no-loading case, but React.lazy still suspends during client rendering and requires an ancestor Suspense boundary. The added context is never automatically provided by React Suspense, so this path can occur even when no tracked parent exists.",
+              "suggestedFix": "Preserve the previous default of creating a Suspense boundary for SSR dynamic components unless there is a verified tracked parent Suspense boundary to delegate to.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.97,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 117,
+              "lineEnd": 121,
+              "message": "Client-only dynamic components with ssr=false skip their own Suspense boundary whenever the custom context says a parent Suspense exists, but BailoutToCSR requires a local Suspense boundary to catch the bailout.",
+              "rationale": "The comment states ssr=false needs a Suspense boundary to catch the BailoutToCSR error, yet the implementation returns false before checking !opts.ssr when hasParentSuspense is true. That changes behavior from always wrapping ssr=false components to conditionally omitting the boundary, which can break the CSR bailout path.",
+              "suggestedFix": "Keep shouldCreateOwnBoundary true for !opts.ssr regardless of parent Suspense tracking, or otherwise prove that the bailout is safely handled by an ancestor boundary.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 13,
+              "lineEnd": 38,
+              "message": "The new SuspenseTrackerProvider/useHasParentSuspense mechanism is introduced here, but this change adds no coverage proving that dynamic() inside a normal React <Suspense> is actually wrapped by the provider and delegates correctly.",
+              "rationale": "This behavior depends on external integration that is not shown in the diff. Without tests covering nested dynamic() under user Suspense, the new branching can regress both fallback rendering and CSR bailout handling unnoticed.",
+              "suggestedFix": "Add integration tests for dynamic() with and without loading under a parent React Suspense boundary, including ssr=true and ssr=false cases.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.95,
+              "file": "test/e2e/dynamic-suspense-parent/dynamic-suspense-parent.test.ts",
+              "lineStart": 20,
+              "lineEnd": 34,
+              "message": "The SSR assertion is incompatible with `ssr:false`: `next.render('/')` returns server HTML before client hydration, so `loaded` cannot be present and a parent Suspense fallback is not rendered on the server for a client-only dynamic import.",
+              "rationale": "This test can only pass if the server HTML contains neither the dynamic content nor the parent fallback semantics assumed by the assertion, making it fail or validate the wrong behavior.",
+              "suggestedFix": "Assert the server HTML against the actual expected SSR output for `ssr:false`, and move fallback/anti-flicker verification to a browser-based test that inspects the DOM before and after hydration.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 31009,
+            "completionTokens": 765,
+            "totalTokens": 31774
+          }
+        },
+        {
+          "durationMs": 20548,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.97,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 120,
+              "lineEnd": 124,
+              "message": "SSR dynamic components without an explicit loading prop no longer create a local Suspense boundary when no parent boundary is tracked, which can leave React.lazy suspensions uncaught.",
+              "rationale": "Previously `hasSuspenseBoundary` was true for all SSR-enabled dynamic imports unless `ssr` was false or a loading component was provided, so `React.lazy` was always wrapped. The new logic returns `false` for the common `ssr=true`, `hasParentSuspense=false`, `hasExplicitLoading=false` case, despite the comment claiming an own boundary is still needed when no parent Suspense exists. That changes runtime behavior and can surface missing-Suspense errors instead of preserving the prior null fallback behavior.",
+              "suggestedFix": "Make `shouldCreateOwnBoundary` return `true` when `!hasParentSuspense && !hasExplicitLoading`, regardless of `opts.ssr`, or otherwise preserve the previous wrapping behavior for SSR dynamic imports.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "high",
+              "confidence": 0.92,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 11,
+              "lineEnd": 39,
+              "message": "The new Suspense tracking context is never connected to actual user-defined `<Suspense>` boundaries in this change, so `useHasParentSuspense()` will always return `false` unless callers are updated elsewhere.",
+              "rationale": "`LoadableComponent` now relies on `useHasParentSuspense()` to decide whether to delegate suspension upward, but this diff only defines and exports `SuspenseTrackerProvider`; it does not wrap any existing Suspense boundaries with it. As introduced here, the new branch for `hasParentSuspense` is effectively dead and the intended flicker fix will not occur.",
+              "suggestedFix": "Ensure all relevant Suspense boundaries that should be detectable render `SuspenseTrackerProvider` inside their fallback boundary, or avoid basing boundary creation on this context until those call sites are wired up.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "packages/next/src/shared/lib/lazy-dynamic/loadable.tsx",
+              "lineStart": 86,
+              "lineEnd": 124,
+              "message": "Missing regression tests for dynamic imports without `loading` under both tracked and untracked parent Suspense boundaries.",
+              "rationale": "This change alters when `dynamic()` creates its own Suspense boundary, but there are no accompanying tests covering the key cases: no parent Suspense, parent Suspense present, and `ssr: false`. Without these, the uncaught-suspense regression and the inactive parent-tracking path would not be detected.",
+              "suggestedFix": "Add tests that render `dynamic()` components with and without explicit `loading`, inside and outside a parent Suspense boundary, and assert which fallback is shown for both `ssr: true` and `ssr: false`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "test/e2e/dynamic-suspense-parent/dynamic-suspense-parent.test.ts",
+              "lineStart": 20,
+              "lineEnd": 34,
+              "message": "The SSR assertion is inverted: it fails when the parent Suspense fallback is rendered together with static shell content, which is the expected streaming behavior.",
+              "rationale": "A parent Suspense boundary can stream its fallback while sibling/static content like the header is still present in the HTML. The test currently treats any HTML containing 'header' without 'loaded' as a bug, so it will incorrectly fail valid implementations that render the fallback plus static content.",
+              "suggestedFix": "Assert that the HTML contains the parent fallback (or loaded content) without forbidding the presence of static content, e.g. check for 'parent loading...' and 'header' together if that is the intended behavior.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 31012,
+            "completionTokens": 849,
+            "totalTokens": 31861
+          }
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 1.3333333333333333,
+        "avgSignals": 2.6666666666666665,
+        "hallucinated": 0,
+        "avgTokens": 31817.5,
+        "avgPromptTokens": 31010.5,
+        "avgCompletionTokens": 807,
+        "tokensPerSignal": 7954.375,
+        "tokensPerSecond": 617.3120949904932,
+        "avgLatencyMs": 34361.333333333336,
+        "maxLatencyMs": 60002
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 60003.333333333336,
+        "maxLatencyMs": 60004
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 47223,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 55743.333333333336,
+        "maxLatencyMs": 60004
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 30566,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 50190.666666666664,
+        "maxLatencyMs": 60003
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120007,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120004.66666666667,
+        "maxLatencyMs": 120007
+      }
+    },
+    {
+      "scenarioId": "nextjs_pr_91004",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120008,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120005,
+        "maxLatencyMs": 120008
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 32114,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.75,
+              "file": "crates/cli/src/decompress.rs",
+              "lineStart": 229,
+              "lineEnd": 229,
+              "message": "Not all decompression commands may support `--` as an end-of-options marker. Some tools (e.g., uncompress, lz4) may not recognize `--` and could treat it as a filename or error out, breaking decompression for those formats.",
+              "rationale": "The decompression matcher can invoke various external tools (gzip, bzip2, xz, lz4, uncompress, zstd, etc.). While `--` is a POSIX convention, not all tools honor it. For example, `uncompress` on some systems may not support `--`. This could cause regressions for certain file types.",
+              "suggestedFix": "Verify that all decompression commands configured in the default matcher support `--` as an end-of-options separator, or only insert `--` for commands known to support it.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 6601,
+            "completionTokens": 282,
+            "totalTokens": 6883
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 2,
+        "variance": 0.3333333333333333,
+        "avgSignals": 0.3333333333333333,
+        "hallucinated": 0,
+        "avgTokens": 6883,
+        "avgPromptTokens": 6601,
+        "avgCompletionTokens": 282,
+        "tokensPerSignal": 6883,
+        "tokensPerSecond": 45.24747073015205,
+        "avgLatencyMs": 50706.333333333336,
+        "maxLatencyMs": 60003
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 60009,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 31036,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "crates/cli/src/decompress.rs",
+              "lineStart": 229,
+              "lineEnd": 229,
+              "message": "Not all decompression tools support `--` as an end-of-options separator",
+              "rationale": "While `--` is a POSIX convention, some decompression tools (e.g., older versions of `gzip`, `bzip2`, `xz`, or Windows-native tools) may not recognize `--` and will treat it as an unknown argument, causing the command to fail. This could silently fall back to the passthru reader, returning undecompressed data instead of an error.",
+              "suggestedFix": "Consider making the `--` separator configurable per-command in the matcher, or document which tools are known to support it and test against the full set of supported decompressors.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 6601,
+            "completionTokens": 249,
+            "totalTokens": 6850
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 2,
+        "variance": 0.3333333333333333,
+        "avgSignals": 0.3333333333333333,
+        "hallucinated": 0,
+        "avgTokens": 6850,
+        "avgPromptTokens": 6601,
+        "avgCompletionTokens": 249,
+        "tokensPerSignal": 6850,
+        "tokensPerSecond": 45.35012280945666,
+        "avgLatencyMs": 50349,
+        "maxLatencyMs": 60009
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 60012,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 28812,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "risk",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "crates/cli/src/decompress.rs",
+              "lineStart": 229,
+              "lineEnd": 229,
+              "message": "Unconditionally inserting `--` before the path can break configured decompression commands that do not support end-of-options markers.",
+              "rationale": "`self.matcher.command(path)` can return arbitrary external commands from the decompression matcher configuration, not just GNU-style tools. Some supported or user-configured decompressors may treat `--` as an invalid argument, causing decompression to fail for files that previously worked.",
+              "suggestedFix": "Only add `--` for commands known to support it, or make end-of-options insertion configurable per decompression rule instead of unconditional.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "crates/cli/src/decompress.rs",
+              "lineStart": 229,
+              "lineEnd": 229,
+              "message": "Missing regression tests for decompression commands that do and do not accept `--` before the input path.",
+              "rationale": "This behavioral change alters the argv passed to every decompressor invocation. Without coverage for representative built-in commands and a custom matcher command, regressions in decompression compatibility may go unnoticed.",
+              "suggestedFix": "Add tests that verify successful decompression for filenames beginning with `-` using commands that support `--`, and a compatibility test for a custom decompression command that does not accept `--`.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 5394,
+            "completionTokens": 298,
+            "totalTokens": 5692
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 2,
+        "variance": 0.6666666666666666,
+        "avgSignals": 0.6666666666666666,
+        "hallucinated": 0,
+        "avgTokens": 5692,
+        "avgPromptTokens": 5394,
+        "avgCompletionTokens": 298,
+        "tokensPerSignal": 2846,
+        "tokensPerSecond": 38.24600540228186,
+        "avgLatencyMs": 49608.666666666664,
+        "maxLatencyMs": 60012
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 3123,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1976,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 60002,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 21700.333333333332,
+        "maxLatencyMs": 60002
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 1848,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1579,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1913,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 1780,
+        "maxLatencyMs": 1913
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 1905,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 2572,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 21493.666666666668,
+        "maxLatencyMs": 60004
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120027,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120031,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120020.33333333333,
+        "maxLatencyMs": 120031
+      }
+    },
+    {
+      "scenarioId": "ripgrep_pr_3282",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120012,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120027,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120037,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120025.33333333333,
+        "maxLatencyMs": 120037
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 56575,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2689,
+              "message": "No tests are included for the new rocksdb_compact_files, rocksdb_compact_files_cf, and rocksdb_compaction_options_* C API functions.",
+              "rationale": "The RocksDB C API typically has corresponding tests in db/c_test.c. New public API functions without test coverage risk undetected bugs, especially around the C/C++ boundary (e.g., null pointer handling, correct parameter passing).",
+              "suggestedFix": "Add test cases in db/c_test.c that exercise rocksdb_compaction_options_create/destroy, the getters/setters, and rocksdb_compact_files/rocksdb_compact_files_cf.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.8,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2670,
+              "message": "rocksdb_compact_files dereferences opt->rep without null-checking opt. Other C API functions in this file follow a pattern where null arguments can lead to crashes. If opt is NULL, this will segfault.",
+              "rationale": "The C API is used from languages that may pass null pointers. While this is somewhat consistent with other C API functions in this file, the CompactFiles functions also don't validate input_file_names or num_input_files, which could cause undefined behavior if input_file_names is null but num_input_files > 0.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "low",
+              "confidence": 0.85,
+              "file": "db/c.cc",
+              "lineStart": 2389,
+              "lineEnd": 2430,
+              "message": "The new C API functions (rocksdb_compaction_options_*, rocksdb_compact_files, rocksdb_compact_files_cf) are not declared in a header file in this diff. They need corresponding declarations in include/rocksdb/c.h to be usable by external consumers.",
+              "rationale": "The diff only shows changes to db/c.cc but the C API header (include/rocksdb/c.h) must also declare these functions with ROCKSDB_LIBRARY_API for them to be part of the public API. If the header declarations are missing, these functions won't be accessible to C consumers.",
+              "suggestedFix": "Add corresponding function declarations to include/rocksdb/c.h with ROCKSDB_LIBRARY_API linkage.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "include/rocksdb/c.h",
+              "message": "No corresponding implementation or tests are included for the new C API functions (rocksdb_compact_files, rocksdb_compact_files_cf, rocksdb_compaction_options_*). The header declares functions but the diff does not show the .c/.cc implementation or any test coverage.",
+              "rationale": "Declaring functions in a header without providing implementations will cause linker errors. The diff only shows header changes. If the implementation exists in another file not shown in this diff, this may be fine, but typically a PR should include both declaration and definition.",
+              "suggestedFix": "Ensure the corresponding implementations in db/c.cc (or equivalent) and tests in db/c_test.c are included in this change.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "risk",
+              "severity": "low",
+              "confidence": 0.75,
+              "file": "include/rocksdb/c.h",
+              "lineStart": 108,
+              "lineEnd": 108,
+              "message": "The new type name 'rocksdb_compaction_options_t' is very similar to the existing 'rocksdb_compactoptions_t', which could cause confusion and accidental misuse by C API consumers.",
+              "rationale": "The existing API already has 'rocksdb_compactoptions_t' (for CompactRangeOptions). The new 'rocksdb_compaction_options_t' (for CompactionOptions used by CompactFiles) differs only by an underscore. This naming is consistent with the C++ API (CompactRangeOptions vs CompactionOptions) but may be error-prone in the C API.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.7,
+              "file": "include/rocksdb/c.h",
+              "lineStart": 2469,
+              "lineEnd": 2469,
+              "message": "The C++ CompactionOptions struct also has a 'compression' field (CompressionType), but the new C API does not expose a setter/getter for it. Users who need to specify compression for CompactFiles will be unable to do so through this API.",
+              "rationale": "The CompactionOptions struct in the C++ API includes compression, output_file_size_limit, max_subcompactions, and allow_trivial_move (among others). Missing the compression option may limit the usefulness of this API.",
+              "suggestedFix": "Consider adding rocksdb_compaction_options_set_compression / rocksdb_compaction_options_get_compression functions.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 39666,
+            "completionTokens": 1448,
+            "totalTokens": 41114
+          }
+        },
+        {
+          "durationMs": 52326,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2689,
+              "message": "No tests are included for the new rocksdb_compact_files, rocksdb_compact_files_cf, and rocksdb_compaction_options_* C API functions.",
+              "rationale": "The RocksDB C API typically has corresponding tests in db/c_test.c. New public API functions without test coverage risk undetected bugs, especially around the C/C++ boundary (e.g., null pointer handling, correct parameter passing).",
+              "suggestedFix": "Add test cases in db/c_test.c that exercise rocksdb_compaction_options_create/destroy, the getters/setters, and rocksdb_compact_files/rocksdb_compact_files_cf.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.85,
+              "file": "db/c.cc",
+              "lineStart": 2667,
+              "lineEnd": 2670,
+              "message": "rocksdb_compact_files constructs std::vector<std::string> from char* pointers without length information, relying on implicit conversion from const char* to std::string. If any input_file_names entry is not null-terminated, this will read out of bounds.",
+              "rationale": "The C API convention elsewhere passes both pointer and length for strings. Here, input_file_names entries are assumed to be null-terminated C strings. While file names are typically null-terminated, this is inconsistent with the rest of the C API and the contract is not documented. This is a minor risk rather than a definite bug, but worth noting.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2689,
+              "message": "No null-pointer checks on 'opt' or 'db' parameters in rocksdb_compact_files and rocksdb_compact_files_cf. Passing NULL will cause a segfault rather than returning an error.",
+              "rationale": "While many existing C API functions also lack null checks, CompactFiles is more likely to be called with user-constructed parameters that could be null (e.g., forgetting to create compaction options). A null dereference on opt->rep would crash without a useful error message.",
+              "suggestedFix": "Add null checks for db, opt, and column_family parameters, and set *errptr with an appropriate error message if any are null.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "include/rocksdb/c.h",
+              "message": "No corresponding implementation (c.cc) or test changes are included for the new C API functions (rocksdb_compact_files, rocksdb_compact_files_cf, rocksdb_compaction_options_*). Header declarations without implementations will cause linker errors.",
+              "rationale": "The diff only adds declarations in the header file. The retrieved context shows patterns from c.cc with implementations for similar types (e.g., rocksdb_fifo_compaction_options_*, rocksdb_universal_compaction_options_*), but no implementation file changes are included in this PR. Without the corresponding struct definition and function implementations in c.cc, any code using these new APIs will fail to link.",
+              "suggestedFix": "Add implementations in db/c.cc for all declared functions, including the rocksdb_compaction_options_t struct definition and the rocksdb_compact_files/rocksdb_compact_files_cf functions. Also add test coverage in db/c_test.c.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 39666,
+            "completionTokens": 1044,
+            "totalTokens": 40710
+          }
+        },
+        {
+          "durationMs": 60000,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 2.6666666666666665,
+        "avgSignals": 3.3333333333333335,
+        "hallucinated": 0,
+        "avgTokens": 40912,
+        "avgPromptTokens": 39666,
+        "avgCompletionTokens": 1246,
+        "tokensPerSignal": 8182.4,
+        "tokensPerSecond": 484.44947039982,
+        "avgLatencyMs": 56300.333333333336,
+        "maxLatencyMs": 60000
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 53174,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "db/c.cc",
+              "lineStart": 2663,
+              "lineEnd": 2669,
+              "message": "rocksdb_compact_files and rocksdb_compact_files_cf do not handle null opt pointer, and there is no null check for input_file_names when num_input_files is 0",
+              "rationale": "If opt is null, dereferencing opt->rep will crash. While callers should not pass null, the C API pattern in this file typically does not guard against this. More critically, constructing std::vector<std::string> from a null pointer with size 0 is undefined behavior in C++.",
+              "suggestedFix": "Add null checks for opt and guard the vector construction: if num_input_files == 0, use an empty vector directly rather than constructing from a potentially null pointer.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c.cc",
+              "lineStart": 2663,
+              "lineEnd": 2669,
+              "message": "rocksdb_compact_files passes CompactionOptions by value (copy) into CompactFiles, but CompactionOptions may contain fields not exposed via the C API (e.g., compression type), leaving them at default values with no way for C callers to configure them",
+              "rationale": "CompactionOptions includes a compression field that is not exposed through any setter in this diff. C API callers have no way to set compression for CompactFiles, which may silently use an unintended compression type.",
+              "suggestedFix": "Add rocksdb_compaction_options_set_compression / get_compression accessors to expose the compression field.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c.cc",
+              "lineStart": 2663,
+              "lineEnd": 2686,
+              "message": "No C API tests added for rocksdb_compact_files, rocksdb_compact_files_cf, or the new rocksdb_compaction_options_t accessors",
+              "rationale": "The existing C API test file (db/c_test.c) exercises all C API functions. The new functions are not tested, leaving correctness of the wrappers unverified.",
+              "suggestedFix": "Add test cases in db/c_test.c that create a rocksdb_compaction_options_t, set/get each field, call rocksdb_compact_files and rocksdb_compact_files_cf, and verify no error is returned.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c_test.c",
+              "lineStart": 1280,
+              "lineEnd": 1285,
+              "message": "lf3 is destroyed after rocksdb_compact_files_cf but l0_file2 points into lf3's memory, so the pointer passed to rocksdb_compact_files_cf may be dangling if the compaction call uses it after lf3 is freed.",
+              "rationale": "l0_file2 is set to rocksdb_livefiles_name(lf3, i), which returns a pointer owned by lf3. rocksdb_compact_files_cf is called with input_files2[0] = l0_file2, and only after that call returns is rocksdb_livefiles_destroy(lf3) called. While the compaction call is synchronous and likely finishes before the destroy, the string pointer is into lf3's internal storage. If the implementation copies the string before returning, this is safe; if not, it is undefined behavior. The ordering is correct (destroy after call), so this is low-to-medium risk, but it is worth noting that the pointer lifetime depends on implementation details of rocksdb_compact_files_cf.",
+              "suggestedFix": "Copy the filename into a local buffer before calling rocksdb_compact_files_cf, or destroy lf3 only after the compaction call (which is already the case here — re-examine: destroy is after the call, so this is actually safe as written). Disregard if confirmed safe.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c_test.c",
+              "lineStart": 1295,
+              "lineEnd": 1298,
+              "message": "The assertion that all live files are at L1 after the second compact_files_cf call may be flaky: the first compacted file (foo→bar) is already at L1, and after compacting foo2→bar2 to L1, both files should be at L1. However, if auto-compaction is not disabled, a background compaction could move files to a different level between the compact_files_cf call and the livefiles check, causing a spurious test failure.",
+              "rationale": "The test DB (cf_db) is opened without disable_auto_compactions=true. With two L1 files present, the level compaction trigger could fire and move files to L2 before the assertion runs.",
+              "suggestedFix": "Set rocksdb_options_set_disable_auto_compactions(cf_opts, 1) when opening cf_db to prevent background compactions from interfering with the level assertions.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 39666,
+            "completionTokens": 1407,
+            "totalTokens": 41073
+          }
+        },
+        {
+          "durationMs": 53870,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "db/c.cc",
+              "lineStart": 2663,
+              "lineEnd": 2669,
+              "message": "rocksdb_compact_files and rocksdb_compact_files_cf do not handle null opt pointer; passing null will dereference opt->rep and crash.",
+              "rationale": "The existing compact_range functions accept nullable options in some cases, and C API callers may pass null. There is no null check on `opt` before dereferencing `opt->rep`.",
+              "suggestedFix": "Add a null check for `opt` and either use a default-constructed CompactionOptions or return an error when opt is null.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2689,
+              "message": "No C API tests added for rocksdb_compact_files, rocksdb_compact_files_cf, or the new rocksdb_compaction_options_t accessors.",
+              "rationale": "The existing C API test file (db/c_test.c) exercises all public C API functions. The new functions are not covered, leaving correctness of the wrappers unverified.",
+              "suggestedFix": "Add test cases in db/c_test.c that exercise rocksdb_compaction_options_create/destroy, the getter/setter functions, and rocksdb_compact_files/rocksdb_compact_files_cf.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c_test.c",
+              "lineStart": 1290,
+              "lineEnd": 1295,
+              "message": "lf3 is destroyed after compact_files_cf is called, but l0_file2 points into lf3's memory. If compact_files_cf internally uses the filename string asynchronously or if the pointer is invalidated before the call completes, this is a use-after-free risk. More concretely, l0_file2 is used in input_files2[0] which is passed to rocksdb_compact_files_cf, and lf3 is destroyed only after that call returns — this ordering is correct. However, the comment says 'Keep lf alive through the compact_files call' for the first case but no such comment exists here, making the intent unclear and the pattern inconsistent.",
+              "rationale": "In the first compact_files test, there is an explicit comment 'Keep lf alive through the compact_files call since the returned pointer is owned by lf.' The same pattern applies to lf3/l0_file2, but lf3 is destroyed after the call, which is correct. However, the asymmetry and lack of comment could lead to future bugs if the order is changed.",
+              "suggestedFix": "Add a comment similar to the first case: 'Keep lf3 alive through the rocksdb_compact_files_cf call since l0_file2 is owned by lf3.'",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "db/c_test.c",
+              "lineStart": 1299,
+              "lineEnd": 1305,
+              "message": "After the second compact_files_cf call, the test asserts all live files are at L1. However, the first compaction already moved 'foo' to L1, so there are now two L1 files. The loop correctly checks all are at L1, but there is no assertion that exactly 2 files exist at L1 (one from the first compaction, one from the second). Without this, the test would pass even if one file was missing.",
+              "rationale": "The test verifies level placement but not file count, so a scenario where one file is missing would go undetected.",
+              "suggestedFix": "Add CheckCondition(rocksdb_livefiles_count(lf4) == 2) before the loop.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 39666,
+            "completionTokens": 1093,
+            "totalTokens": 40759
+          }
+        },
+        {
+          "durationMs": 10477,
+          "outcome": "failure",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 2,
+        "avgSignals": 3,
+        "hallucinated": 0,
+        "avgTokens": 40916,
+        "avgPromptTokens": 39666,
+        "avgCompletionTokens": 1250,
+        "tokensPerSignal": 9092.444444444445,
+        "tokensPerSecond": 696.318104849346,
+        "avgLatencyMs": 39173.666666666664,
+        "maxLatencyMs": 53870
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 28816,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "db/c.cc",
+              "lineStart": 2664,
+              "lineEnd": 2665,
+              "message": "The new C API converts input_file_names to std::string using the null-terminated constructor, so file names containing embedded NUL bytes will be truncated before calling DB::CompactFiles.",
+              "rationale": "The existing C API commonly accepts explicit lengths for binary-safe strings. Here only const char* is accepted and std::vector<std::string> files(input_file_names, input_file_names + num_input_files) constructs each std::string from a C string, which stops at the first '\\0'. RocksDB file paths are passed through this API and truncation can cause compaction to target the wrong files or fail unexpectedly.",
+              "suggestedFix": "Change the API to accept per-file lengths and construct each std::string with std::string(ptr, len), or document and enforce that only NUL-terminated paths without embedded NULs are supported.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.97,
+              "file": "db/c.cc",
+              "lineStart": 2677,
+              "lineEnd": 2678,
+              "message": "The column-family variant has the same truncation bug when converting input_file_names to std::string from const char* pointers.",
+              "rationale": "std::vector<std::string> files(input_file_names, input_file_names + num_input_files) uses the C-string constructor for each element, so any embedded NUL in a file name is lost before CompactFiles is invoked.",
+              "suggestedFix": "Accept explicit lengths for each file name and build std::string values with those lengths, or reject non-null-terminated inputs explicitly.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.95,
+              "file": "db/c_test.c",
+              "lineStart": 1213,
+              "lineEnd": 1219,
+              "message": "The test opens a dedicated DB path without first destroying any existing contents, so reruns can observe leftover SSTs and fail the assumption that exactly one live file exists after the first flush.",
+              "rationale": "The path is deterministic (`...-compact_files` under temp dir for the current euid). If a prior run crashed or left files behind, `rocksdb_open(..., create_if_missing=1)` will reopen that DB instead of starting fresh, making `rocksdb_livefiles_count(lf) == 1` unreliable.",
+              "suggestedFix": "Call `rocksdb_destroy_db(cf_opts, compact_files_dbname, &err)` (ignoring NotFound) before `rocksdb_open`, or use a unique temporary directory per run.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "db/c_test.c",
+              "lineStart": 1299,
+              "lineEnd": 1300,
+              "message": "The default column family handle returned by `rocksdb_get_default_column_family_handle` is never destroyed, leaking a handle in the test.",
+              "rationale": "C API column family handles are owned resources and should be released with `rocksdb_column_family_handle_destroy`. This test creates one and closes the DB without destroying it.",
+              "suggestedFix": "Add `rocksdb_column_family_handle_destroy(default_cf);` before closing `cf_db`.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 30130,
+            "completionTokens": 693,
+            "totalTokens": 30823
+          }
+        },
+        {
+          "durationMs": 18032,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "db/c.cc",
+              "lineStart": 2664,
+              "lineEnd": 2668,
+              "message": "The new C API dereferences `opt` unconditionally in `rocksdb_compact_files`, causing a null-pointer crash if callers pass NULL to request default compaction options.",
+              "rationale": "Existing RocksDB C APIs commonly accept NULL for optional option structs and substitute defaults internally. This function directly accesses `opt->rep` without any null check.",
+              "suggestedFix": "Handle `opt == nullptr` by creating a default `CompactionOptions` locally and passing that to `CompactFiles`, or document and enforce non-null in the public header and all bindings.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "db/c.cc",
+              "lineStart": 2675,
+              "lineEnd": 2679,
+              "message": "The new C API dereferences `opt` unconditionally in `rocksdb_compact_files_cf`, causing a null-pointer crash if callers pass NULL to request default compaction options.",
+              "rationale": "This mirrors the non-CF variant and directly accesses `opt->rep` without validating the pointer first.",
+              "suggestedFix": "Handle `opt == nullptr` by using a default-constructed `CompactionOptions` before calling `CompactFiles`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.87,
+              "file": "db/c.cc",
+              "lineStart": 2661,
+              "lineEnd": 2679,
+              "message": "No C API test coverage is added for the new `rocksdb_compact_files*` entry points.",
+              "rationale": "These wrappers introduce new pointer handling and file-name conversion logic, but the diff adds no tests validating success paths or null/default option behavior.",
+              "suggestedFix": "Add C API tests covering `rocksdb_compact_files` and `rocksdb_compact_files_cf`, including default-created options and invalid/null option handling if supported.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.95,
+              "file": "db/c_test.c",
+              "lineStart": 1214,
+              "lineEnd": 1219,
+              "message": "The test opens a fixed per-user DB path without first destroying any existing contents, so reruns can inherit stale SSTs and fail the assertions that expect exactly one live file.",
+              "rationale": "The path is deterministic (`...-compact_files` with only `geteuid()` varying). Unlike other tests in this file that use fresh DBs, this block calls `rocksdb_open(... create_if_missing=1)` directly and then asserts `rocksdb_livefiles_count(lf) == 1` after a single flush. If a previous run left files behind, the DB will reopen with existing data and these assertions become invalid.",
+              "suggestedFix": "Call `rocksdb_destroy_db(cf_opts, compact_files_dbname, &err)` and clear `err` before `rocksdb_open`, or use a unique temporary directory/name for this phase.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "db/c_test.c",
+              "lineStart": 1298,
+              "lineEnd": 1301,
+              "message": "The default column family handle returned by `rocksdb_get_default_column_family_handle` is never destroyed, leaking a handle in the test.",
+              "rationale": "Column family handles are owned resources in the C API and should be released with `rocksdb_column_family_handle_destroy`. This block obtains `default_cf` and uses it in `rocksdb_compact_files_cf`, but there is no corresponding destroy before closing the DB.",
+              "suggestedFix": "Add `rocksdb_column_family_handle_destroy(default_cf);` after the `_cf` compaction call and before `rocksdb_close(cf_db);`.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 30130,
+            "completionTokens": 798,
+            "totalTokens": 30928
+          }
+        },
+        {
+          "durationMs": 15779,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "db/c.cc",
+              "lineStart": 2664,
+              "lineEnd": 2666,
+              "message": "Constructing std::vector<std::string> directly from `const char*` pointers does not compile because there is no implicit conversion from iterator value type `const char*` to `std::string` in the vector range constructor.",
+              "rationale": "`std::vector<std::string> files(input_file_names, input_file_names + num_input_files);` instantiates the range constructor with `InputIt = const char* const*`, which requires assigning `const char*` values into `std::string` elements. The vector range constructor does not perform that element-wise converting construction.",
+              "suggestedFix": "Build the vector explicitly, e.g. reserve `num_input_files` and `emplace_back(input_file_names[i])` in a loop, or use `std::transform` with `std::string` construction.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.98,
+              "file": "db/c.cc",
+              "lineStart": 2676,
+              "lineEnd": 2678,
+              "message": "Constructing std::vector<std::string> directly from `const char*` pointers does not compile in the column-family variant for the same reason as the non-CF variant.",
+              "rationale": "`std::vector<std::string> files(input_file_names, input_file_names + num_input_files);` uses the vector range constructor with source elements of type `const char*`, which is not a valid match for the required `std::string` value type construction in this context.",
+              "suggestedFix": "Populate the vector with an explicit loop converting each filename to `std::string` before calling `CompactFiles`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.95,
+              "file": "db/c_test.c",
+              "lineStart": 1214,
+              "lineEnd": 1219,
+              "message": "The test opens a fixed DB path without first destroying any existing contents, so reruns can fail if a previous run left the directory behind.",
+              "rationale": "Unlike the main test DB setup, this new subtest uses a deterministic path derived only from temp dir and euid, then calls rocksdb_open with create_if_missing=1. If that path already exists from an earlier interrupted/failed run, open can fail because the DB already exists with stale state or incompatible options, making the test non-hermetic.",
+              "suggestedFix": "Call rocksdb_destroy_db(cf_opts, compact_files_dbname, &err) before rocksdb_open, or generate a unique path per run.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.92,
+              "file": "db/c_test.c",
+              "lineStart": 1288,
+              "lineEnd": 1290,
+              "message": "The default column family handle returned by rocksdb_get_default_column_family_handle is never destroyed.",
+              "rationale": "This introduces a resource leak in the test. The C API requires column family handles to be explicitly destroyed, and this new handle is not released before closing the DB.",
+              "suggestedFix": "Call rocksdb_column_family_handle_destroy(default_cf) before rocksdb_close(cf_db).",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 30130,
+            "completionTokens": 679,
+            "totalTokens": 30809
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 0,
+        "variance": 0.3333333333333333,
+        "avgSignals": 4.333333333333333,
+        "hallucinated": 0,
+        "avgTokens": 30853.333333333332,
+        "avgPromptTokens": 30130,
+        "avgCompletionTokens": 723.3333333333334,
+        "tokensPerSignal": 7120,
+        "tokensPerSecond": 1477.9567917990641,
+        "avgLatencyMs": 20875.666666666668,
+        "maxLatencyMs": 28816
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 3307,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 3549,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 4152,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 3669.3333333333335,
+        "maxLatencyMs": 4152
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 2611,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2172,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2033,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 2272,
+        "maxLatencyMs": 2611
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 1773,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1813,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2780,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 2122,
+        "maxLatencyMs": 2780
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120001,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120002.66666666667,
+        "maxLatencyMs": 120004
+      }
+    },
+    {
+      "scenarioId": "rocksdb_pr_14390",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120003,
+        "maxLatencyMs": 120003
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "claude-opus-4-6",
+      "runs": [
+        {
+          "durationMs": 60005,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 60004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 52142,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.8,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 47,
+              "lineEnd": 50,
+              "message": "The release() method calls decrementRefCount() but does not check its return value before calling chunk.release(). Previously, chunk.release() was always called (when chunk was non-null), but the ref count check was used to throw IllegalStateException on double-release. If decrementRefCount() throws on already-released buffers, chunk.release() will never be called, potentially leaking the chunk. If it doesn't throw, the chunk is released even when the ref count hasn't reached zero, which could release the underlying chunk prematurely when multiple retains are outstanding.",
+              "rationale": "The old code decremented the ref count (throwing if already 0) and then always called chunk.release() regardless of the resulting count. The new code does the same, but the semantics depend on the parent class's decrementRefCount() implementation which we cannot see. The key concern is that chunk.release() is called on every release() call, not just when refCount reaches 0 - this matches the old behavior and Jetty's retain/release semantics, but the return value of decrementRefCount() is discarded, so any error handling based on it is lost.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.75,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 53,
+              "lineEnd": 57,
+              "message": "slice() calls super.slice() which likely delegates to the delegate's slice(), but the old code called this.delegate.slice() which returned a DefaultDataBuffer. The new super.slice() may return a JettyVirtualDataBuffer wrapping the sliced delegate, creating a nested wrapper. When this is then passed to the new JettyDataBuffer constructor, you get a JettyDataBuffer wrapping a JettyVirtualDataBuffer wrapping a DefaultDataBuffer, adding an unnecessary layer of indirection and potentially breaking equals/hashCode or other identity-sensitive operations.",
+              "rationale": "The old code directly accessed the delegate field and created a new JettyDataBuffer with the raw DefaultDataBuffer slice. The new code goes through super.slice() which may wrap the result differently depending on JettyVirtualDataBuffer's implementation.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.7,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 28,
+              "lineEnd": 28,
+              "message": "The old JettyDataBuffer had a constructor that accepted no chunk (chunk was nullable), used for buffers not backed by a Jetty Content.Chunk. That constructor has been removed. Any code that previously created a JettyDataBuffer without a chunk will now fail to compile or will need to use JettyVirtualDataBuffer directly, which is a breaking API change.",
+              "rationale": "The old class had two constructors: one with chunk and one without. The refactored class only has the constructor with chunk. If JettyDataBufferFactory or other code creates JettyDataBuffer instances without a chunk, this will break.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "risk",
+              "severity": "high",
+              "confidence": 0.85,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBufferFactory.java",
+              "lineStart": 100,
+              "lineEnd": 104,
+              "message": "The `join` method passes a `List<? extends DataBuffer>` to `this.delegate.join(dataBuffers)`, but `DefaultDataBufferFactory.join` likely expects `DefaultDataBuffer` instances. If the list contains `JettyDataBuffer` or `JettyVirtualDataBuffer` instances (which are not `DefaultDataBuffer`), this will fail at runtime. The previous code likely had the same issue, but the change to `JettyVirtualDataBuffer` may alter behavior if `JettyVirtualDataBuffer` has a different relationship to `DefaultDataBuffer` than `JettyDataBuffer` did.",
+              "rationale": "The delegate factory is a `DefaultDataBufferFactory`, and its `join` method likely operates on `DefaultDataBuffer` instances. Passing wrapped `JettyDataBuffer`/`JettyVirtualDataBuffer` instances without unwrapping them could cause ClassCastException or incorrect behavior.",
+              "suggestedFix": "Unwrap the DataBuffer instances to their underlying DefaultDataBuffer delegates before passing them to `this.delegate.join()`.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "risk",
+              "severity": "high",
+              "confidence": 0.8,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBufferFactory.java",
+              "lineStart": 68,
+              "lineEnd": 96,
+              "message": "Return types changed from `JettyDataBuffer` to `DataBuffer`, and the concrete type changed from `JettyDataBuffer` to `JettyVirtualDataBuffer`. This is a binary-incompatible change for any code that relied on the covariant return type (e.g., `JettyDataBuffer buf = factory.allocateBuffer()`). Existing compiled code calling these methods expecting `JettyDataBuffer` as the return type will get `NoSuchMethodError` at runtime.",
+              "rationale": "Changing a covariant return type from a more specific type to a less specific type is a binary-breaking change in Java. Any previously compiled code that was linked against the old signature `JettyDataBuffer allocateBuffer()` will fail to find the method `DataBuffer allocateBuffer()` at link time.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.85,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 53,
+              "lineEnd": 55,
+              "message": "incrementRefCount() silently returns 0 instead of throwing when the buffer is already released (refCount == 0). This means retain() on a released buffer succeeds without error and leaves the buffer in a released state, hiding a use-after-release bug.",
+              "rationale": "The updateAndGet lambda returns 0 when c == 0, meaning retain() on a released buffer silently does nothing. This is inconsistent with decrementRefCount() which throws IllegalStateException. Netty's reference counting, for example, throws IllegalReferenceCountException in this case.",
+              "suggestedFix": "Throw an IllegalStateException when c == 0 in incrementRefCount(), similar to decrementRefCount(): `if (c != 0) { return c + 1; } else { throw new IllegalStateException(\"JettyDataBuffer already released: \" + this); }`",
+              "source": "llm"
+            },
+            {
+              "id": "signal-6",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.82,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 195,
+              "lineEnd": 198,
+              "message": "slice() creates a new JettyVirtualDataBuffer with an independent refCount of 1, but does not retain the parent buffer. If the parent is released, the slice's underlying delegate data may become invalid. Similarly, split() at line 202 has the same issue.",
+              "rationale": "Sliced/split buffers share underlying memory with the parent. Creating a new wrapper with an independent refCount=1 without incrementing the parent's refCount means releasing the parent can invalidate the slice's data. The new wrapper's release() also doesn't release any underlying Jetty resource.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-7",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 0.9,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 63,
+              "lineEnd": 65,
+              "message": "release() returns true when refCount reaches 0 but does not actually release/free any underlying resources. The delegate buffer is never released, potentially causing memory leaks for pooled delegates.",
+              "rationale": "PooledDataBuffer.release() is expected to free the underlying buffer when the reference count reaches zero. This implementation only decrements the counter without performing any cleanup on the delegate.",
+              "suggestedFix": "When decrementRefCount() returns 0, release the delegate buffer (e.g., if it is a PooledDataBuffer, call release() on it, or perform appropriate cleanup).",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 24491,
+            "completionTokens": 2317,
+            "totalTokens": 26808
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 2,
+        "empty": 2,
+        "variance": 2.6666666666666665,
+        "avgSignals": 2.6666666666666665,
+        "hallucinated": 0,
+        "avgTokens": 26808,
+        "avgPromptTokens": 24491,
+        "avgCompletionTokens": 2317,
+        "tokensPerSignal": 3351,
+        "tokensPerSecond": 155.72375414606944,
+        "avgLatencyMs": 57383.666666666664,
+        "maxLatencyMs": 60005
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "claude-sonnet-4-6",
+      "runs": [
+        {
+          "durationMs": 60012,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 51199,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 55,
+              "lineEnd": 58,
+              "message": "release() unconditionally calls chunk.release() regardless of the ref count state returned by decrementRefCount(). If the buffer is already fully released (ref count at 0), a subsequent call to release() will still invoke chunk.release(), potentially causing a double-release of the underlying Jetty chunk.",
+              "rationale": "The old code threw IllegalStateException when refCount was already 0. The new code calls decrementRefCount() but ignores its return value, then always calls chunk.release(). If decrementRefCount() does not throw on underflow, the chunk will be released more times than it was retained.",
+              "suggestedFix": "Check the result of decrementRefCount() before calling chunk.release(), or ensure decrementRefCount() throws on invalid state (ref count already 0) to preserve the previous protection.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBufferFactory.java",
+              "lineStart": 68,
+              "lineEnd": 105,
+              "message": "Return type narrowed from JettyDataBuffer to DataBuffer, breaking binary and source compatibility for callers that depended on the more specific return type.",
+              "rationale": "Callers that previously used the returned JettyDataBuffer directly (e.g., to call JettyDataBuffer-specific methods or to pass to APIs expecting JettyDataBuffer) will now get a compile error or ClassCastException at runtime if they cast. This is a breaking API change for any downstream code using these factory methods.",
+              "suggestedFix": "If JettyVirtualDataBuffer is a subtype of JettyDataBuffer, keep the return type as JettyDataBuffer. If not, document the breaking change and bump the major version or provide a migration path.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 196,
+              "lineEnd": 200,
+              "message": "slice() and split() return a JettyVirtualDataBuffer wrapping the delegate's slice/split result, but the new wrapper starts with refCount=1 and is not tied to the lifecycle of the parent buffer. If the parent is released, the underlying delegate may be freed while the slice/split wrapper still holds a reference to it.",
+              "rationale": "The delegate passed to slice/split is a sub-view of the parent's underlying storage. The new JettyVirtualDataBuffer wrapping it has an independent refCount starting at 1, so releasing the parent (refCount→0) does not prevent the slice from being used. However, since the delegate here is a plain DataBuffer (not pooled), this may be acceptable depending on the delegate type. But if the delegate is itself a pooled buffer whose memory is freed on release, the slice wrapper will hold a dangling reference.",
+              "suggestedFix": "Retain the parent buffer when creating a slice/split wrapper, and release it when the slice/split wrapper is released, or document clearly that this class only wraps non-pooled delegates.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 240,
+              "lineEnd": 243,
+              "message": "equals() only compares delegates between two JettyVirtualDataBuffer instances, but hashCode() delegates to this.delegate.hashCode(). Two JettyVirtualDataBuffer instances wrapping equal delegates will have equal hashCodes and be equal to each other, but a JettyVirtualDataBuffer will never be equal to its own delegate even if they represent the same data. This asymmetry is acceptable, but the real issue is that two wrappers around the same delegate are considered equal regardless of their refCount state, which could mask use-after-release bugs.",
+              "rationale": "Minor correctness concern: equals/hashCode contract is technically satisfied but the semantics may be surprising.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 57,
+              "lineEnd": 68,
+              "message": "decrementRefCount() throws IllegalStateException inside an AtomicInteger.updateAndGet() lambda. If the lambda throws, the atomic value is not updated, which is correct. However, the exception propagates out of updateAndGet() and the caller (release()) does not catch it, meaning a double-release throws an unchecked exception rather than returning false or being silently ignored. This differs from typical PooledDataBuffer behavior where double-release is a programming error but should be handled gracefully in production.",
+              "rationale": "Throwing from within updateAndGet is valid Java but may be unexpected. The real risk is that callers of release() do not expect an exception and may not handle it, leading to resource leaks in error paths.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "message": "No test class is included for JettyVirtualDataBuffer. The refCount lifecycle (retain/release/double-release), slice/split wrapper independence, and equals/hashCode behavior are not covered.",
+              "rationale": "This is a new public class with non-trivial reference counting logic that has no accompanying tests in the diff.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 24491,
+            "completionTokens": 2334,
+            "totalTokens": 26825
+          }
+        },
+        {
+          "durationMs": 57708,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 47,
+              "lineEnd": 50,
+              "message": "In release(), the return value of decrementRefCount() is ignored and chunk.release() is always called regardless of the current ref count state. If the buffer is already released (ref count at 0), chunk.release() will still be invoked, potentially causing a double-release of the underlying Jetty chunk.",
+              "rationale": "The old code threw IllegalStateException when refCount was already 0. If decrementRefCount() in the parent does not throw on underflow, the chunk will be released an extra time. Even if it does throw, the semantics of the return value (whether this was the final release) is now entirely delegated to chunk.release() rather than being coordinated with the ref count.",
+              "suggestedFix": "Check the result of decrementRefCount() before calling chunk.release(), or ensure the parent's decrementRefCount() throws on underflow and returns a value indicating whether the count reached zero, then only call chunk.release() when appropriate.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 55,
+              "lineEnd": 59,
+              "message": "In slice() and split(), super.slice()/super.split() returns a JettyVirtualDataBuffer (a PooledDataBuffer with its own ref count initialized to 1). This is then wrapped in a new JettyDataBuffer, creating a double-pooled buffer. The inner JettyVirtualDataBuffer's ref count is never decremented, leaking its lifecycle management.",
+              "rationale": "JettyVirtualDataBuffer.slice() likely returns a new JettyVirtualDataBuffer instance. Wrapping that in JettyDataBuffer means there are now two PooledDataBuffer wrappers around the same underlying data, with the inner one's release() never being called.",
+              "suggestedFix": "super.slice()/super.split() should return the raw delegate DataBuffer (not a JettyVirtualDataBuffer), or the JettyDataBuffer constructor should unwrap a JettyVirtualDataBuffer to get the underlying delegate.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBufferFactory.java",
+              "lineStart": 68,
+              "lineEnd": 104,
+              "message": "Return type narrowed from JettyDataBuffer to DataBuffer, breaking binary and source compatibility for callers that relied on the more specific return type.",
+              "rationale": "Any existing code that called allocateBuffer(), wrap(), or join() on a JettyDataBufferFactory reference and used the returned JettyDataBuffer directly (e.g., to call JettyDataBuffer-specific methods or pass it where JettyDataBuffer is expected) will now get a compile error or ClassCastException at runtime. This is a breaking API change for downstream consumers.",
+              "suggestedFix": "If the intent is to introduce JettyVirtualDataBuffer as the new implementation, consider keeping the return type as JettyDataBuffer (with JettyVirtualDataBuffer extending JettyDataBuffer), or document this as a deliberate breaking change with a migration path.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 196,
+              "lineEnd": 200,
+              "message": "slice() creates a JettyVirtualDataBuffer wrapping a delegate slice, but the slice's lifecycle is not tied to the parent's refcount. When the parent is released, the delegate slice may become invalid, but the child JettyVirtualDataBuffer has its own independent refcount starting at 1 with no connection to the parent.",
+              "rationale": "The slice of the delegate DataBuffer may share underlying memory with the parent delegate. If the parent's delegate is released/freed independently, the child JettyVirtualDataBuffer wrapping the slice will hold a dangling reference. There is no retain on the parent when creating a slice.",
+              "suggestedFix": "Retain the parent buffer when creating a slice/split, and release it when the child is released, or ensure the delegate's slice is independently owned.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 205,
+              "lineEnd": 209,
+              "message": "split() has the same lifecycle issue as slice(): the returned JettyVirtualDataBuffer wraps a delegate split with no connection to the parent's refcount.",
+              "rationale": "Same as slice() — the split portion of the delegate may share or depend on the parent delegate's memory, but the child has an independent refcount with no parent retain.",
+              "suggestedFix": "Retain the parent buffer when creating a split, and release it when the child is released.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 57,
+              "lineEnd": 59,
+              "message": "incrementRefCount() silently returns 0 when the buffer is already released (refCount == 0), making retain() a no-op on a released buffer without throwing an exception.",
+              "rationale": "Calling retain() on an already-released buffer should be an error. The current implementation silently does nothing (returns 0 and retain() returns this), which can mask use-after-release bugs. The decrementRefCount() correctly throws, but incrementRefCount() does not.",
+              "suggestedFix": "Throw an IllegalStateException in incrementRefCount() when c == 0, similar to how decrementRefCount() throws when already at 0.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-6",
+              "type": "risk",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 27,
+              "lineEnd": 27,
+              "message": "The class is public but has no Javadoc, and the constructor is package-private. The sealed/permits relationship with JettyDataBuffer is not documented, making the intended usage contract unclear.",
+              "rationale": "Public API without documentation in a framework library is a maintenance risk, especially for a sealed class hierarchy.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-7",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 1,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "message": "No tests are included for JettyVirtualDataBuffer's refcounting behavior, including: retain after release (should throw or be a no-op), double release (should throw), slice/split lifecycle, and isAllocated() state transitions.",
+              "rationale": "Reference counting bugs are subtle and high-impact. The new class introduces non-trivial refcount logic that is untested.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 24491,
+            "completionTokens": 2592,
+            "totalTokens": 27083
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 1,
+        "variance": 4.666666666666667,
+        "avgSignals": 4.666666666666667,
+        "hallucinated": 0,
+        "avgTokens": 26954,
+        "avgPromptTokens": 24491,
+        "avgCompletionTokens": 2463,
+        "tokensPerSignal": 3850.5714285714284,
+        "tokensPerSecond": 319.13520681510073,
+        "avgLatencyMs": 56306.333333333336,
+        "maxLatencyMs": 60012
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "gpt-5.4",
+      "runs": [
+        {
+          "durationMs": 54694,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 53,
+              "lineEnd": 56,
+              "message": "release() now always delegates to chunk.release(), which can over-release the underlying Jetty chunk when this buffer still has outstanding retains.",
+              "rationale": "The previous implementation decremented the buffer's own refCount and only used the chunk's boolean return value; with the new code, every release() call invokes chunk.release() regardless of whether incrementRefCount()/decrementRefCount() has reached zero. After retain(), a single release() should not free the underlying chunk while the buffer is still allocated.",
+              "suggestedFix": "Only call this.chunk.release() when decrementRefCount() transitions the buffer's ref count to zero; otherwise return false.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 183,
+              "lineEnd": 191,
+              "message": "slice() and split() create independent reference counts for views over the same underlying buffer, allowing one view to be released while others still access the shared storage.",
+              "rationale": "JettyVirtualDataBuffer is intended to provide pooled semantics via refCount, but slice/split wrap delegate views in new JettyVirtualDataBuffer instances initialized with refCount=1 instead of sharing or retaining a common counter. Since the underlying delegate views still reference the same memory, releasing one wrapper does not protect the others from use-after-release or double-release scenarios.",
+              "suggestedFix": "Make derived buffers share the same reference-count state as the parent, or retain the parent/underlying pooled buffer when creating slice/split views and release through that shared owner.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.89,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 31,
+              "lineEnd": 36,
+              "message": "Constructor does not validate bufferFactory, but factory() unconditionally returns it.",
+              "rationale": "Passing a null JettyDataBufferFactory will succeed at construction and later cause factory() to return null despite the DataBufferFactory contract expecting a valid factory instance.",
+              "suggestedFix": "Add Assert.notNull(bufferFactory, \"BufferFactory must not be null\"); in the constructor.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 17883,
+            "completionTokens": 519,
+            "totalTokens": 18402
+          }
+        },
+        {
+          "durationMs": 18941,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.97,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 53,
+              "lineEnd": 56,
+              "message": "release() now always delegates to chunk.release(), which breaks buffers created without a backing Jetty chunk.",
+              "rationale": "The previous implementation supported instances with chunk == null and returned true when the local ref count reached zero. This change removes the null case and will throw a NullPointerException if release() is invoked on a JettyDataBuffer created without a Content.Chunk, which is still implied by the old secondary constructor usage pattern and by the new superclass-based delegation model.",
+              "suggestedFix": "Preserve the null-safe release path, or ensure JettyDataBuffer cannot be instantiated without a non-null chunk everywhere and update all call sites accordingly.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.94,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 39,
+              "lineEnd": 45,
+              "message": "retain() no longer guards against retaining an already released chunk before calling chunk.retain().",
+              "rationale": "The old code only retained the underlying chunk when the ref count transition succeeded (result != 0). If incrementRefCount() follows the previous contract and returns 0 for an already released buffer, this method now still calls chunk.retain() whenever result != 0 but has no protection against exceptions or mismatches introduced by the superclass implementation. The change also removed the explicit IllegalStateException behavior from this class, so retain/release semantics now depend entirely on the superclass while still directly mutating the chunk here.",
+              "suggestedFix": "Keep the retain/release behavior aligned with the superclass contract and explicitly handle the released state before calling chunk.retain().",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 58,
+              "lineEnd": 73,
+              "message": "Missing regression tests for slice()/split() and release() reference-count behavior after moving ref-count management into the superclass.",
+              "rationale": "This class now mixes superclass ref counting with direct Content.Chunk retain/release calls. There are no visible tests in the diff proving that parent/slice/split buffers release the underlying chunk exactly once per retain and still reject double release correctly.",
+              "suggestedFix": "Add tests covering retain/release, double release, and slice/split lifecycle interactions with the underlying Content.Chunk.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 183,
+              "lineEnd": 193,
+              "message": "slice() and split() create independent reference counts for views over the same underlying buffer, allowing one view to be released while others still access the same storage.",
+              "rationale": "The new JettyVirtualDataBuffer wraps delegate.slice()/split() in a fresh JettyVirtualDataBuffer with refCount initialized to 1, but there is no shared ownership state or retain on the original pooled resource. If the underlying delegate is backed by pooled memory, releasing one wrapper does not coordinate with the others, which can lead to premature release or use-after-release across related views.",
+              "suggestedFix": "Share a common reference-count state across JettyVirtualDataBuffer instances derived from the same underlying pooled resource, or retain/release the underlying pooled delegate appropriately when creating and releasing slices/splits.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.88,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 183,
+              "lineEnd": 193,
+              "message": "Missing tests for retain/release behavior across slice() and split() views.",
+              "rationale": "This class introduces custom reference counting and creates new wrappers from slice()/split(), but there are no accompanying tests demonstrating that releasing parent and child buffers in different orders preserves correct allocation semantics.",
+              "suggestedFix": "Add tests covering slice()/split() with multiple retain/release orderings and verifying that related views remain valid until the final release.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 17883,
+            "completionTokens": 887,
+            "totalTokens": 18770
+          }
+        },
+        {
+          "durationMs": 22029,
+          "outcome": "success",
+          "signals": [
+            {
+              "id": "signal-0",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 53,
+              "lineEnd": 56,
+              "message": "release() now always delegates to chunk.release(), which can over-release the underlying Jetty chunk when called more times than this wrapper's ref count allows.",
+              "rationale": "Previously, a second release() on the same JettyDataBuffer threw IllegalStateException before touching the chunk. After this change, decrementRefCount() may detect the wrapper underflow, but chunk.release() is still invoked unconditionally, so the underlying chunk can be released even when this wrapper was already fully released.",
+              "suggestedFix": "Only call this.chunk.release() when decrementRefCount() transitions this buffer's ref count to zero; preserve the previous IllegalStateException behavior for double release without delegating to the chunk.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-1",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.88,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 61,
+              "lineEnd": 65,
+              "message": "slice() no longer increments this buffer's own ref count before creating a new wrapper that shares the same chunk.",
+              "rationale": "The new sliced JettyDataBuffer retains the shared chunk, but the original buffer's ref count is unchanged. Releasing the original buffer can therefore mark it deallocated while a derived slice still exists, breaking pooled-buffer allocation semantics for shared views.",
+              "suggestedFix": "Retain the parent buffer/reference count when creating shared derived buffers, or ensure the shared reference counting state is centralized so all wrappers observe the same allocation state.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-2",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.88,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyDataBuffer.java",
+              "lineStart": 68,
+              "lineEnd": 72,
+              "message": "split() no longer increments this buffer's own ref count before creating a new wrapper that shares the same chunk.",
+              "rationale": "As with slice(), the returned JettyDataBuffer shares the same underlying chunk but the original wrapper's allocation state is not retained. One wrapper can become deallocated while another still legitimately owns the chunk, which is inconsistent with pooled buffer lifecycle tracking.",
+              "suggestedFix": "Retain the parent/shared reference count when producing split buffers, or use a shared ref-count object across wrappers backed by the same chunk.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-3",
+              "type": "bug",
+              "severity": "high",
+              "confidence": 0.95,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 183,
+              "lineEnd": 193,
+              "message": "slice() and split() create independent virtual buffers without retaining the original pooled buffer, allowing the underlying storage to be released while derived buffers are still in use.",
+              "rationale": "The new JettyVirtualDataBuffer only tracks its own AtomicInteger and delegates all data access to another DataBuffer. When slice() or split() return a new JettyVirtualDataBuffer wrapping a derived delegate, no retain is performed on the original pooled resource and the new wrapper does not share the same reference count. Releasing the parent buffer can therefore drop the underlying pooled content while the child buffer remains 'allocated' according to its own refCount.",
+              "suggestedFix": "Ensure derived buffers participate in the same pooled lifecycle, e.g. share a common reference count/backing pooled buffer or retain the underlying pooled resource when creating slice/split views and release it when the derived buffer is released.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-4",
+              "type": "bug",
+              "severity": "medium",
+              "confidence": 0.89,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 58,
+              "lineEnd": 69,
+              "message": "release() throws IllegalStateException on a second call instead of returning false as expected for PooledDataBuffer implementations.",
+              "rationale": "decrementRefCount() throws when refCount is already 0, and release() does not handle that case. Existing pooled buffer implementations in Spring return false once a buffer has already been released; callers commonly use DataBufferUtils.release defensively and should not receive an exception for duplicate release attempts.",
+              "suggestedFix": "Change release()/decrementRefCount() so that releasing an already released buffer returns false rather than throwing.",
+              "source": "llm"
+            },
+            {
+              "id": "signal-5",
+              "type": "test",
+              "severity": "medium",
+              "confidence": 0.84,
+              "file": "spring-core/src/main/java/org/springframework/core/io/buffer/JettyVirtualDataBuffer.java",
+              "lineStart": 183,
+              "lineEnd": 193,
+              "message": "Missing tests for reference-count behavior of slice()/split() and repeated release().",
+              "rationale": "The new pooled buffer wrapper introduces custom retain/release semantics and derived-buffer creation, but no tests are shown to verify that child buffers keep the underlying storage alive or that duplicate release behaves consistently with other pooled buffers.",
+              "suggestedFix": "Add tests covering parent/child release ordering for slice()/split(), retain/release interactions, and repeated release calls.",
+              "source": "llm"
+            }
+          ],
+          "usage": {
+            "promptTokens": 17883,
+            "completionTokens": 1041,
+            "totalTokens": 18924
+          }
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 0,
+        "variance": 1.6666666666666667,
+        "avgSignals": 4.666666666666667,
+        "hallucinated": 0,
+        "avgTokens": 18698.666666666668,
+        "avgPromptTokens": 17883,
+        "avgCompletionTokens": 815.6666666666666,
+        "tokensPerSignal": 4006.8571428571427,
+        "tokensPerSecond": 586.3856832246195,
+        "avgLatencyMs": 31888,
+        "maxLatencyMs": 54694
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "gpt-5.3",
+      "runs": [
+        {
+          "durationMs": 2487,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2279,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 60003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 1,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 21589.666666666668,
+        "maxLatencyMs": 60003
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "gemini-2.5-pro",
+      "runs": [
+        {
+          "durationMs": 2636,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1492,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1961,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 2029.6666666666667,
+        "maxLatencyMs": 2636
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "gemini-flash-latest",
+      "runs": [
+        {
+          "durationMs": 1876,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 1335,
+          "outcome": "success",
+          "signals": []
+        },
+        {
+          "durationMs": 2145,
+          "outcome": "success",
+          "signals": []
+        }
+      ],
+      "metrics": {
+        "failures": 0,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 1785.3333333333333,
+        "maxLatencyMs": 2145
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "qwen2.5-coder",
+      "runs": [
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120011,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120006,
+        "maxLatencyMs": 120011
+      }
+    },
+    {
+      "scenarioId": "spring_framework_pr_36373",
+      "model": "deepseek-coder-v2",
+      "runs": [
+        {
+          "durationMs": 120006,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120004,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        },
+        {
+          "durationMs": 120003,
+          "outcome": "timeout",
+          "signals": [],
+          "error": "timeout"
+        }
+      ],
+      "metrics": {
+        "failures": 3,
+        "empty": 3,
+        "variance": 0,
+        "avgSignals": 0,
+        "hallucinated": 0,
+        "avgTokens": 0,
+        "avgPromptTokens": 0,
+        "avgCompletionTokens": 0,
+        "tokensPerSignal": 0,
+        "tokensPerSecond": 0,
+        "avgLatencyMs": 120004.33333333333,
+        "maxLatencyMs": 120006
+      }
+    }
+  ]
+}

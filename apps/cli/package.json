@@ -29,7 +29,7 @@
     "url": "https://github.com/navxio/prsense",
     "directory": "apps/cli"
   },
-  "homepage": "https://github.com/navxio/PRSense/blob/trunk/apps/cli/README.md",
+  "homepage": "https://prsense.org",
   "bugs": "https://github.com/navxio/prsense/issues",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
