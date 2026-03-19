@@ -759,7 +759,10 @@ A complete command reference is available in:
 
 ## Benchmarks
 
-ToDo
+Currently benchmarks track the time for each review, token usage, grounding etc for flagship
+models and local models via ollama
+
+See [benchmarks](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json)
 
 Note: To run the benchmarks yourself, make sure to setup `PRSENSE_GITHUB_BENCH_TOKEN` to not get blocked by the GH web api rate limiting
 
