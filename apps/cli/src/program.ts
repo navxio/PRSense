@@ -4,7 +4,9 @@ import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
 import daemonCommand from "./commands/daemon.js";
-import { PRSENSE_VERSION } from "@prsense/core";
+import pkg from "../package.json" with { type: "json" };
+
+const PRSENSE_VERSION = pkg.version;
 
 export const program = new Command()
   .name("prsense")

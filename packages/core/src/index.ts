@@ -16,5 +16,4 @@ export * from "./repository/identity.js";
 
 export * from "./doctor.js";
 
-export * from "./generated/version.js";
 export * from "./IndexedRepository.js";

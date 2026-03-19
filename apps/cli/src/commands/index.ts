@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
-import { createEventBus, CoreEvents, PRSENSE_VERSION } from "@prsense/core";
+import { createEventBus, CoreEvents } from "@prsense/core";
 import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
@@ -12,6 +12,10 @@ import {
   stdoutConfigReporter,
   stdoutIndexedReposReporter,
 } from "@prsense/reporters";
+
+import pkg from "../../package.json" with { type: "json" };
+
+const PRSENSE_VERSION = pkg.version;
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")
