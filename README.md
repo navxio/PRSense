@@ -761,6 +761,8 @@ A complete command reference is available in:
 
 ToDo
 
+Note: To run the benchmarks yourself, make sure to setup `PRSENSE_GITHUB_BENCH_TOKEN` to not get blocked by the GH web api rate limiting
+
 ## Project Status
 
 PRSense is under active development.
