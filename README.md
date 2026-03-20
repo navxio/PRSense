@@ -762,9 +762,16 @@ A complete command reference is available in:
 Currently benchmarks track the time for each review, token usage, grounding etc for flagship
 models and local models via ollama
 
-See [benchmarks](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json)
+See [benchmarks.json](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json)
 
-Note: To run the benchmarks yourself, make sure to setup `PRSENSE_GITHUB_BENCH_TOKEN` to not get blocked by the GH web api rate limiting
+#### Running benchmarking
+
+You can run the benchmarks on your own machine by cloning the repository, installing the packages with `pnpm i` from the root
+
+1. Create a github token and set it up `PRSENSE_GITHUB_BENCH_TOKEN`
+2. `pnpm bench`
+
+Make sure all the environment variables related to cloud providers have been set up and ollama is running with the models being tested available
 
 ## Project Status
 
