@@ -24,8 +24,10 @@ Review of a real-world pull request:
 
 ✔ Signals reference actual changed files  
 ✔ No hallucinated files or symbols  
-✔ 0 hallucinated signals (validated against diff)
-Signals are derived directly from pull request diff.
+✔ 0 hallucinated signals (validated against diff)  
+✔ Signals are derived directly from pull request diff
+
+**Excerpt from CLI output**
 
 ![Example PRSense output](docs/example.png)
 
