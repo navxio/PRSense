@@ -123,28 +123,52 @@ export const reviewCommand = new Command("review")
       const durationMs = Date.now() - start;
 
       if (options.stats) {
-        const validFiles = new Set(result.payload?.diffSummary?.files ?? []);
+        if (options.stats) {
+          if (result.outcome === "success") {
+            const { signals, usage, diffSummary } = result.payload;
 
-        printStats({
-          outcome: result.outcome,
-          signals: result.payload?.signals ?? [],
-          usage: result.payload?.usage,
-          durationMs,
-          model: {
-            provider: env.config.llm.provider,
-            name: env.config.llm.model,
-          },
-          context: {
-            indexing: {
-              enabled: true,
-              provider: env.config.embeddings.provider,
-              model: env.config.embeddings.model,
-            },
-          },
-          diff: {
-            validFiles,
-          },
-        });
+            const validFiles = new Set(diffSummary?.files ?? []);
+
+            printStats({
+              outcome: result.outcome,
+              signals,
+              durationMs,
+              model: {
+                provider: env.config.llm.provider,
+                name: env.config.llm.model,
+              },
+              context: {
+                indexing: {
+                  enabled: true,
+                  provider: env.config.embeddings.provider,
+                  model: env.config.embeddings.model,
+                },
+              },
+              diff: {
+                validFiles,
+              },
+              ...(usage && { usage }),
+            });
+          } else {
+            // failure path → no usage, no diffSummary guaranteed
+            printStats({
+              outcome: result.outcome,
+              signals: [],
+              durationMs,
+              model: {
+                provider: env.config.llm.provider,
+                name: env.config.llm.model,
+              },
+              context: {
+                indexing: {
+                  enabled: true,
+                  provider: env.config.embeddings.provider,
+                  model: env.config.embeddings.model,
+                },
+              },
+            });
+          }
+        }
       }
 
       eventBus.emit(CoreEvents.RunFinished, {
