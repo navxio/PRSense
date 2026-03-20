@@ -1,18 +1,43 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/prsense_logo_transparent.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/prsense_logo_dark.png">
+    <img src="assets/prsense_logo_dark.png" width="220">
+  </picture>
+</p>
 <h1 align="center">PRSense</h1>
+<p align="center">
+  <sub>High-confidence signals for pull request review</sub>
+</p>
 
-PRSense is an open-source, AI-powered code review engine that surfaces high-confidence review signals from pull request changes.
+**PRSense is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from pull request changes.**
+<p align="center">
+  <img src="https://img.shields.io/github/license/navxio/prsense" />
+  <img src="https://img.shields.io/github/stars/navxio/prsense?style=social" />
+  <img src="https://img.shields.io/npm/v/@prsense/cli" />
+</p>
 
-It does not rewrite your code.
-It does not flood your PR with generic comments.
-It does not act autonomously.
 
-Instead, PRSense focuses on what matters:
+## Example Review
 
-- What changed
-- Where risk exists
-- Why human attention is warranted
+Review of a real-world pull request:
 
-It is built for senior engineers who want review assistance that is:
+✔ Signals reference actual changed files  
+✔ No hallucinated files or symbols  
+✔ 0 hallucinated signals (validated against diff)
+Signals are derived directly from pull request diff.
+
+![Example PRSense output](docs/example.png)
+
+PRSense does not rewrite your code or flood your PR with generic comments.
+
+It surfaces what matters:
+
+- What changed  
+- Where risk exists  
+- Why attention is warranted  
+
+It is built for engineers who want review assistance that is:
 
 - Intentional
 - Inspectable
@@ -26,6 +51,7 @@ PRSense separates review logic from delivery. The same core engine can run:
 - Behind webhooks
 
 This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
+
 
 ## Table of Contents
 
@@ -68,7 +94,7 @@ PRSense is built around a few core principles:
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
-- Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Examples Outputs](docs/raw_signals.md))
+- Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
 
