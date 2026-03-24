@@ -11,12 +11,12 @@
 </p>
 
 **PRSense is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from pull request changes.**
+
 <p align="center">
   <img src="https://img.shields.io/github/license/navxio/prsense" />
   <img src="https://img.shields.io/github/stars/navxio/prsense?style=social" />
   <img src="https://img.shields.io/npm/v/@prsense/cli" />
 </p>
-
 
 ## Example Review
 
@@ -35,9 +35,9 @@ PRSense does not rewrite your code or flood your PR with generic comments.
 
 It surfaces what matters:
 
-- What changed  
-- Where risk exists  
-- Why attention is warranted  
+- What changed
+- Where risk exists
+- Why attention is warranted
 
 It is built for engineers who want review assistance that is:
 
@@ -53,7 +53,6 @@ PRSense separates review logic from delivery. The same core engine can run:
 - Behind webhooks
 
 This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
-
 
 ## Table of Contents
 
@@ -385,7 +384,6 @@ embeddings:
 index:
   chunkSizeChars: 1000
   chunkOverlapChars: 200
-  maxFileSizeBytes: 1048576
 
 review:
   confidenceThreshold: 0.6
@@ -434,7 +432,6 @@ Controls repository chunking.
 
 - `chunkSizeChars` — characters per chunk.
 - `chunkOverlapChars` — overlap between chunks.
-- `maxFileSizeBytes` — skip large files.
 
 ## `review`
 

@@ -27,7 +27,6 @@ export const benchConfig: ResolvedConfig = {
   index: {
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
-    maxFileSizeBytes: 1048576,
   },
 
   context: {

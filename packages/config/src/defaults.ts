@@ -13,7 +13,6 @@ export const defaults = {
   index: {
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
-    maxFileSizeBytes: 1_000_000,
   },
 
   review: {

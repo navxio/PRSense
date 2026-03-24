@@ -15,7 +15,6 @@ export const RuntimeConfigSchema = z.object({
   index: z.object({
     chunkSizeChars: z.number().int().positive(),
     chunkOverlapChars: z.number().int().positive(),
-    maxFileSizeBytes: z.number().int().positive(),
   }),
 
   review: z.object({
