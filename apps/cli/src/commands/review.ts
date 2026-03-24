@@ -23,21 +23,22 @@ export const reviewCommand = new Command("review")
   .option(
     "-c, --max-chunks <n>",
     "Maximum number of indexed chunks to retrieve for context",
+    Number,
   )
   .option(
     "-k, --confidence-threshold <n>",
     "Minimum llm confidence in a signal to be included in result",
-    parseFloat,
+    Number,
   )
   .option(
     "-p, --llm-provider <provider>",
     "LLM provider for running the review",
   )
   .option(
-    "-m, --llm-model",
+    "-m, --llm-model <model>",
     "Canonical model name as prescribed by the provider",
   )
-  .option("-t, --llm-temperature", "LLM temperature", parseFloat)
+  .option("-t, --llm-temperature <n>", "LLM temperature", Number)
   .option("-s, --stats", "Print Stats related to review")
   .action(async (target, options) => {
     const logger = createPinoLogger({
