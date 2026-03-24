@@ -50,6 +50,7 @@ export const CoreEvents = {
   WorkflowReviewContextChunkRetrieved:
     "workflow.review.context.chunk_retrieved",
   WorkflowReviewFileStarted: "workflow.review.file_started",
+  WorkflowReviewDiffLoaded: "workflow.review.diff.loaded",
 
   /* -------------------------------------------------
    * Capability lifecycle

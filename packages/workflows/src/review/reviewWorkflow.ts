@@ -34,6 +34,11 @@ export async function runReviewWorkflow({
       diffSummary: summary,
     } = await loadDiff(diffProvider);
 
+    eventBus.emit(CoreEvents.WorkflowReviewDiffLoaded, {
+      files: diff.files.length,
+      summary,
+    });
+
     diffSummary = summary;
 
     if (diff.files.length === 0) {

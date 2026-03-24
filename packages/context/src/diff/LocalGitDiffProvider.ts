@@ -15,14 +15,40 @@ export class LocalGitDiffProvider implements DiffProvider {
   async load() {
     const cwd = path.resolve(this.repoRoot);
 
-    const diffCommand = this.baseBranch
-      ? `git diff ${this.baseBranch}`
-      : `git diff`;
+    const hasUncommittedChanges =
+      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim()
+        .length > 0;
 
-    const diffText = execSync(diffCommand, {
-      cwd,
-      encoding: "utf8",
-    });
+    let diffText = "";
+    let mode: "working-tree" | "branch" = "working-tree";
+
+    if (hasUncommittedChanges) {
+      diffText = execSync("git diff", {
+        cwd,
+        encoding: "utf8",
+      });
+    } else {
+      const baseBranch =
+        this.baseBranch ??
+        execSync("git symbolic-ref refs/remotes/origin/HEAD", {
+          cwd,
+          encoding: "utf8",
+        })
+          .trim()
+          .split("/")
+          .pop();
+
+      if (!baseBranch) {
+        throw new Error("Unable to determine base branch");
+      }
+
+      diffText = execSync(`git diff ${baseBranch}...HEAD`, {
+        cwd,
+        encoding: "utf8",
+      });
+
+      mode = "branch";
+    }
 
     const revision = execSync("git rev-parse HEAD", {
       cwd,
@@ -35,6 +61,7 @@ export class LocalGitDiffProvider implements DiffProvider {
       provider: "filesystem",
       id: cwd,
     };
+
     return {
       diff,
       revision,
