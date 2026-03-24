@@ -14,6 +14,7 @@ import {
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
 } from "@prsense/context";
+import { applyCliOverrides } from "../shared/configOverride.js";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
@@ -100,6 +101,8 @@ export const reviewCommand = new Command("review")
         process.exit(1);
       }
 
+      const effectiveConfig = applyCliOverrides(env.config, options);
+
       // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
@@ -123,7 +126,10 @@ export const reviewCommand = new Command("review")
           mrNumber,
         );
       } else {
-        diffProvider = new LocalGitDiffProvider(repoRoot, options.baseBranch);
+        diffProvider = new LocalGitDiffProvider(
+          repoRoot,
+          effectiveConfig.git?.baseBranch,
+        );
       }
 
       // -------------------------------------------------
@@ -133,7 +139,7 @@ export const reviewCommand = new Command("review")
       const start = Date.now();
 
       const result = await runReviewWorkflow({
-        config: env.config,
+        config: effectiveConfig,
         credentials: env.credentials,
         diffProvider,
         eventBus,
@@ -142,51 +148,49 @@ export const reviewCommand = new Command("review")
       const durationMs = Date.now() - start;
 
       if (options.stats) {
-        if (options.stats) {
-          if (result.outcome === "success") {
-            const { signals, usage, diffSummary } = result.payload;
+        if (result.outcome === "success") {
+          const { signals, usage, diffSummary } = result.payload;
 
-            const validFiles = new Set(diffSummary?.files ?? []);
+          const validFiles = new Set(diffSummary?.files ?? []);
 
-            printStats({
-              outcome: result.outcome,
-              signals,
-              durationMs,
-              model: {
-                provider: env.config.llm.provider,
-                name: env.config.llm.model,
+          printStats({
+            outcome: result.outcome,
+            signals,
+            durationMs,
+            model: {
+              provider: effectiveConfig.llm.provider,
+              name: effectiveConfig.llm.model,
+            },
+            context: {
+              indexing: {
+                enabled: true,
+                provider: effectiveConfig.embeddings.provider,
+                model: effectiveConfig.embeddings.model,
               },
-              context: {
-                indexing: {
-                  enabled: true,
-                  provider: env.config.embeddings.provider,
-                  model: env.config.embeddings.model,
-                },
+            },
+            diff: {
+              validFiles,
+            },
+            ...(usage && { usage }),
+          });
+        } else {
+          // failure path → no usage, no diffSummary guaranteed
+          printStats({
+            outcome: result.outcome,
+            signals: [],
+            durationMs,
+            model: {
+              provider: effectiveConfig.llm.provider,
+              name: effectiveConfig.llm.model,
+            },
+            context: {
+              indexing: {
+                enabled: true,
+                provider: effectiveConfig.embeddings.provider,
+                model: effectiveConfig.embeddings.model,
               },
-              diff: {
-                validFiles,
-              },
-              ...(usage && { usage }),
-            });
-          } else {
-            // failure path → no usage, no diffSummary guaranteed
-            printStats({
-              outcome: result.outcome,
-              signals: [],
-              durationMs,
-              model: {
-                provider: env.config.llm.provider,
-                name: env.config.llm.model,
-              },
-              context: {
-                indexing: {
-                  enabled: true,
-                  provider: env.config.embeddings.provider,
-                  model: env.config.embeddings.model,
-                },
-              },
-            });
-          }
+            },
+          });
         }
       }
 
