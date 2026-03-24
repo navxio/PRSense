@@ -18,6 +18,19 @@ import {
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("--base-branch <branch>", "Base branch to diff against")
+  .option("--max-signals <n>", "Maximum number of signals requested")
+  .option(
+    "--max-chunks <n>",
+    "Maximum number of indexed chunks to retrieve for context",
+  )
+  .option(
+    "--confidence-threshold <n>",
+    "Minimum llm confidence in a signal to be included in result",
+    parseFloat,
+  )
+  .option("--llm-provider <provider>", "LLM provider for running the review")
+  .option("--llm-model", "Canonical model name as prescribed by the provider")
+  .option("--llm-temperature", "LLM temperature", parseFloat)
   .option("--stats", "Print Stats related to review")
   .action(async (target, options) => {
     const logger = createPinoLogger({

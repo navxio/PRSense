@@ -22,7 +22,9 @@ export const indexCommand = new Command("index")
   .option("--force", "Rebuild the index from scratch")
   .option("--dry-run", "Show what would be indexed without writing")
   .option("--stats", "Print indexing statistics after completion")
-  .option("--chunk-size <n>", "Override chunk size (characters)")
+  .option("--chunk-size-chars <n>", "Override chunk size (characters)")
+  .option("--chunk-overlap-chars <n>", "Chunk overlap chars")
+  .option("--max-file-size-bytes <n>", "Chunk overlap chars")
   .option("--list", "List indexed repositories")
   .action(async (target, options) => {
     try {

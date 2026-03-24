@@ -52,6 +52,10 @@ const daemonCommand = new Command("daemon").description(
 daemonCommand
   .command("start")
   .option("--foreground", "Run in foreground")
+  .option(
+    "--delivery <provider>",
+    "Run the daemon with configured delivery provider",
+  )
   .action(async (opts) => {
     ensureStateDir();
 
