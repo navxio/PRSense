@@ -19,13 +19,13 @@ const PRSENSE_VERSION = pkg.version;
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")
-  .option("--force", "Rebuild the index from scratch")
-  .option("--dry-run", "Show what would be indexed without writing")
-  .option("--stats", "Print indexing statistics after completion")
-  .option("--chunk-size-chars <n>", "Override chunk size (characters)")
-  .option("--chunk-overlap-chars <n>", "Chunk overlap chars")
-  .option("--max-file-size-bytes <n>", "Chunk overlap chars")
-  .option("--list", "List indexed repositories")
+  .option("-f, --force", "Rebuild the index from scratch")
+  .option("-d, --dry-run", "Show what would be indexed without writing")
+  .option("-s, --stats", "Print indexing statistics after completion")
+  .option("-c, --chunk-size-chars <n>", "Override chunk size (characters)")
+  .option("-o, --chunk-overlap-chars <n>", "Chunk overlap chars")
+  .option("-b, --max-file-size-bytes <n>", "Chunk overlap chars")
+  .option("-l, --list", "List indexed repositories")
   .action(async (target, options) => {
     try {
       /* ------------------------------------------------- */
