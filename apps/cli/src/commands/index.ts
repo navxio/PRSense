@@ -25,6 +25,14 @@ export const indexCommand = new Command("index")
   .option("-c, --chunk-size-chars <n>", "Override chunk size (characters)")
   .option("-o, --chunk-overlap-chars <n>", "Chunk overlap chars")
   .option("-l, --list", "List indexed repositories")
+  .option(
+    "-p, --embeddings-provider <provider>",
+    "LLM provider for generating embeddings",
+  )
+  .option(
+    "-m, --embeddings-model <model>",
+    "Canonical model name to use for generating embeddings",
+  )
   .action(async (target, options) => {
     try {
       /* ------------------------------------------------- */
