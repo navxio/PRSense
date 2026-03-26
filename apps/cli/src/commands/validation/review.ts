@@ -4,6 +4,7 @@ import {
   ValidationIssue,
 } from "@prsense/config";
 
+//TODO: move to zod based config schema
 export function validateReviewEffectiveConfig(
   config: ResolvedConfig,
   credentials: CredentialContext,

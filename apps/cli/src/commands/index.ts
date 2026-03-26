@@ -12,6 +12,8 @@ import {
   stdoutConfigReporter,
   stdoutIndexedReposReporter,
 } from "@prsense/reporters";
+import { applyOverrides, buildOverrides } from "../shared/configOverride.js";
+import { validateEffectiveIndexConfig } from "./validation/index.js";
 
 import pkg from "../../package.json" with { type: "json" };
 
@@ -86,20 +88,6 @@ export const indexCommand = new Command("index")
         root: repoRoot,
         provider: repoProvider,
       });
-      const resolved = env.config;
-
-      /* ------------------------------------------------- */
-      /* CLI Overrides (Before Resolve)                    */
-      /* ------------------------------------------------- */
-
-      if (options.list) {
-        const repos = await listIndexedRepositories(resolved);
-
-        await stdoutIndexedReposReporter.report(repos);
-        eventBus.emit(CoreEvents.RunFinished);
-
-        return;
-      }
 
       if (env.issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
@@ -111,11 +99,40 @@ export const indexCommand = new Command("index")
       }
 
       /* ------------------------------------------------- */
+      /* CLI Overrides (Before Resolve)                    */
+      /* ------------------------------------------------- */
+
+      const overrides = buildOverrides(options);
+      const effectiveConfig = applyOverrides(env.config, overrides);
+
+      const runtimeIssues = validateEffectiveIndexConfig(
+        effectiveConfig,
+        env.credentials,
+      );
+
+      if (runtimeIssues.some((i) => i.level === "error")) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-cli-config",
+        });
+
+        await stdoutConfigReporter.report({ issues: runtimeIssues });
+        process.exit(1);
+      }
+      if (options.list) {
+        const repos = await listIndexedRepositories(effectiveConfig);
+
+        await stdoutIndexedReposReporter.report(repos);
+        eventBus.emit(CoreEvents.RunFinished);
+
+        return;
+      }
+
+      /* ------------------------------------------------- */
       /* Run Workflow                                      */
       /* ------------------------------------------------- */
 
       const result = await runIndexWorkflow({
-        config: resolved,
+        config: effectiveConfig,
         credentials: env.credentials,
         target,
         force: Boolean(options.force),
