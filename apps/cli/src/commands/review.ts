@@ -3,7 +3,8 @@ import { Command } from "commander";
 import { runReviewWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveEnvironment } from "@prsense/config";
+import { resolveEnvironment, ValidationIssue } from "@prsense/config";
+import { validateReviewEffectiveConfig } from "./validation/review.js";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -103,6 +104,19 @@ export const reviewCommand = new Command("review")
       }
 
       const effectiveConfig = applyCliOverrides(env.config, options);
+      const cliIssues = validateReviewEffectiveConfig(
+        effectiveConfig,
+        env.credentials,
+      );
+
+      if (cliIssues.some((i: ValidationIssue) => i.level === "error")) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-cli-config",
+        });
+
+        await stdoutConfigReporter.report({ issues: cliIssues });
+        process.exit(1);
+      }
 
       // -------------------------------------------------
       // Create Diff Provider
