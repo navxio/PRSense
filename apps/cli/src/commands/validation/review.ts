@@ -42,6 +42,7 @@ function validateLLMConfig(
     });
   }
 
+  //TODO: add provider aware validation
   if (temperature < 0 || temperature > 2) {
     issues.push({
       level: "error",

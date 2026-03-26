@@ -15,7 +15,7 @@ import {
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
 } from "@prsense/context";
-import { applyCliOverrides } from "../shared/configOverride.js";
+import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
@@ -103,7 +103,9 @@ export const reviewCommand = new Command("review")
         process.exit(1);
       }
 
-      const effectiveConfig = applyCliOverrides(env.config, options);
+      const overrides = buildOverrides(options);
+      const effectiveConfig = applyOverrides(env.config, overrides);
+
       const cliIssues = validateReviewEffectiveConfig(
         effectiveConfig,
         env.credentials,

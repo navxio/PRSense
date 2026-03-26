@@ -1,43 +1,66 @@
-export function applyCliOverrides(config: any, options: any) {
+function clean(obj: any) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined),
+  );
+}
+
+export function applyOverrides(config: any, overrides: any) {
   const next = { ...config };
 
-  // LLM
-  if (options.llmProvider) {
-    next.llm = { ...next.llm, provider: options.llmProvider };
+  if (overrides.llm) {
+    next.llm = { ...next.llm, ...clean(overrides.llm) };
   }
 
-  if (options.llmModel) {
-    next.llm = { ...next.llm, model: options.llmModel };
+  if (overrides.review) {
+    next.review = { ...next.review, ...clean(overrides.review) };
   }
 
-  if (options.llmTemperature !== undefined) {
-    next.llm = { ...next.llm, temperature: options.llmTemperature };
+  if (overrides.context) {
+    next.context = { ...next.context, ...clean(overrides.context) };
   }
 
-  // Review
-  if (options.maxSignals !== undefined) {
-    next.review = { ...next.review, maxSignals: Number(options.maxSignals) };
+  if (overrides.git) {
+    next.git = { ...next.git, ...clean(overrides.git) };
   }
 
-  if (options.confidenceThreshold !== undefined) {
-    next.review = {
-      ...next.review,
-      confidenceThreshold: options.confidenceThreshold,
+  if (overrides.embeddings) {
+    next.embeddings = {
+      ...next.embeddings,
+      ...clean(overrides.embeddings),
     };
   }
 
-  // Context
-  if (options.maxChunks !== undefined) {
-    next.context = {
-      ...next.context,
-      maxChunks: Number(options.maxChunks),
-    };
-  }
-
-  // Git
-  if (options.baseBranch) {
-    next.git = { ...next.git, baseBranch: options.baseBranch };
+  if (overrides.index) {
+    next.index = { ...next.index, ...clean(overrides.index) };
   }
 
   return next;
+}
+
+export function buildOverrides(options: any) {
+  return {
+    llm: {
+      provider: options.llmProvider,
+      model: options.llmModel,
+      temperature: options.llmTemperature,
+    },
+    review: {
+      maxSignals: options.maxSignals,
+      confidenceThreshold: options.confidenceThreshold,
+    },
+    context: {
+      maxChunks: options.maxChunks,
+    },
+    git: {
+      baseBranch: options.baseBranch,
+    },
+    embeddings: {
+      provider: options.embeddingsProvider,
+      model: options.embeddingsModel,
+    },
+    index: {
+      chunkSizeChars: options.chunkSizeChars,
+      chunkOverlapChars: options.chunkOverlapChars,
+    },
+  };
 }
