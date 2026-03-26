@@ -1,5 +1,6 @@
 // apps/cli/src/commands/daemon/index.ts
 import { Command, Option } from "commander";
+import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -70,10 +71,12 @@ daemonCommand
 
       fs.unlinkSync(PID_FILE);
     }
+    const require = createRequire(import.meta.url);
+    const daemonBin = require.resolve("@prsense/daemon");
 
     const logFile = path.join(STATE_DIR, "daemon.log");
 
-    const child = spawn(process.execPath, [], {
+    const child = spawn(process.execPath, [daemonBin], {
       detached: !opts.foreground,
       cwd: process.cwd(),
       stdio: opts.foreground
