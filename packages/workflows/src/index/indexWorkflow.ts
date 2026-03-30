@@ -222,7 +222,7 @@ export async function runIndexWorkflow({
       commitSha: revision.commitSha,
     });
 
-    if (!force && stored) {
+    if (!force && stored && !dryRun) {
       eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
         reason: "index-outdated",
       });
