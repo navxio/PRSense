@@ -222,14 +222,6 @@ export async function runIndexWorkflow({
       commitSha: revision.commitSha,
     });
 
-    if (dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-      return {
-        outcome: "success",
-        payload: { chunksIndexed: 0 },
-      };
-    }
-
     if (!force && stored) {
       eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
         reason: "index-outdated",
@@ -308,6 +300,23 @@ export async function runIndexWorkflow({
     eventBus.emit(CoreEvents.ContextChunksBuilt, {
       count: chunks.length,
     });
+
+    // -------------------------------------------------
+    // DRY RUN (no mutations beyond this point)
+    // -------------------------------------------------
+
+    if (dryRun) {
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+      return {
+        outcome: "success",
+        payload: {
+          chunksIndexed: chunks.length,
+          commitSha: revision.commitSha,
+          upToDate: false,
+        },
+      };
+    }
 
     // -------------------------------------------------
     // Delete Existing Chunks (Rebuild)
