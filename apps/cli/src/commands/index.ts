@@ -145,11 +145,33 @@ export const indexCommand = new Command("index")
         outcome: result.outcome,
       });
 
+      /*
+       *
+       * dry run
+       */
+      if (options.dryRun) {
+        const { chunksIndexed, commitSha, upToDate } = result.payload;
+
+        console.log("\n[DRY RUN]");
+        console.log("-----------------------------");
+
+        if (upToDate) {
+          console.log(
+            `Index is already up to date (commit ${commitSha ?? "unknown"})`,
+          );
+        } else {
+          console.log(`Would index approximately ${chunksIndexed} chunks`);
+          console.log(`Target commit: ${commitSha ?? "unknown"}`);
+        }
+
+        console.log("\nNo changes were written.\n");
+      }
+
       /* ------------------------------------------------- */
       /* Optional Stats                                    */
       /* ------------------------------------------------- */
 
-      if (options.stats) {
+      if (options.stats && !options.dryRun) {
         const { chunksIndexed, commitSha, upToDate } = result.payload;
 
         if (upToDate) {
