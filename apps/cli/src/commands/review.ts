@@ -3,7 +3,8 @@ import { Command } from "commander";
 import { runReviewWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveEnvironment } from "@prsense/config";
+import { resolveEnvironment, ValidationIssue } from "@prsense/config";
+import { validateReviewEffectiveConfig } from "./validation/review.js";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -14,11 +15,32 @@ import {
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
 } from "@prsense/context";
+import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
-  .option("--base-branch <branch>", "Base branch to diff against")
-  .option("--stats", "Print Stats related to review")
+  .option("-b, --base-branch <branch>", "Base branch to diff against")
+  .option("-n, --max-signals <n>", "Maximum number of signals requested")
+  .option(
+    "-c, --max-chunks <n>",
+    "Maximum number of indexed chunks to retrieve for context",
+    Number,
+  )
+  .option(
+    "-k, --confidence-threshold <n>",
+    "Minimum llm confidence in a signal to be included in result",
+    Number,
+  )
+  .option(
+    "-p, --llm-provider <provider>",
+    "LLM provider for running the review",
+  )
+  .option(
+    "-m, --llm-model <model>",
+    "Canonical model name as prescribed by the provider",
+  )
+  .option("-t, --llm-temperature <n>", "LLM temperature", Number)
+  .option("-s, --stats", "Print Stats related to review")
   .action(async (target, options) => {
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
@@ -81,6 +103,23 @@ export const reviewCommand = new Command("review")
         process.exit(1);
       }
 
+      const overrides = buildOverrides(options);
+      const effectiveConfig = applyOverrides(env.config, overrides);
+
+      const cliIssues = validateReviewEffectiveConfig(
+        effectiveConfig,
+        env.credentials,
+      );
+
+      if (cliIssues.some((i: ValidationIssue) => i.level === "error")) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-cli-config",
+        });
+
+        await stdoutConfigReporter.report({ issues: cliIssues });
+        process.exit(1);
+      }
+
       // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
@@ -104,7 +143,10 @@ export const reviewCommand = new Command("review")
           mrNumber,
         );
       } else {
-        diffProvider = new LocalGitDiffProvider(repoRoot, options.baseBranch);
+        diffProvider = new LocalGitDiffProvider(
+          repoRoot,
+          effectiveConfig.git?.baseBranch,
+        );
       }
 
       // -------------------------------------------------
@@ -114,7 +156,7 @@ export const reviewCommand = new Command("review")
       const start = Date.now();
 
       const result = await runReviewWorkflow({
-        config: env.config,
+        config: effectiveConfig,
         credentials: env.credentials,
         diffProvider,
         eventBus,
@@ -123,51 +165,49 @@ export const reviewCommand = new Command("review")
       const durationMs = Date.now() - start;
 
       if (options.stats) {
-        if (options.stats) {
-          if (result.outcome === "success") {
-            const { signals, usage, diffSummary } = result.payload;
+        if (result.outcome === "success") {
+          const { signals, usage, diffSummary } = result.payload;
 
-            const validFiles = new Set(diffSummary?.files ?? []);
+          const validFiles = new Set(diffSummary?.files ?? []);
 
-            printStats({
-              outcome: result.outcome,
-              signals,
-              durationMs,
-              model: {
-                provider: env.config.llm.provider,
-                name: env.config.llm.model,
+          printStats({
+            outcome: result.outcome,
+            signals,
+            durationMs,
+            model: {
+              provider: effectiveConfig.llm.provider,
+              name: effectiveConfig.llm.model,
+            },
+            context: {
+              indexing: {
+                enabled: true,
+                provider: effectiveConfig.embeddings.provider,
+                model: effectiveConfig.embeddings.model,
               },
-              context: {
-                indexing: {
-                  enabled: true,
-                  provider: env.config.embeddings.provider,
-                  model: env.config.embeddings.model,
-                },
+            },
+            diff: {
+              validFiles,
+            },
+            ...(usage && { usage }),
+          });
+        } else {
+          // failure path → no usage, no diffSummary guaranteed
+          printStats({
+            outcome: result.outcome,
+            signals: [],
+            durationMs,
+            model: {
+              provider: effectiveConfig.llm.provider,
+              name: effectiveConfig.llm.model,
+            },
+            context: {
+              indexing: {
+                enabled: true,
+                provider: effectiveConfig.embeddings.provider,
+                model: effectiveConfig.embeddings.model,
               },
-              diff: {
-                validFiles,
-              },
-              ...(usage && { usage }),
-            });
-          } else {
-            // failure path → no usage, no diffSummary guaranteed
-            printStats({
-              outcome: result.outcome,
-              signals: [],
-              durationMs,
-              model: {
-                provider: env.config.llm.provider,
-                name: env.config.llm.model,
-              },
-              context: {
-                indexing: {
-                  enabled: true,
-                  provider: env.config.embeddings.provider,
-                  model: env.config.embeddings.model,
-                },
-              },
-            });
-          }
+            },
+          });
         }
       }
 

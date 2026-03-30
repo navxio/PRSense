@@ -1,6 +1,6 @@
 {
   "name": "@prsense/llm",
-  "version": "0.1.1",
+  "version": "0.1.6",
   "description": "LLM interface and providers for PRsense",
   "type": "module",
   "main": "./dist/index.js",

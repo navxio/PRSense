@@ -70,13 +70,15 @@ The review process:
 
 If no index exists, review falls back to diff-only mode.
 
+CLI flags override configuration from global and repository config files.
+
 When --stats is provided, PRSense prints a structured summary including:
 
 • Model and provider
 • Indexing configuration
-• Signal counts and hallucination rate
-• Token usage (prompt, completion, total, per signal)
-• Performance metrics (latency, throughput)
+• Signal counts
+• Token usage (if available)
+• Performance metrics (latency, duration)
 
 TARGETS
 
@@ -86,33 +88,45 @@ TARGETS
 <path>
     Path to a local repository
 
-https://github.com/…/pull/
+https://github.com/.../pull/<number>
     GitHub Pull Request
 
-https://gitlab.com/…/-/merge_requests/
+https://gitlab.com/.../-/merge_requests/<number>
     GitLab Merge Request
 
 OPTIONS
 
---base-branch <branch>
+-b, --base-branch <branch>
     Override base branch for diff comparison.
 
---format <text|json>
-    Output format (default: text).
+-n, --max-signals <n>
+    Maximum number of signals to return.
 
---no-context
-    Disable contextual retrieval (diff-only review).
+-c, --max-chunks <n>
+    Maximum number of indexed chunks retrieved for contextual review.
 
---stats
+-k, --confidence-threshold <n>
+    Minimum LLM confidence required for a signal to be included.
+
+-p, --llm-provider <provider>
+    LLM provider to use (ollama | openai | google | anthropic).
+
+-m, --llm-model <model>
+    Model name to use with the selected provider.
+
+-t, --llm-temperature <n>
+    Sampling temperature for the LLM.
+
+-s, --stats
     Print structured review statistics alongside results.
 
 EXAMPLES
 
 prsense review .
-prsense review --base-branch origin/main
-prsense review https://github.com/org/repo/pull/42
+prsense review . --base-branch main
+prsense review . -p openai -m gpt-5.4
+prsense review . --max-signals 5 --confidence-threshold 0.7
 prsense review https://github.com/org/repo/pull/42 --stats
-
 ⸻
 
 COMMAND: index
@@ -146,6 +160,8 @@ Re-indexing is triggered when:
 • Chunking strategy changes
 • PRSense version changes
 
+CLI flags override configuration from global and repository config files.
+
 TARGETS
 
 .
@@ -159,20 +175,29 @@ https://gitlab.com/group/project
 
 OPTIONS
 
---force
-    Rebuild index even if up-to-date.
+-f, --force
+    Rebuild index even if it is already up-to-date.
 
---dry-run
-    Evaluate index state without writing.
+-d, --dry-run
+    Evaluate indexing without writing any data.
 
---stats
-    Print indexing statistics.
+-s, --stats
+    Print indexing statistics after completion.
 
---list
-    List indexed repositories and their metadata.
+-l, --list
+    List indexed repositories and exit.
 
---chunk-size <chars>
-    Override chunk size in characters.
+-c, --chunk-size-chars <n>
+    Override chunk size (in characters).
+
+-o, --chunk-overlap-chars <n>
+    Override chunk overlap size (in characters).
+
+-p, --embeddings-provider <provider>
+    Embedding provider to use (ollama | openai).
+
+-m, --embeddings-model <model>
+    Embedding model to use.
 
 OUTPUT (--list)
 
@@ -198,17 +223,18 @@ Indexing requires:
 
 • PostgreSQL
 • pgvector extension
-• Valid embedding provider
+• Valid embedding provider credentials
 
-Embedding dimension must match database schema.
+Embedding dimension must match the database schema.
 
 EXAMPLES
 
 prsense index .
 prsense index . --force
+prsense index . --chunk-size-chars 2000
+prsense index . -p openai -m text-embedding-3-large
 prsense index --list
 prsense index https://github.com/org/repo
-
 ⸻
 
 COMMAND: doctor

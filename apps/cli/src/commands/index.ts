@@ -12,6 +12,8 @@ import {
   stdoutConfigReporter,
   stdoutIndexedReposReporter,
 } from "@prsense/reporters";
+import { applyOverrides, buildOverrides } from "../shared/configOverride.js";
+import { validateEffectiveIndexConfig } from "./validation/index.js";
 
 import pkg from "../../package.json" with { type: "json" };
 
@@ -19,11 +21,20 @@ const PRSENSE_VERSION = pkg.version;
 
 export const indexCommand = new Command("index")
   .argument("[target]", "Path or GitHub/GitLab URL", ".")
-  .option("--force", "Rebuild the index from scratch")
-  .option("--dry-run", "Show what would be indexed without writing")
-  .option("--stats", "Print indexing statistics after completion")
-  .option("--chunk-size <n>", "Override chunk size (characters)")
-  .option("--list", "List indexed repositories")
+  .option("-f, --force", "Rebuild the index from scratch")
+  .option("-d, --dry-run", "Show what would be indexed without writing")
+  .option("-s, --stats", "Print indexing statistics after completion")
+  .option("-c, --chunk-size-chars <n>", "Override chunk size (characters)")
+  .option("-o, --chunk-overlap-chars <n>", "Chunk overlap chars")
+  .option("-l, --list", "List indexed repositories")
+  .option(
+    "-p, --embeddings-provider <provider>",
+    "LLM provider for generating embeddings",
+  )
+  .option(
+    "-m, --embeddings-model <model>",
+    "Canonical model name to use for generating embeddings",
+  )
   .action(async (target, options) => {
     try {
       /* ------------------------------------------------- */
@@ -77,20 +88,6 @@ export const indexCommand = new Command("index")
         root: repoRoot,
         provider: repoProvider,
       });
-      const resolved = env.config;
-
-      /* ------------------------------------------------- */
-      /* CLI Overrides (Before Resolve)                    */
-      /* ------------------------------------------------- */
-
-      if (options.list) {
-        const repos = await listIndexedRepositories(resolved);
-
-        await stdoutIndexedReposReporter.report(repos);
-        eventBus.emit(CoreEvents.RunFinished);
-
-        return;
-      }
 
       if (env.issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
@@ -102,11 +99,40 @@ export const indexCommand = new Command("index")
       }
 
       /* ------------------------------------------------- */
+      /* CLI Overrides (Before Resolve)                    */
+      /* ------------------------------------------------- */
+
+      const overrides = buildOverrides(options);
+      const effectiveConfig = applyOverrides(env.config, overrides);
+
+      const runtimeIssues = validateEffectiveIndexConfig(
+        effectiveConfig,
+        env.credentials,
+      );
+
+      if (runtimeIssues.some((i) => i.level === "error")) {
+        eventBus.emit(CoreEvents.RunFailed, {
+          reason: "invalid-cli-config",
+        });
+
+        await stdoutConfigReporter.report({ issues: runtimeIssues });
+        process.exit(1);
+      }
+      if (options.list) {
+        const repos = await listIndexedRepositories(effectiveConfig);
+
+        await stdoutIndexedReposReporter.report(repos);
+        eventBus.emit(CoreEvents.RunFinished);
+
+        return;
+      }
+
+      /* ------------------------------------------------- */
       /* Run Workflow                                      */
       /* ------------------------------------------------- */
 
       const result = await runIndexWorkflow({
-        config: resolved,
+        config: effectiveConfig,
         credentials: env.credentials,
         target,
         force: Boolean(options.force),

@@ -1,5 +1,5 @@
 // apps/cli/src/commands/daemon/index.ts
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -51,7 +51,13 @@ const daemonCommand = new Command("daemon").description(
 
 daemonCommand
   .command("start")
-  .option("--foreground", "Run in foreground")
+  .option("-f, --foreground", "Run in foreground")
+  .addOption(
+    new Option(
+      "-d, --delivery <provider>",
+      "Run the daemon with configured delivery provider",
+    ).choices(["gitlab", "github"]),
+  )
   .action(async (opts) => {
     ensureStateDir();
 
@@ -65,9 +71,8 @@ daemonCommand
 
       fs.unlinkSync(PID_FILE);
     }
-
     const require = createRequire(import.meta.url);
-    const daemonBin = require.resolve("@prsense/daemon/dist/index.js");
+    const daemonBin = require.resolve("@prsense/daemon");
 
     const logFile = path.join(STATE_DIR, "daemon.log");
 

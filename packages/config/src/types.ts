@@ -62,7 +62,6 @@ type BaseResolvedConfig = {
   index: {
     chunkSizeChars: number;
     chunkOverlapChars: number;
-    maxFileSizeBytes: number;
   };
 
   review: {
