@@ -14,7 +14,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/license/navxio/prsense" />
-  <img src="https://img.shields.io/github/stars/navxio/prsense?style=social" />
+  <img src="https://img.shields.io/npm/dw/%40prsense%2Fcli" />
   <img src="https://img.shields.io/npm/v/@prsense/cli" />
 </p>
 
