@@ -1,5 +1,5 @@
 // apps/cli/src/commands/daemon/index.ts
-import { Command, Option } from "commander";
+import { Command } from "commander";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -9,7 +9,12 @@ import http from "node:http";
 
 const STATE_DIR = path.join(os.homedir(), ".local", "state", "prsense");
 const PID_FILE = path.join(STATE_DIR, "daemon.pid");
-const DAEMON_PORT = 3000;
+const DAEMON_PORT = Number(process.env.PRSENSE_DAEMON_PORT ?? 11000);
+const DAEMON_HOST = process.env.PRSENSE_DAEMON_HOST ?? "127.0.0.1";
+
+if (DAEMON_PORT == 0) {
+  throw new Error("Port 0 is not supported for daemon");
+}
 
 function ensureStateDir() {
   fs.mkdirSync(STATE_DIR, { recursive: true });
@@ -28,7 +33,7 @@ async function checkHealth(): Promise<boolean> {
   return new Promise((resolve) => {
     const req = http.get(
       {
-        hostname: "127.0.0.1",
+        hostname: DAEMON_HOST,
         port: DAEMON_PORT,
         path: "/health",
         timeout: 1000,
@@ -52,12 +57,6 @@ const daemonCommand = new Command("daemon").description(
 daemonCommand
   .command("start")
   .option("-f, --foreground", "Run in foreground")
-  .addOption(
-    new Option(
-      "-d, --delivery <provider>",
-      "Run the daemon with configured delivery provider",
-    ).choices(["gitlab", "github"]),
-  )
   .action(async (opts) => {
     ensureStateDir();
 
@@ -72,7 +71,7 @@ daemonCommand
       fs.unlinkSync(PID_FILE);
     }
     const require = createRequire(import.meta.url);
-    const daemonBin = require.resolve("@prsense/daemon");
+    const daemonBin = require.resolve("@prsense/daemon/dist/index.js");
 
     const logFile = path.join(STATE_DIR, "daemon.log");
 
