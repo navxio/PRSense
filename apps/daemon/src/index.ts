@@ -63,10 +63,11 @@ async function main() {
     deliveryRegistry,
   );
 
+  const host = process.env.PRSENSE_DAEMON_HOST ?? "127.0.0.1";
   const port = parseInt(process.env.PRSENSE_DAEMON_PORT ?? "11000");
-  await app.listen({ port: port });
+  await app.listen({ port: port, host });
 
-  console.log(`Daemon listening on port ${port}`);
+  console.log(`Daemon listening on: ${host}: ${port}`);
 
   logger.info("daemon.started", { port });
 }
