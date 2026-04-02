@@ -9,7 +9,11 @@ import http from "node:http";
 
 const STATE_DIR = path.join(os.homedir(), ".local", "state", "prsense");
 const PID_FILE = path.join(STATE_DIR, "daemon.pid");
-const DAEMON_PORT = 11000;
+const DAEMON_PORT = Number(process.env.PRSENSE_DAEMON_PORT ?? 11000);
+
+if (DAEMON_PORT == 0) {
+  throw new Error("Port 0 is not supported for daemon");
+}
 
 function ensureStateDir() {
   fs.mkdirSync(STATE_DIR, { recursive: true });
