@@ -1,5 +1,5 @@
 // apps/cli/src/commands/daemon/index.ts
-import { Command, Option } from "commander";
+import { Command } from "commander";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -56,12 +56,6 @@ const daemonCommand = new Command("daemon").description(
 daemonCommand
   .command("start")
   .option("-f, --foreground", "Run in foreground")
-  .addOption(
-    new Option(
-      "-d, --delivery <provider>",
-      "Run the daemon with configured delivery provider",
-    ).choices(["gitlab", "github"]),
-  )
   .action(async (opts) => {
     ensureStateDir();
 
