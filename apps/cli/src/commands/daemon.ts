@@ -9,7 +9,7 @@ import http from "node:http";
 
 const STATE_DIR = path.join(os.homedir(), ".local", "state", "prsense");
 const PID_FILE = path.join(STATE_DIR, "daemon.pid");
-const DAEMON_PORT = 3000;
+const DAEMON_PORT = 11000;
 
 function ensureStateDir() {
   fs.mkdirSync(STATE_DIR, { recursive: true });
@@ -72,7 +72,7 @@ daemonCommand
       fs.unlinkSync(PID_FILE);
     }
     const require = createRequire(import.meta.url);
-    const daemonBin = require.resolve("@prsense/daemon");
+    const daemonBin = require.resolve("@prsense/daemon/dist/index.js");
 
     const logFile = path.join(STATE_DIR, "daemon.log");
 
