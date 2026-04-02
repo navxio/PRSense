@@ -1,6 +1,6 @@
 {
   "name": "@prsense/logging",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Structured logging primitives for PRSense",
   "private": false,
   "type": "module",
