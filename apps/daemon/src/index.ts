@@ -66,6 +66,8 @@ async function main() {
   const port = parseInt(process.env.PRSENSE_DAEMON_PORT ?? "11000");
   await app.listen({ port: port });
 
+  console.log(`Daemon listening on port ${port}`);
+
   logger.info("daemon.started", { port });
 }
 
