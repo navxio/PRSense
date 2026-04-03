@@ -1,6 +1,6 @@
 {
   "name": "@prsense/bench",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Benchmarking different LLM models for PRSense",
   "private": false,
   "type": "module",
