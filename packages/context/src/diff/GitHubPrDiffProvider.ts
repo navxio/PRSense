@@ -14,6 +14,7 @@ type LoadResult = {
   metadata?: {
     title?: string;
     description?: string;
+    branchName?: string;
   };
 };
 
@@ -68,6 +69,7 @@ export class GitHubPrDiffProvider implements DiffProvider {
         title: data.title ?? undefined,
         description: data.body ?? undefined,
         revision: data.head?.sha,
+        branchName: data.head?.ref ?? undefined,
       };
     } catch {
       return {};
@@ -114,6 +116,9 @@ export class GitHubPrDiffProvider implements DiffProvider {
         ...(metadata.title !== undefined && { title: metadata.title }),
         ...(metadata.description !== undefined && {
           description: metadata.description,
+        }),
+        ...(metadata.branchName !== undefined && {
+          branchName: metadata.branchName,
         }),
       },
     };

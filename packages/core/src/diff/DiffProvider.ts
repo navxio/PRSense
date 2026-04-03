@@ -8,6 +8,7 @@ export interface DiffProvider {
     metadata?: {
       title?: string;
       description?: string;
+      branchName?: string;
     };
   }>;
 }

@@ -18,5 +18,6 @@ export type ReviewInput = {
     title?: string;
     description?: string;
     author?: string;
+    branchName?: string;
   };
 };

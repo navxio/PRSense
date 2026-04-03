@@ -6,6 +6,24 @@ import type { UnifiedDiff, DiffProvider } from "@prsense/core";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
 import { RepositoryIdentity } from "@prsense/core";
 
+function getBranchName(cwd: string): string | undefined {
+  try {
+    const raw = execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd,
+      encoding: "utf8",
+    }).trim();
+
+    // Detached HEAD → not a real branch
+    if (!raw || raw === "HEAD") {
+      return undefined;
+    }
+
+    return raw;
+  } catch {
+    return undefined;
+  }
+}
+
 export class LocalGitDiffProvider implements DiffProvider {
   constructor(
     private readonly repoRoot: string,
@@ -62,10 +80,15 @@ export class LocalGitDiffProvider implements DiffProvider {
       id: cwd,
     };
 
+    const branchName = getBranchName(cwd);
+
     return {
       diff,
       revision,
       repositoryIdentity: identity,
+      metadata: {
+        ...(branchName !== undefined && { branchName }),
+      },
     };
   }
 }
