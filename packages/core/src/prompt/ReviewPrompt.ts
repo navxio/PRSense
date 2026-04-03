@@ -6,6 +6,7 @@ export type ReviewPromptInput = {
   metadata?: {
     title?: string;
     description?: string;
+    branchName?: string;
   };
 };
 
@@ -65,6 +66,7 @@ If it is not valid JSON, regenerate it.
 ${input.metadata?.title ? `## PR Title\n${input.metadata.title}\n\n` : ""}
 
 ${input.metadata?.description ? `## PR Description\n${input.metadata.description}\n\n` : ""}
+${input.metadata?.branchName ? `Branch: ${input.metadata.branchName}\n\n` : ""}
 ## Pull Request Diff
 
 ${diffText}
