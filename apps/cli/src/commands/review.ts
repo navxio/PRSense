@@ -223,6 +223,10 @@ export const reviewCommand = new Command("review")
       // Print Signals
       // -------------------------------------------------
 
+      if (result.payload.signals.length === 0) {
+        console.log("✔ No review signals (change looks safe)");
+        process.exit(0);
+      }
       for (const signal of result.payload.signals) {
         console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
         console.log(signal.message);

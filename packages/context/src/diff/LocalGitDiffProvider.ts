@@ -87,7 +87,7 @@ export class LocalGitDiffProvider implements DiffProvider {
       revision,
       repositoryIdentity: identity,
       metadata: {
-        branchName,
+        ...(branchName !== undefined && { branchName }),
       },
     };
   }

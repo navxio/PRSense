@@ -48,13 +48,16 @@ export class GitLabMrDiffProvider implements DiffProvider {
         title?: string;
         description?: string;
         revision?: string;
+        branchName?: string;
       } = {};
 
       // GitLab returns string | null
       if (mr.title != null) metadata.title = mr.title;
       if (mr.description != null) metadata.description = mr.description;
       if (mr.sha != null) metadata.revision = mr.sha;
-      if (mr.source_branch != null) metadata.branchName = mr.source_branch;
+      if (typeof mr.source_branch === "string") {
+        metadata.branchName = mr.source_branch;
+      }
 
       return metadata;
     } catch {
