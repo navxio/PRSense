@@ -62,10 +62,18 @@ export class LocalGitDiffProvider implements DiffProvider {
       id: cwd,
     };
 
+    const branchName = execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd,
+      encoding: "utf8",
+    }).trim();
+
     return {
       diff,
       revision,
       repositoryIdentity: identity,
+      metadata: {
+        branchName,
+      },
     };
   }
 }

@@ -36,6 +36,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
     title?: string;
     description?: string;
     revision?: string;
+    branchName?: string;
   }> {
     try {
       const mr = await this.api.MergeRequests.show(
@@ -53,6 +54,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
       if (mr.title != null) metadata.title = mr.title;
       if (mr.description != null) metadata.description = mr.description;
       if (mr.sha != null) metadata.revision = mr.sha;
+      if (mr.source_branch != null) metadata.branchName = mr.source_branch;
 
       return metadata;
     } catch {
@@ -92,6 +94,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
     metadata?: {
       title?: string;
       description?: string;
+      branchName?: string;
     };
   }> {
     const [metadata, diffText] = await Promise.all([
@@ -112,6 +115,9 @@ export class GitLabMrDiffProvider implements DiffProvider {
         ...(metadata.title !== undefined && { title: metadata.title }),
         ...(metadata.description !== undefined && {
           description: metadata.description,
+        }),
+        ...(metadata.branchName !== undefined && {
+          branchName: metadata.branchName,
         }),
       },
     };
