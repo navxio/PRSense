@@ -12,4 +12,5 @@ export interface CliTaskRenderer {
   start(task: CliTask): void;
   update(task: CliTask): void;
   finish(task: CliTask): void;
+  stop(): void;
 }

@@ -36,6 +36,7 @@ export const indexCommand = new Command("index")
     "Canonical model name to use for generating embeddings",
   )
   .action(async (target, options) => {
+    const renderer = createSpinnerRenderer(process.stdout);
     try {
       /* ------------------------------------------------- */
       /* Load Config                                       */
@@ -45,8 +46,6 @@ export const indexCommand = new Command("index")
         level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
         pretty: true,
       });
-
-      const renderer = createSpinnerRenderer(process.stdout);
 
       const eventBus = createEventBus((event) => {
         logEvent(logger, event);
@@ -152,6 +151,7 @@ export const indexCommand = new Command("index")
       if (options.dryRun) {
         const { chunksIndexed, commitSha, upToDate } = result.payload;
 
+        renderer.stop();
         console.log("\n[DRY RUN]");
         console.log("-----------------------------");
 
@@ -171,6 +171,7 @@ export const indexCommand = new Command("index")
       /* Optional Stats                                    */
       /* ------------------------------------------------- */
 
+      renderer.stop();
       if (options.stats && !options.dryRun) {
         const { chunksIndexed, commitSha, upToDate } = result.payload;
 
@@ -183,9 +184,12 @@ export const indexCommand = new Command("index")
         }
       }
 
+      renderer.stop();
       process.exit(result.outcome === "failure" ? 1 : 0);
     } catch (err) {
+      renderer.stop();
       console.error(err instanceof Error ? err.message : String(err));
+
       process.exit(1);
     }
   });
