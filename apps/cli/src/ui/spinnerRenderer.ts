@@ -1,3 +1,4 @@
+// apps/cli/src/ui/spinnerRenderer.ts
 import { CliTask, CliTaskRenderer } from "./tasks.js";
 
 const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
@@ -19,7 +20,7 @@ export function createSpinnerRenderer(
           ? "✔"
           : "✖";
 
-    output.write(`\r${icon} ${currentTask.label}`);
+    output.write(`\r${icon} ${currentTask.label}\x1b[K`);
     frame++;
   }
 
@@ -28,7 +29,7 @@ export function createSpinnerRenderer(
       clearInterval(timer);
       timer = null;
     }
-    output.write("\n");
+    output.write("\r\n");
   }
 
   return {
@@ -51,5 +52,6 @@ export function createSpinnerRenderer(
       stop();
       currentTask = null;
     },
+    stop,
   };
 }
