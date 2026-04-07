@@ -250,4 +250,24 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       await client.end().catch(() => {});
     }
   }
+
+  async deleteByPaths(
+    provider: string,
+    name: string,
+    paths: string[],
+  ): Promise<void> {
+    if (paths.length === 0) return;
+
+    await this.withClient(async (client) => {
+      await client.query(
+        `
+      DELETE FROM rag_chunks
+      WHERE repo_provider = $1
+        AND repo_name = $2
+        AND path = ANY($3)
+      `,
+        [provider, name, paths],
+      );
+    });
+  }
 }
