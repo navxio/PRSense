@@ -57,4 +57,10 @@ export class GitHubRepositorySource implements RepositorySource {
       id: `${this.owner}/${this.repo}`,
     };
   }
+  getLocalPath(): string {
+    if (!this.tempDir) {
+      throw new Error("Repository not cloned yet");
+    }
+    return this.tempDir;
+  }
 }

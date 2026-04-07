@@ -121,4 +121,8 @@ export class FileSystemRepositorySource implements RepositorySource {
       id: this.root,
     };
   }
+
+  getLocalPath(): string {
+    return this.root;
+  }
 }

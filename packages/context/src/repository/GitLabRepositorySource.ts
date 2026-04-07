@@ -57,4 +57,11 @@ export class GitLabRepositorySource implements RepositorySource {
       id: `${this.namespace}/${this.repo}`,
     };
   }
+
+  getLocalPath(): string {
+    if (!this.tempDir) {
+      throw new Error("Repository not cloned yet");
+    }
+    return this.tempDir;
+  }
 }

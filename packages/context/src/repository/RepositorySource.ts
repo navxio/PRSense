@@ -34,4 +34,6 @@ export interface RepositorySource {
     provider: "filesystem" | "github" | "gitlab";
     id: string;
   };
+
+  getLocalPath(): string;
 }
