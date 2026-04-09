@@ -1,12 +1,9 @@
 // packages/workflows/src/index/indexWorkflow.ts
 
-import path from "node:path";
+import { execSync } from "node:child_process";
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
-  FileSystemRepositorySource,
-  GitHubRepositorySource,
   PostgresIndexMetadataRepository,
-  GitLabRepositorySource,
   PostgresRagChunkRepository,
   createCharChunker,
   detectKind,
@@ -18,8 +15,8 @@ import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
+import { resolveRepositorySource } from "./util.js";
 
-//TODO: modularise this
 export async function runIndexWorkflow({
   config,
   credentials,
@@ -44,51 +41,19 @@ export async function runIndexWorkflow({
     // Resolve Repository Source
     // -------------------------------------------------
 
-    let repositorySource;
-
-    const isGithub = /github\.com/.test(target);
-    const isGitlab = /gitlab\.com/.test(target);
-
-    if (isGithub) {
-      const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-
-      if (!match) {
-        throw new Error("Invalid GitHub URL");
-      }
-
-      const owner = match[1];
-      const repo = match[2];
-
-      if (!owner || !repo) {
-        throw new Error("Invalid GitHub repository url");
-      }
-
-      repositorySource = new GitHubRepositorySource(
-        owner,
-        repo.replace(".git", ""),
-      );
-    } else if (isGitlab) {
-      const match = target.match(/gitlab\.com\/(.+?)\/([^\/]+)(?:\.git)?$/);
-
-      if (!match) throw new Error("Invalid GitLab URL");
-
-      const owner = match[1];
-      const repo = match[2];
-      if (!owner || !repo) throw new Error("Invalid GitLab repository url");
-      repositorySource = new GitLabRepositorySource(
-        owner,
-        repo.replace(".git", ""),
-      );
-    } else {
-      const absolute = path.resolve(target);
-      repositorySource = new FileSystemRepositorySource(absolute);
-    }
+    let repositorySource = resolveRepositorySource(target);
 
     // -------------------------------------------------
     // Resolve Identity + Revision
     // -------------------------------------------------
 
     const identity = repositorySource.getRepositoryIdentity();
+
+    eventBus.emit(CoreEvents.WorkflowIndexRepositorySourceResolved, {
+      provider: identity.provider,
+      id: identity.id,
+    });
+
     let revision;
 
     try {
@@ -240,10 +205,37 @@ export async function runIndexWorkflow({
     }
 
     // -------------------------------------------------
-    // Rebuild
+    // Incremental update
     // -------------------------------------------------
 
-    const files = await repositorySource.listFiles();
+    let changedFiles: string[] = [];
+    let deletedFiles: string[] = [];
+
+    if (!stored) {
+      // first index = full scan
+      changedFiles = await repositorySource.listFiles();
+    } else {
+      const prevSha = stored.revision.commitSha;
+      const currentSha = revision.commitSha;
+
+      const diffOutput = execSync(
+        `git diff --name-status ${prevSha} ${currentSha}`,
+        { cwd: repositorySource.getLocalPath() },
+      ).toString("utf8");
+
+      for (const line of diffOutput.split("\n")) {
+        if (!line.trim()) continue;
+
+        const [status, file] = line.split("\t");
+
+        if (status === "D") {
+          deletedFiles.push(resolvePath(file));
+        } else {
+          changedFiles.push(resolvePath(file));
+        }
+      }
+    }
+
     if (files.length === 0) {
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
@@ -262,7 +254,7 @@ export async function runIndexWorkflow({
     });
 
     const chunks: ContextChunk[] = [];
-    for (const file of files) {
+    for (const file of changedFiles) {
       try {
         const content = await repositorySource.readFile(file);
         const kind = detectKind(file);
@@ -331,7 +323,6 @@ export async function runIndexWorkflow({
     const allRows = [];
 
     //PERF: different batch size for openai based embedding
-    //PERF: multi threaded?
     const BATCH_SIZE = 32;
 
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {

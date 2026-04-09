@@ -1,6 +1,7 @@
 // packages/workflows/src/index/util.ts
 import { execSync } from "node:child_process";
 
+import path from "node:path";
 import type {
   IndexMetadata,
   RepositoryIdentity,
@@ -16,7 +17,44 @@ import {
   detectKind,
   detectLanguage,
   PostgresRagChunkRepository,
+  FileSystemRepositorySource,
+  GitLabRepositorySource,
+  GitHubRepositorySource,
 } from "@prsense/context";
+
+export function resolveRepositorySource(target: string) {
+  const isGithub = /github\.com/.test(target);
+  const isGitlab = /gitlab\.com/.test(target);
+
+  if (isGithub) {
+    const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+
+    if (!match) {
+      throw new Error("Invalid GitHub URL");
+    }
+
+    const owner = match[1];
+    const repo = match[2];
+
+    if (!owner || !repo) {
+      throw new Error("Invalid GitHub repository url");
+    }
+
+    return new GitHubRepositorySource(owner, repo.replace(".git", ""));
+  } else if (isGitlab) {
+    const match = target.match(/gitlab\.com\/(.+?)\/([^\/]+)(?:\.git)?$/);
+
+    if (!match) throw new Error("Invalid GitLab URL");
+
+    const owner = match[1];
+    const repo = match[2];
+    if (!owner || !repo) throw new Error("Invalid GitLab repository url");
+    return new GitLabRepositorySource(owner, repo.replace(".git", ""));
+  } else {
+    const absolute = path.resolve(target);
+    return new FileSystemRepositorySource(absolute);
+  }
+}
 
 export function computeDiff({
   repoPath,

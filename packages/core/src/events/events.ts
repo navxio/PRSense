@@ -40,6 +40,8 @@ export const CoreEvents = {
   WorkflowIndexEmbeddingDimensionDetected:
     "workflow.index.embedding_dimension_detected",
   WorkflowIndexDimensionMismatch: "workflow.index.dimension_mismatch",
+  WorkflowIndexRepositorySourceResolved:
+    "workflow.index.repository_store.resolved",
   WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
   WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
   WorkflowReviewContextAvailable: "workflow.review.context_available",
