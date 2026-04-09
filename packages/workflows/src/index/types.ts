@@ -9,3 +9,8 @@ export type IndexPayload = {
 };
 
 export type IndexWorkflowResult = WorkflowResult<IndexPayload>;
+
+export type IndexPlan =
+  | { type: "noop" }
+  | { type: "full" }
+  | { type: "incremental"; baseSha: string; targetSha: string };

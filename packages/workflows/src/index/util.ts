@@ -1,0 +1,167 @@
+// packages/workflows/src/index/util.ts
+import { execSync } from "node:child_process";
+
+import type {
+  IndexMetadata,
+  RepositoryIdentity,
+  ContextChunk,
+} from "@prsense/core";
+import { EventBus, CoreEvents } from "@prsense/core";
+import type { EmbeddingClient } from "@prsense/llm";
+
+import type { IndexPlan } from "./types.js";
+import type { RepositoryRevision, RepositorySource } from "@prsense/context";
+import {
+  createCharChunker,
+  detectKind,
+  detectLanguage,
+  PostgresRagChunkRepository,
+} from "@prsense/context";
+
+export function computeDiff({
+  repoPath,
+  baseSha,
+  targetSha,
+}: {
+  repoPath: string;
+  baseSha: string;
+  targetSha: string;
+}): { changed: string[]; deleted: string[] } {
+  const output = execSync(`git diff --name-status ${baseSha} ${targetSha}`, {
+    cwd: repoPath,
+  }).toString("utf8");
+
+  const changed: string[] = [];
+  const deleted: string[] = [];
+
+  for (const line of output.split("\n")) {
+    if (!line.trim()) continue;
+
+    const [status, file] = line.split("\t");
+
+    if (status === "D") {
+      deleted.push(path.join(repoPath, file));
+    } else {
+      changed.push(path.join(repoPath, file));
+    }
+  }
+
+  return { changed, deleted };
+}
+
+export async function buildChunks({
+  files,
+  repositorySource,
+  chunker,
+  eventBus,
+}: {
+  files: string[];
+  repositorySource: RepositorySource;
+  chunker: ReturnType<typeof createCharChunker>;
+  eventBus: EventBus;
+}): Promise<ContextChunk[]> {
+  const chunks: ContextChunk[] = [];
+
+  for (const file of files) {
+    try {
+      const content = await repositorySource.readFile(file);
+      const kind = detectKind(file);
+      const language = detectLanguage(file);
+
+      const fileChunks = chunker.chunk({
+        content,
+        source: { kind: "file", path: file },
+      });
+
+      for (const chunk of fileChunks) {
+        chunk.metadata = {
+          ...chunk.metadata,
+          path: file,
+          kind,
+          ...(language ? { language } : {}),
+        };
+      }
+
+      chunks.push(...fileChunks);
+    } catch (err) {
+      if (err instanceof Error && err.message === "BINARY_FILE_DETECTED") {
+        eventBus.emit(CoreEvents.ContextFileSkipped, {
+          path: file,
+          reason: "binary",
+        });
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  return chunks;
+}
+
+export async function embedAndInsert({
+  chunks,
+  embeddingClient,
+  chunkRepository,
+  identity,
+  revision,
+  eventBus,
+}: {
+  chunks: ContextChunk[];
+  embeddingClient: EmbeddingClient;
+  chunkRepository: PostgresRagChunkRepository;
+  identity: RepositoryIdentity;
+  revision: RepositoryRevision;
+  eventBus: EventBus;
+}) {
+  const BATCH_SIZE = 32;
+
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    const batch = chunks.slice(i, i + BATCH_SIZE);
+
+    eventBus.emit(CoreEvents.WorkflowIndexProgress, {
+      processed: Math.min(i + BATCH_SIZE, chunks.length),
+      total: chunks.length,
+    });
+
+    const embeddings = await embeddingClient.embed(batch.map((c) => c.content));
+
+    const rows = batch.map((chunk, idx) => ({
+      chunk,
+      repoProvider: identity.provider,
+      repoName: identity.id,
+      repoRef: revision.commitSha,
+      embedding: embeddings[idx],
+    }));
+
+    await chunkRepository.insertChunks(rows);
+  }
+}
+
+export function planIndex({
+  stored,
+  currentFingerprint,
+  force,
+}: {
+  stored: IndexMetadata | null;
+  currentFingerprint: any;
+  force?: boolean;
+}): IndexPlan {
+  if (!stored) return { type: "full" };
+
+  const fingerprintChanged =
+    stored.revision.commitSha !== currentFingerprint.commitSha ||
+    stored.embedding.provider !== currentFingerprint.embeddingProvider ||
+    stored.embedding.model !== currentFingerprint.embeddingModel ||
+    stored.chunking.strategy !== currentFingerprint.chunkStrategy ||
+    stored.chunking.version !== currentFingerprint.chunkVersion;
+
+  if (!fingerprintChanged) return { type: "noop" };
+
+  if (force) return { type: "full" };
+
+  return {
+    type: "incremental",
+    baseSha: stored.revision.commitSha,
+    targetSha: currentFingerprint.commitSha,
+  };
+}
