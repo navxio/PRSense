@@ -264,17 +264,9 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       DELETE FROM rag_chunks
       WHERE repo_provider = $1
         AND repo_name = $2
-        AND (
-          path = ANY($3)
-          OR path LIKE ANY($4)
-        )
+        AND path = ANY($3)
       `,
-        [
-          provider,
-          name,
-          paths,
-          paths.map((p) => `%/${p}`),
-        ],
+        [provider, name, paths],
       );
     });
   }
