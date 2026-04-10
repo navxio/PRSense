@@ -69,15 +69,25 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    const absolutePath = path.join(this.root, filePath);
+    const absolutePath = path.resolve(this.root, filePath);
+
+    // SECURITY CHECK
+    if (
+      absolutePath !== this.root &&
+      !absolutePath.startsWith(this.root + path.sep)
+    ) {
+      throw new Error("PATH_OUTSIDE_REPOSITORY");
+    }
+
     const stat = await fs.stat(absolutePath);
 
     if (!stat.isFile()) {
       throw new Error("NOT_A_FILE");
     }
+
     const buffer = await fs.readFile(absolutePath);
 
-    // Detect binary via NULL byte
+    // binary detection...
     const sampleSize = Math.min(buffer.length, 8000);
     for (let i = 0; i < sampleSize; i++) {
       if (buffer[i] === 0) {
@@ -85,15 +95,11 @@ export class FileSystemRepositorySource implements RepositorySource {
       }
     }
 
-    // Convert to UTF-8 safely
     let content = buffer.toString("utf8");
-
-    // Defensive: strip remaining NULL characters if any
     content = content.replace(/\u0000/g, "");
 
     return content;
   }
-
   async getRevision(): Promise<RepositoryRevision> {
     try {
       const sha = execSync("git rev-parse HEAD", {
