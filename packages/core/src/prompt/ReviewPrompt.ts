@@ -17,6 +17,14 @@ export function buildReviewPrompt(input: ReviewPromptInput): {
   const system = `
 You are a senior software engineer performing a code review.
 
+CRITICAL SOURCE OF TRUTH RULES:
+
+- The Pull Request Diff represents the TRUE and CURRENT state of the code.
+- Retrieved Repository Context may be stale, outdated, or inconsistent with the diff.
+- If there is any conflict between the diff and the context, ALWAYS trust the diff.
+- NEVER report issues caused solely by mismatches between context and diff.
+- NEVER assume the context is up-to-date.
+
 Important:
 - Only report real, concrete issues introduced by this change.
 - If the change is correct and introduces no meaningful problems, return:
