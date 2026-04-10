@@ -2,21 +2,15 @@
 import { execSync } from "node:child_process";
 
 import path from "node:path";
-import type {
-  IndexMetadata,
-  RepositoryIdentity,
-  ContextChunk,
-} from "@prsense/core";
+import type { IndexMetadata, ContextChunk } from "@prsense/core";
 import { EventBus, CoreEvents } from "@prsense/core";
-import type { EmbeddingClient } from "@prsense/llm";
 
 import type { IndexPlan } from "./types.js";
-import type { RepositoryRevision, RepositorySource } from "@prsense/context";
+import type { RepositorySource } from "@prsense/context";
 import {
   createCharChunker,
   detectKind,
   detectLanguage,
-  PostgresRagChunkRepository,
   FileSystemRepositorySource,
   GitLabRepositorySource,
   GitHubRepositorySource,
@@ -168,3 +162,4 @@ export async function buildChunks({
 
   return chunks;
 }
+
