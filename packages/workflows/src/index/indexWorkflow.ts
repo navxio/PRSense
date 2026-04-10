@@ -175,6 +175,30 @@ export async function runIndexWorkflow({
       changedFiles = await repositorySource.listFiles();
 
       if (changedFiles.length === 0) {
+        // clear stale data
+        await chunkRepository.deleteByRepository(identity.provider, identity.id);
+
+        await metadataRepository.save({
+          repository: {
+            provider: identity.provider,
+            id: identity.id,
+          },
+          revision: {
+            commitSha: revision.commitSha,
+          },
+          embedding: {
+            provider: config.embeddings.provider,
+            model: config.embeddings.model,
+            dimension: embeddingDimension,
+          },
+          chunking: {
+            strategy: "default",
+            version: 1,
+          },
+          prsenseVersion: version,
+          createdAt: new Date().toISOString(),
+        });
+
         eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
         return {
