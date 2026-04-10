@@ -80,6 +80,8 @@ export function planIndex({
 }
 
 
+import { execFileSync } from "node:child_process";
+
 export function computeDiff({
   repoPath,
   baseSha,
@@ -103,12 +105,12 @@ export function computeDiff({
   let i = 0;
 
   while (i < tokens.length) {
-    const entry = tokens[i++];
+    const status = tokens[i++];
 
-    if (!entry) break;
+    if (!status) break;
 
-    // Rename / copy: R100, C100
-    if (entry.startsWith("R") || entry.startsWith("C")) {
+    // Rename / copy
+    if (status.startsWith("R") || status.startsWith("C")) {
       const oldPath = tokens[i++];
       const newPath = tokens[i++];
 
@@ -121,16 +123,12 @@ export function computeDiff({
       continue;
     }
 
-    // Normal case: "M\tfile.ts"
-    const tabIndex = entry.indexOf("\t");
-    if (tabIndex === -1) {
-      throw new Error(`Malformed git diff entry: ${entry}`);
+    // Normal case
+    const file = tokens[i++];
+
+    if (!file) {
+      throw new Error("Malformed git diff output (file missing)");
     }
-
-    const status = entry.slice(0, tabIndex);
-    const file = entry.slice(tabIndex + 1);
-
-    if (!file) continue;
 
     if (status === "D") {
       deleted.push(file);
