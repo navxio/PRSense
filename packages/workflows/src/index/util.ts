@@ -107,9 +107,13 @@ export function computeDiff({
     const [status, file] = line.split("\t");
 
     if (status === "D") {
-      deleted.push(path.join(repoPath, file));
+      if (file) {
+        deleted.push(path.join(repoPath, file));
+      }
     } else {
-      changed.push(path.join(repoPath, file));
+      if (file) {
+        changed.push(path.join(repoPath, file));
+      }
     }
   }
 
@@ -163,43 +167,4 @@ export async function buildChunks({
   }
 
   return chunks;
-}
-
-export async function embedAndInsert({
-  chunks,
-  embeddingClient,
-  chunkRepository,
-  identity,
-  revision,
-  eventBus,
-}: {
-  chunks: ContextChunk[];
-  embeddingClient: EmbeddingClient;
-  chunkRepository: PostgresRagChunkRepository;
-  identity: RepositoryIdentity;
-  revision: RepositoryRevision;
-  eventBus: EventBus;
-}) {
-  const BATCH_SIZE = 32;
-
-  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
-
-    eventBus.emit(CoreEvents.WorkflowIndexProgress, {
-      processed: Math.min(i + BATCH_SIZE, chunks.length),
-      total: chunks.length,
-    });
-
-    const embeddings = await embeddingClient.embed(batch.map((c) => c.content));
-
-    const rows = batch.map((chunk, idx) => ({
-      chunk,
-      repoProvider: identity.provider,
-      repoName: identity.id,
-      repoRef: revision.commitSha,
-      embedding: embeddings[idx],
-    }));
-
-    await chunkRepository.insertChunks(rows);
-  }
 }

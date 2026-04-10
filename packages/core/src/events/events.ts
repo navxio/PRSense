@@ -35,6 +35,9 @@ export const CoreEvents = {
   WorkflowIndexUpToDate: "workflow.index.up_to_date",
   WorkflowIndexOutdated: "workflow.index.outdated",
   WorkflowIndexInexistent: "workflow.index.inexistent",
+  WorkflowIndexPlanComputed: "workflow.index.plan.computed",
+  WorkflowIndexFilesChanged: "workflow.index.files.changed",
+  WorkflowIndexFilesDeleted: "workflow.index.files.deleted",
   WorkflowIndexDryRun: "workflow.index.dry_run",
   WorkflowIndexProgress: "workflow.index.progress",
   WorkflowIndexEmbeddingDimensionDetected:
