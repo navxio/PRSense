@@ -9,7 +9,7 @@ import {
 } from "./RepositorySource.js";
 
 export class FileSystemRepositorySource implements RepositorySource {
-  constructor(private readonly root: string) {}
+  constructor(private readonly root: string) { }
 
   async listFiles(): Promise<string[]> {
     try {
@@ -22,7 +22,7 @@ export class FileSystemRepositorySource implements RepositorySource {
         .toString("utf8")
         .split("\0")
         .filter(Boolean)
-        .map((relative) => path.join(this.root, relative));
+        .map((relative) => relative);
 
       const files: string[] = [];
 
@@ -46,6 +46,7 @@ export class FileSystemRepositorySource implements RepositorySource {
 
   private async walkDirectory(dir: string): Promise<string[]> {
     const files: string[] = [];
+    const root = this.root
 
     async function walk(current: string) {
       const entries = await fs.readdir(current, { withFileTypes: true });
@@ -58,7 +59,7 @@ export class FileSystemRepositorySource implements RepositorySource {
         if (entry.isDirectory()) {
           await walk(fullPath);
         } else if (entry.isFile()) {
-          files.push(fullPath);
+          files.push(path.relative(root, fullPath));
         }
       }
     }
@@ -68,12 +69,13 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    const stat = await fs.stat(filePath);
+    const absolutePath = path.join(this.root, filePath);
+    const stat = await fs.stat(absolutePath);
 
     if (!stat.isFile()) {
       throw new Error("NOT_A_FILE");
     }
-    const buffer = await fs.readFile(filePath);
+    const buffer = await fs.readFile(absolutePath);
 
     // Detect binary via NULL byte
     const sampleSize = Math.min(buffer.length, 8000);
