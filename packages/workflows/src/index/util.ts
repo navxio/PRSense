@@ -56,6 +56,35 @@ export function resolveRepositorySource(target: string) {
   }
 }
 
+export function planIndex({
+  stored,
+  currentFingerprint,
+  force,
+}: {
+  stored: IndexMetadata | null;
+  currentFingerprint: any;
+  force?: boolean;
+}): IndexPlan {
+  if (!stored) return { type: "full" };
+
+  const fingerprintChanged =
+    stored.revision.commitSha !== currentFingerprint.commitSha ||
+    stored.embedding.provider !== currentFingerprint.embeddingProvider ||
+    stored.embedding.model !== currentFingerprint.embeddingModel ||
+    stored.chunking.strategy !== currentFingerprint.chunkStrategy ||
+    stored.chunking.version !== currentFingerprint.chunkVersion;
+
+  if (!fingerprintChanged) return { type: "noop" };
+
+  if (force) return { type: "full" };
+
+  return {
+    type: "incremental",
+    baseSha: stored.revision.commitSha,
+    targetSha: currentFingerprint.commitSha,
+  };
+}
+
 export function computeDiff({
   repoPath,
   baseSha,
@@ -173,33 +202,4 @@ export async function embedAndInsert({
 
     await chunkRepository.insertChunks(rows);
   }
-}
-
-export function planIndex({
-  stored,
-  currentFingerprint,
-  force,
-}: {
-  stored: IndexMetadata | null;
-  currentFingerprint: any;
-  force?: boolean;
-}): IndexPlan {
-  if (!stored) return { type: "full" };
-
-  const fingerprintChanged =
-    stored.revision.commitSha !== currentFingerprint.commitSha ||
-    stored.embedding.provider !== currentFingerprint.embeddingProvider ||
-    stored.embedding.model !== currentFingerprint.embeddingModel ||
-    stored.chunking.strategy !== currentFingerprint.chunkStrategy ||
-    stored.chunking.version !== currentFingerprint.chunkVersion;
-
-  if (!fingerprintChanged) return { type: "noop" };
-
-  if (force) return { type: "full" };
-
-  return {
-    type: "incremental",
-    baseSha: stored.revision.commitSha,
-    targetSha: currentFingerprint.commitSha,
-  };
 }

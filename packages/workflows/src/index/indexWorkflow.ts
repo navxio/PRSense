@@ -1,5 +1,4 @@
 // packages/workflows/src/index/indexWorkflow.ts
-
 import { execSync } from "node:child_process";
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
@@ -15,7 +14,7 @@ import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
-import { resolveRepositorySource } from "./util.js";
+import { resolveRepositorySource, planIndex, computeDiff, buildChunks } from "./util.js";
 
 export async function runIndexWorkflow({
   config,
@@ -132,42 +131,18 @@ export async function runIndexWorkflow({
       chunkVersion: 1,
     };
 
-    let rebuildRequired = false;
-
-    if (!stored) {
-      rebuildRequired = true;
-    } else {
-      if (stored.revision.commitSha !== currentFingerprint.commitSha) {
-        rebuildRequired = true;
-      }
-
-      if (stored.embedding.provider !== currentFingerprint.embeddingProvider) {
-        rebuildRequired = true;
-      }
-
-      if (stored.embedding.model !== currentFingerprint.embeddingModel) {
-        rebuildRequired = true;
-      }
-
-      if (stored.chunking.strategy !== currentFingerprint.chunkStrategy) {
-        rebuildRequired = true;
-      }
-
-      if (stored.chunking.version !== currentFingerprint.chunkVersion) {
-        rebuildRequired = true;
-      }
-    }
+    const plan = planIndex({ stored, currentFingerprint, force: force || false });
 
     // -------------------------------------------------
     // Up-to-date Case
     // -------------------------------------------------
 
-    if (!rebuildRequired) {
+    if (plan.type === "noop") {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
         commitSha: revision.commitSha,
       });
 
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+      eventBus.emit(CoreEvents.WorkflowIndexFinished)
 
       return {
         outcome: "success",
@@ -179,64 +154,27 @@ export async function runIndexWorkflow({
       };
     }
 
-    // -------------------------------------------------
-    // Outdated Case
-    // -------------------------------------------------
-
-    eventBus.emit(CoreEvents.WorkflowIndexOutdated, {
-      commitSha: revision.commitSha,
-    });
-
-    if (!force && stored && !dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
-        reason: "index-outdated",
-      });
-
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-          commitSha: revision.commitSha,
-          upToDate: false,
-        },
-      };
-    }
-
-    // -------------------------------------------------
-    // Incremental update
-    // -------------------------------------------------
 
     let changedFiles: string[] = [];
     let deletedFiles: string[] = [];
+    await repositorySource.listFiles()
+    const repoPath = repositorySource.getLocalPath()
 
-    if (!stored) {
-      // first index = full scan
-      changedFiles = await repositorySource.listFiles();
-    } else {
-      const prevSha = stored.revision.commitSha;
-      const currentSha = revision.commitSha;
-
-      const diffOutput = execSync(
-        `git diff --name-status ${prevSha} ${currentSha}`,
-        { cwd: repositorySource.getLocalPath() },
-      ).toString("utf8");
-
-      for (const line of diffOutput.split("\n")) {
-        if (!line.trim()) continue;
-
-        const [status, file] = line.split("\t");
-
-        if (status === "D") {
-          deletedFiles.push(resolvePath(file));
-        } else {
-          changedFiles.push(resolvePath(file));
-        }
-      }
+    if (plan.type === "full") {
+      eventBus.emit(CoreEvents.WorkflowIndexInexistent)
+      changedFiles = await repositorySource.listFiles()
+      await chunkRepository.deleteByRepository(identity.provider, identity.id)
     }
 
-    if (files.length === 0) {
+    if (plan.type === "incremental") {
+      const diff = computeDiff({ repoPath, baseSha: plan.baseSha, targetSha: plan.targetSha })
+      changedFiles = diff.changed
+      deletedFiles = diff.deleted
+
+      await chunkRepository.deleteByPaths(identity.provider, identity.id, [...changedFiles, ...deletedFiles])
+    }
+
+    if (changedFiles.length === 0 && deletedFiles.length === 0) {
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
       return {
@@ -248,46 +186,13 @@ export async function runIndexWorkflow({
         },
       };
     }
+
     const chunker = createCharChunker({
       maxChars: config.index.chunkSizeChars,
       overlapChars: config.index.chunkOverlapChars,
     });
 
-    const chunks: ContextChunk[] = [];
-    for (const file of changedFiles) {
-      try {
-        const content = await repositorySource.readFile(file);
-        const kind = detectKind(file);
-        const language = detectLanguage(file);
-
-        const fileChunks = chunker.chunk({
-          content,
-          source: { kind: "file", path: file },
-        });
-
-        for (const chunk of fileChunks) {
-          const metadata: typeof chunk.metadata = {
-            ...chunk.metadata,
-            path: file,
-            kind,
-          };
-          if (language !== undefined) metadata.language = language;
-          chunk.metadata = metadata;
-        }
-
-        chunks.push(...fileChunks);
-      } catch (err) {
-        if (err instanceof Error && err.message === "BINARY_FILE_DETECTED") {
-          eventBus.emit(CoreEvents.ContextFileSkipped, {
-            path: file,
-            reason: "binary",
-          });
-          continue;
-        }
-
-        throw err;
-      }
-    }
+    const chunks: ContextChunk[] = await buildChunks({ files: changedFiles, repositorySource, chunker, eventBus })
 
     eventBus.emit(CoreEvents.ContextChunksBuilt, {
       count: chunks.length,
@@ -310,11 +215,6 @@ export async function runIndexWorkflow({
       };
     }
 
-    // -------------------------------------------------
-    // Delete Existing Chunks (Rebuild)
-    // -------------------------------------------------
-
-    await chunkRepository.deleteByRepository(identity.provider, identity.id);
 
     // -------------------------------------------------
     // Embed + Persist Chunks
@@ -355,11 +255,8 @@ export async function runIndexWorkflow({
       allRows.push(...rows);
     }
 
-    await chunkRepository.rebuildRepository(
-      identity.provider,
-      identity.id,
-      allRows,
-    );
+    await chunkRepository.insertChunks(allRows)
+
     await metadataRepository.save({
       repository: {
         provider: identity.provider,
