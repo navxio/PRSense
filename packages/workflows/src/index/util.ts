@@ -1,5 +1,5 @@
 // packages/workflows/src/index/util.ts
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 import path from "node:path";
 import type { IndexMetadata, ContextChunk } from "@prsense/core";
@@ -88,32 +88,30 @@ export function computeDiff({
   baseSha: string;
   targetSha: string;
 }): { changed: string[]; deleted: string[] } {
-  const output = execSync(`git diff --name-status ${baseSha} ${targetSha}`, {
-    cwd: repoPath,
-  }).toString("utf8");
+  const output = execFileSync(
+    "git",
+    ["diff", "--name-status", "-z", baseSha, targetSha],
+    { cwd: repoPath }
+  );
+
+  const parts = output.toString("utf8").split("\0").filter(Boolean);
 
   const changed: string[] = [];
   const deleted: string[] = [];
 
-  for (const line of output.split("\n")) {
-    if (!line.trim()) continue;
+  for (let i = 0; i < parts.length;) {
+    const entry = parts[i++];
+    const status = entry[0];
 
-    const parts = line.split("\t");
-    const status = parts[0];
-
-    if (status.startsWith("D")) {
-      const file = parts[1];
-      if (file) deleted.push(file);
-    } else if (status.startsWith("R") || status.startsWith("C")) {
-      // R100 old new
-      const oldPath = parts[1];
-      const newPath = parts[2];
-
-      if (oldPath) deleted.push(oldPath);
-      if (newPath) changed.push(newPath);
+    if (status === "D") {
+      deleted.push(parts[i++]);
+    } else if (status === "R" || status === "C") {
+      const oldPath = parts[i++];
+      const newPath = parts[i++];
+      deleted.push(oldPath);
+      changed.push(newPath);
     } else {
-      const file = parts[1];
-      if (file) changed.push(file);
+      changed.push(parts[i++]);
     }
   }
 
