@@ -227,7 +227,19 @@ export const reviewCommand = new Command("review")
         console.log("✔ No review signals (change looks safe)");
         process.exit(0);
       }
-      for (const signal of result.payload.signals) {
+
+      const severityOrder: Record<string, number> = {
+        high: 3,
+        medium: 2,
+        low: 1,
+        info: 0,
+      };
+
+      const sortedSignals = [...result.payload.signals].sort((a, b) => {
+        return (severityOrder[b.severity] ?? -1) - (severityOrder[a.severity] ?? -1);
+      });
+
+      for (const signal of sortedSignals) {
         console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
         console.log(signal.message);
 
