@@ -80,7 +80,6 @@ export function planIndex({
 }
 
 
-import { execFileSync } from "node:child_process";
 
 export function computeDiff({
   repoPath,

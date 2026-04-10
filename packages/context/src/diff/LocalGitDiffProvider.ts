@@ -28,52 +28,73 @@ export class LocalGitDiffProvider implements DiffProvider {
   constructor(
     private readonly repoRoot: string,
     private readonly baseBranch?: string,
-  ) {}
+  ) { }
 
   async load() {
     const cwd = path.resolve(this.repoRoot);
 
-    const hasUncommittedChanges =
-      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim()
-        .length > 0;
+    // -------------------------------------------------
+    // Resolve base branch
+    // -------------------------------------------------
 
-    let diffText = "";
-    let mode: "working-tree" | "branch" = "working-tree";
-
-    if (hasUncommittedChanges) {
-      diffText = execSync("git diff", {
+    const baseBranch =
+      this.baseBranch ??
+      execSync("git symbolic-ref refs/remotes/origin/HEAD", {
         cwd,
         encoding: "utf8",
-      });
-    } else {
-      const baseBranch =
-        this.baseBranch ??
-        execSync("git symbolic-ref refs/remotes/origin/HEAD", {
-          cwd,
-          encoding: "utf8",
-        })
-          .trim()
-          .split("/")
-          .pop();
+      })
+        .trim()
+        .split("/")
+        .pop();
 
-      if (!baseBranch) {
-        throw new Error("Unable to determine base branch");
-      }
-
-      diffText = execSync(`git diff ${baseBranch}...HEAD`, {
-        cwd,
-        encoding: "utf8",
-      });
-
-      mode = "branch";
+    if (!baseBranch) {
+      throw new Error("Unable to determine base branch");
     }
+
+    // -------------------------------------------------
+    // Compute diffs
+    // -------------------------------------------------
+
+    // 1. Committed changes vs base branch
+    const branchDiff = execSync(
+      `git diff ${baseBranch}...HEAD`,
+      { cwd, encoding: "utf8" }
+    );
+
+    // 2. Staged changes
+    const stagedDiff = execSync("git diff --cached", {
+      cwd,
+      encoding: "utf8",
+    });
+
+    // 3. Unstaged changes
+    const workingDiff = execSync("git diff", {
+      cwd,
+      encoding: "utf8",
+    });
+
+    // -------------------------------------------------
+    // Combine all diffs
+    // -------------------------------------------------
+
+    const diffText = [branchDiff, stagedDiff, workingDiff]
+      .filter((d) => d && d.trim().length > 0)
+      .join("\n");
+
+    // -------------------------------------------------
+    // Parse diff
+    // -------------------------------------------------
+
+    const diff: UnifiedDiff = parseUnifiedDiff(diffText);
+
+    // -------------------------------------------------
+    // Revision + metadata
+    // -------------------------------------------------
 
     const revision = execSync("git rev-parse HEAD", {
       cwd,
       encoding: "utf8",
     }).trim();
-
-    const diff: UnifiedDiff = parseUnifiedDiff(diffText);
 
     const identity: RepositoryIdentity = {
       provider: "filesystem",
