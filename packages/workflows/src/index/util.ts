@@ -94,24 +94,39 @@ export function computeDiff({
     { cwd: repoPath }
   );
 
-  const parts = output.toString("utf8").split("\0").filter(Boolean);
+  const tokens = output.toString("utf8").split("\0").filter(Boolean);
 
   const changed: string[] = [];
   const deleted: string[] = [];
 
-  for (let i = 0; i < parts.length;) {
-    const entry = parts[i++];
+  let i = 0;
+
+  while (i < tokens.length) {
+    const entry = tokens[i++];
+    if (!entry) break;
+
     const status = entry[0];
 
+    // helper to safely read next token
+    const next = (): string => {
+      const val = tokens[i++];
+      if (!val) {
+        throw new Error("Malformed git diff output");
+      }
+      return val;
+    };
+
     if (status === "D") {
-      deleted.push(parts[i++]);
+      deleted.push(next());
     } else if (status === "R" || status === "C") {
-      const oldPath = parts[i++];
-      const newPath = parts[i++];
+      const oldPath = next();
+      const newPath = next();
+
       deleted.push(oldPath);
       changed.push(newPath);
     } else {
-      changed.push(parts[i++]);
+      // A, M, etc.
+      changed.push(next());
     }
   }
 
