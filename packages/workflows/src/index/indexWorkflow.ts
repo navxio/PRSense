@@ -14,7 +14,12 @@ import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
-import { resolveRepositorySource, planIndex, computeDiff, buildChunks } from "./util.js";
+import {
+  resolveRepositorySource,
+  planIndex,
+  computeDiff,
+  buildChunks,
+} from "./util.js";
 
 export async function runIndexWorkflow({
   config,
@@ -131,10 +136,14 @@ export async function runIndexWorkflow({
       chunkVersion: 1,
     };
 
-    const plan = planIndex({ stored, currentFingerprint, force: force || false });
+    const plan = planIndex({
+      stored,
+      currentFingerprint,
+      force: force || false,
+    });
     eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
-      type: plan.type
-    })
+      type: plan.type,
+    });
 
     // -------------------------------------------------
     // Up-to-date Case
@@ -145,7 +154,7 @@ export async function runIndexWorkflow({
         commitSha: revision.commitSha,
       });
 
-      eventBus.emit(CoreEvents.WorkflowIndexFinished)
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
       return {
         outcome: "success",
@@ -157,32 +166,53 @@ export async function runIndexWorkflow({
       };
     }
 
-
     let changedFiles: string[] = [];
     let deletedFiles: string[] = [];
 
     if (plan.type === "full") {
-      eventBus.emit(CoreEvents.WorkflowIndexInexistent)
-      changedFiles = await repositorySource.listFiles()
-      await chunkRepository.deleteByRepository(identity.provider, identity.id)
+      eventBus.emit(CoreEvents.WorkflowIndexInexistent);
+
+      changedFiles = await repositorySource.listFiles();
+
+      if (changedFiles.length === 0) {
+        eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+        return {
+          outcome: "success",
+          payload: {
+            chunksIndexed: 0,
+            commitSha: revision.commitSha,
+            upToDate: false,
+          },
+        };
+      }
+
+      await chunkRepository.deleteByRepository(identity.provider, identity.id);
     } else {
-      await repositorySource.listFiles()
+      await repositorySource.listFiles();
     }
-    const repoPath = repositorySource.getLocalPath()
+    const repoPath = repositorySource.getLocalPath();
 
     if (plan.type === "incremental") {
-      const diff = computeDiff({ repoPath, baseSha: plan.baseSha, targetSha: plan.targetSha })
-      changedFiles = diff.changed
-      deletedFiles = diff.deleted
+      const diff = computeDiff({
+        repoPath,
+        baseSha: plan.baseSha,
+        targetSha: plan.targetSha,
+      });
+      changedFiles = diff.changed;
+      deletedFiles = diff.deleted;
 
-      await chunkRepository.deleteByPaths(identity.provider, identity.id, [...changedFiles, ...deletedFiles])
+      await chunkRepository.deleteByPaths(identity.provider, identity.id, [
+        ...changedFiles,
+        ...deletedFiles,
+      ]);
     }
     eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
-      changedFiles
-    })
+      changedFiles,
+    });
     eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
-      deletedFiles
-    })
+      deletedFiles,
+    });
 
     if (changedFiles.length === 0 && deletedFiles.length > 0) {
       await metadataRepository.save({
@@ -226,7 +256,12 @@ export async function runIndexWorkflow({
       overlapChars: config.index.chunkOverlapChars,
     });
 
-    const chunks: ContextChunk[] = await buildChunks({ files: changedFiles, repositorySource, chunker, eventBus })
+    const chunks: ContextChunk[] = await buildChunks({
+      files: changedFiles,
+      repositorySource,
+      chunker,
+      eventBus,
+    });
 
     eventBus.emit(CoreEvents.ContextChunksBuilt, {
       count: chunks.length,
@@ -248,7 +283,6 @@ export async function runIndexWorkflow({
         },
       };
     }
-
 
     // -------------------------------------------------
     // Embed + Persist Chunks

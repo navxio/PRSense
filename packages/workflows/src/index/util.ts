@@ -98,16 +98,22 @@ export function computeDiff({
   for (const line of output.split("\n")) {
     if (!line.trim()) continue;
 
-    const [status, file] = line.split("\t");
+    const parts = line.split("\t");
+    const status = parts[0];
 
-    if (status === "D") {
-      if (file) {
-        deleted.push(path.join(repoPath, file));
-      }
+    if (status.startsWith("D")) {
+      const file = parts[1];
+      if (file) deleted.push(file);
+    } else if (status.startsWith("R") || status.startsWith("C")) {
+      // R100 old new
+      const oldPath = parts[1];
+      const newPath = parts[2];
+
+      if (oldPath) deleted.push(oldPath);
+      if (newPath) changed.push(newPath);
     } else {
-      if (file) {
-        changed.push(path.join(repoPath, file));
-      }
+      const file = parts[1];
+      if (file) changed.push(file);
     }
   }
 
@@ -162,4 +168,3 @@ export async function buildChunks({
 
   return chunks;
 }
-
