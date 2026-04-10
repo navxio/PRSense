@@ -79,6 +79,7 @@ export function planIndex({
   };
 }
 
+
 export function computeDiff({
   repoPath,
   baseSha,
@@ -87,7 +88,7 @@ export function computeDiff({
   repoPath: string;
   baseSha: string;
   targetSha: string;
-}): { changed: string[]; deleted: string[] } {
+}) {
   const output = execFileSync(
     "git",
     ["diff", "--name-status", "-z", baseSha, targetSha],
@@ -103,30 +104,38 @@ export function computeDiff({
 
   while (i < tokens.length) {
     const entry = tokens[i++];
+
     if (!entry) break;
 
-    const status = entry[0];
+    // Rename / copy: R100, C100
+    if (entry.startsWith("R") || entry.startsWith("C")) {
+      const oldPath = tokens[i++];
+      const newPath = tokens[i++];
 
-    // helper to safely read next token
-    const next = (): string => {
-      const val = tokens[i++];
-      if (!val) {
-        throw new Error("Malformed git diff output");
+      if (!oldPath || !newPath) {
+        throw new Error("Malformed git diff output (rename)");
       }
-      return val;
-    };
-
-    if (status === "D") {
-      deleted.push(next());
-    } else if (status === "R" || status === "C") {
-      const oldPath = next();
-      const newPath = next();
 
       deleted.push(oldPath);
       changed.push(newPath);
+      continue;
+    }
+
+    // Normal case: "M\tfile.ts"
+    const tabIndex = entry.indexOf("\t");
+    if (tabIndex === -1) {
+      throw new Error(`Malformed git diff entry: ${entry}`);
+    }
+
+    const status = entry.slice(0, tabIndex);
+    const file = entry.slice(tabIndex + 1);
+
+    if (!file) continue;
+
+    if (status === "D") {
+      deleted.push(file);
     } else {
-      // A, M, etc.
-      changed.push(next());
+      changed.push(file);
     }
   }
 
