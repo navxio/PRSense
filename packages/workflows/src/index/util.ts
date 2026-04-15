@@ -61,6 +61,8 @@ export function planIndex({
 }): IndexPlan {
   if (!stored) return { type: "full" };
 
+  if (force) return { type: "full" };
+
   const fingerprintChanged =
     stored.revision.commitSha !== currentFingerprint.commitSha ||
     stored.embedding.provider !== currentFingerprint.embeddingProvider ||
@@ -70,7 +72,6 @@ export function planIndex({
 
   if (!fingerprintChanged) return { type: "noop" };
 
-  if (force) return { type: "full" };
 
   return {
     type: "incremental",
@@ -78,8 +79,6 @@ export function planIndex({
     targetSha: currentFingerprint.commitSha,
   };
 }
-
-
 
 export function computeDiff({
   repoPath,

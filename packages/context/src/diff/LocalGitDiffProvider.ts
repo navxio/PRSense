@@ -64,7 +64,12 @@ export class LocalGitDiffProvider implements DiffProvider {
 
     if (hasUncommittedChanges) {
       // FULL current state vs base
-      diffText = execSync(`git diff $(git merge-base baseBranch HEAD)`, {
+      const mergeBase = execSync(
+        `git merge-base ${baseBranch} HEAD`,
+        { cwd, encoding: "utf8" }
+      ).trim();
+
+      diffText = execSync(`git diff ${mergeBase}`, {
         cwd,
         encoding: "utf8",
       });
