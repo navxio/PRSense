@@ -170,13 +170,16 @@ export async function runIndexWorkflow({
     let deletedFiles: string[] = [];
 
     if (plan.type === "full") {
-      eventBus.emit(CoreEvents.WorkflowIndexInexistent);
+      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired);
 
       changedFiles = await repositorySource.listFiles();
 
       if (changedFiles.length === 0) {
         // clear stale data
-        await chunkRepository.deleteByRepository(identity.provider, identity.id);
+        await chunkRepository.deleteByRepository(
+          identity.provider,
+          identity.id,
+        );
 
         await metadataRepository.save({
           repository: {
