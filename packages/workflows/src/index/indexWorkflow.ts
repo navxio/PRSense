@@ -133,7 +133,6 @@ export async function runIndexWorkflow({
       chunkVersion: 2,
     };
 
-    let incompatible = false;
 
     const incompatibilityReasons: string[] = [];
 

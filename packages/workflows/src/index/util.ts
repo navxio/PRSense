@@ -120,14 +120,14 @@ export function computeDiff({
 
     if (status.startsWith("R")) {
       //rename
-      deleted.push(oldPath)
-      changed.push(newPath)
+      if (oldPath) deleted.push(oldPath)
+      if (newPath) changed.push(newPath)
       continue;
     }
 
     if (status.startsWith("C")) {
       //copy
-      changed.push(newPath)
+      if (newPath) changed.push(newPath)
       continue;
     }
     // Normal case

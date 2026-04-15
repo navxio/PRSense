@@ -77,19 +77,18 @@ export function eventToCliTask(
           state: "succeeded",
         },
       };
-    case CoreEvents.WorkflowIndexRebuildRequired:
+    case CoreEvents.WorkflowIndexRebuildRequired: {
+      if (!event.fields) return null
+      const { reason } = event.fields
       return {
-        kind: "failure",
-        label: [
-          "Index is incompatible with current configuration.",
-          "",
-          "Reasons:",
-          ...payload.reasons.map((r: string) => `- ${r}`),
-          "",
-          "Run with --force to rebuild:",
-          "  prsense index . --force",
-        ].join("\n"),
+        kind: "finish",
+        task: {
+          id: "index",
+          label: reason as string,
+          state: "running"
+        }
       };
+    }
 
     case CoreEvents.WorkflowIndexProgress: {
       if (!event.fields) return null;
