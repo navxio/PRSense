@@ -192,6 +192,13 @@ export async function runIndexWorkflow({
     const repoPath = repositorySource.getLocalPath();
 
     if (plan.type === "incremental") {
+      if (plan.type === "incremental") {
+        if (revision.commitSha !== plan.targetSha) {
+          throw new Error(
+            `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+          );
+        }
+      }
       const diff = computeDiff({
         repoPath,
         baseSha: plan.baseSha,
