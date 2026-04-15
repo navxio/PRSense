@@ -161,6 +161,8 @@ export async function runIndexWorkflow({
     // Up-to-date Case
     // -------------------------------------------------
 
+    let deleteAll = false;
+    let pathsToDelete: string[] = []
     if (plan.type === "noop") {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
         commitSha: revision.commitSha,
@@ -183,49 +185,7 @@ export async function runIndexWorkflow({
 
     if (plan.type === "full") {
       changedFiles = await repositorySource.listFiles();
-
-      if (changedFiles.length === 0) {
-        // clear stale data
-        await chunkRepository.deleteByRepository(
-          identity.provider,
-          identity.id,
-        );
-
-        await metadataRepository.save({
-          repository: {
-            provider: identity.provider,
-            id: identity.id,
-          },
-          revision: {
-            commitSha: revision.commitSha,
-          },
-          embedding: {
-            provider: config.embeddings.provider,
-            model: config.embeddings.model,
-            dimension: embeddingDimension,
-          },
-          chunking: {
-            strategy: "default",
-            version: 2,
-          },
-          prsenseVersion: version,
-          createdAt: new Date().toISOString(),
-        });
-
-        eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-        return {
-          outcome: "success",
-          payload: {
-            chunksIndexed: 0,
-            commitSha: revision.commitSha,
-            upToDate: false,
-          },
-        };
-      }
-
-
-      await chunkRepository.deleteByRepository(identity.provider, identity.id);
+      deleteAll = true;
     } else {
       await repositorySource.listFiles();
     }
@@ -240,18 +200,62 @@ export async function runIndexWorkflow({
       changedFiles = diff.changed;
       deletedFiles = diff.deleted;
 
-
-      await chunkRepository.deleteByPaths(identity.provider, identity.id, [
-        ...changedFiles,
-        ...deletedFiles,
-      ]);
+      pathsToDelete = [...changedFiles, ...deletedFiles]
     }
+
     eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
       changedFiles,
     });
     eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
       deletedFiles,
     });
+
+
+
+    const chunker = createCharChunker({
+      maxChars: config.index.chunkSizeChars,
+      overlapChars: config.index.chunkOverlapChars,
+    });
+
+    const chunks: ContextChunk[] = await buildChunks({
+      files: changedFiles,
+      repositorySource,
+      chunker,
+      eventBus,
+    });
+
+    eventBus.emit(CoreEvents.ContextChunksBuilt, {
+      count: chunks.length,
+    });
+    if (dryRun) {
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+      return {
+        outcome: "success",
+        payload: {
+          chunksIndexed: chunks.length,
+          commitSha: revision.commitSha,
+          upToDate: false,
+          summary: {
+            filesChanged: changedFiles.length,
+            filesDeleted: deletedFiles.length,
+            deleteAll
+          }
+        },
+      };
+    }
+
+    if (deleteAll) {
+      await chunkRepository.deleteByRepository(identity.provider, identity.id);
+    }
+
+    if (pathsToDelete.length > 0) {
+      await chunkRepository.deleteByPaths(
+        identity.provider,
+        identity.id,
+        pathsToDelete,
+      );
+    }
 
     if (changedFiles.length === 0 && deletedFiles.length > 0) {
       await metadataRepository.save({
@@ -289,23 +293,6 @@ export async function runIndexWorkflow({
         },
       };
     }
-
-    const chunker = createCharChunker({
-      maxChars: config.index.chunkSizeChars,
-      overlapChars: config.index.chunkOverlapChars,
-    });
-
-    const chunks: ContextChunk[] = await buildChunks({
-      files: changedFiles,
-      repositorySource,
-      chunker,
-      eventBus,
-    });
-
-    eventBus.emit(CoreEvents.ContextChunksBuilt, {
-      count: chunks.length,
-    });
-
     // -------------------------------------------------
     // Embed + Persist Chunks
     // -------------------------------------------------
