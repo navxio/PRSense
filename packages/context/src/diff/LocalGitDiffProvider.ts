@@ -37,49 +37,44 @@ export class LocalGitDiffProvider implements DiffProvider {
     // Resolve base branch
     // -------------------------------------------------
 
-    const baseBranch =
-      this.baseBranch ??
-      execSync("git symbolic-ref refs/remotes/origin/HEAD", {
-        cwd,
-        encoding: "utf8",
-      })
-        .trim()
-        .split("/")
-        .pop();
+    let baseBranch;
 
-    if (!baseBranch) {
-      throw new Error("Unable to determine base branch");
+    try {
+      baseBranch =
+        this.baseBranch ??
+        execSync("git symbolic-ref refs/remotes/origin/HEAD", {
+          cwd,
+          encoding: "utf8",
+        })
+          .trim()
+          .split("/")
+          .pop();
+    } catch {
+      baseBranch = "main"; // fallback
     }
 
     // -------------------------------------------------
-    // Compute diffs
+    // Compute diff
     // -------------------------------------------------
 
-    // 1. Committed changes vs base branch
-    const branchDiff = execSync(
-      `git diff ${baseBranch}...HEAD`,
-      { cwd, encoding: "utf8" }
-    );
+    const hasUncommittedChanges =
+      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim().length > 0;
 
-    // 2. Staged changes
-    const stagedDiff = execSync("git diff --cached", {
-      cwd,
-      encoding: "utf8",
-    });
+    let diffText = "";
 
-    // 3. Unstaged changes
-    const workingDiff = execSync("git diff", {
-      cwd,
-      encoding: "utf8",
-    });
-
-    // -------------------------------------------------
-    // Combine all diffs
-    // -------------------------------------------------
-
-    const diffText = [branchDiff, stagedDiff, workingDiff]
-      .filter((d) => d && d.trim().length > 0)
-      .join("\n");
+    if (hasUncommittedChanges) {
+      // FULL current state vs base
+      diffText = execSync(`git diff ${baseBranch}`, {
+        cwd,
+        encoding: "utf8",
+      });
+    } else {
+      // clean branch diff
+      diffText = execSync(`git diff ${baseBranch}...HEAD`, {
+        cwd,
+        encoding: "utf8",
+      });
+    }
 
     // -------------------------------------------------
     // Parse diff
