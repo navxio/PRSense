@@ -293,6 +293,47 @@ export async function runIndexWorkflow({
         },
       };
     }
+
+    if (plan.type === "full" && changedFiles.length === 0) {
+      if (!dryRun) {
+        await chunkRepository.deleteByRepository(identity.provider, identity.id);
+      }
+
+      await metadataRepository.save({
+        repository: {
+          provider: identity.provider,
+          id: identity.id,
+          ...(revision.defaultBranch
+            ? { defaultBranch: revision.defaultBranch }
+            : {}),
+        },
+        revision: {
+          commitSha: revision.commitSha,
+        },
+        embedding: {
+          provider: config.embeddings.provider,
+          model: config.embeddings.model,
+          dimension: embeddingDimension,
+        },
+        chunking: {
+          strategy: "default",
+          version: 2,
+        },
+        prsenseVersion: version,
+        createdAt: new Date().toISOString(),
+      });
+
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+      return {
+        outcome: "success",
+        payload: {
+          chunksIndexed: 0,
+          commitSha: revision.commitSha,
+          upToDate: false,
+        },
+      };
+    }
     // -------------------------------------------------
     // Embed + Persist Chunks
     // -------------------------------------------------
