@@ -1,12 +1,9 @@
 // packages/workflows/src/index/indexWorkflow.ts
-import { execSync } from "node:child_process";
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
   PostgresIndexMetadataRepository,
   PostgresRagChunkRepository,
   createCharChunker,
-  detectKind,
-  detectLanguage,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -133,14 +130,29 @@ export async function runIndexWorkflow({
       embeddingModel: config.embeddings.model,
       embeddingDimension,
       chunkStrategy: "default",
-      chunkVersion: 1,
+      chunkVersion: 2,
     };
 
-    const plan = planIndex({
+    let incompatible = false;
+
+    if (stored) {
+      if (!stored.chunking || stored.chunking.version !== 2) {
+        incompatible = true;
+      }
+    }
+
+    let plan = planIndex({
       stored,
       currentFingerprint,
       force: force || false,
     });
+    if (incompatible) {
+      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
+        reason: "incompatible-index",
+      });
+      plan = { type: "full" };
+    }
+
     eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
       type: plan.type,
     });
@@ -170,8 +182,6 @@ export async function runIndexWorkflow({
     let deletedFiles: string[] = [];
 
     if (plan.type === "full") {
-      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired);
-
       changedFiles = await repositorySource.listFiles();
 
       if (changedFiles.length === 0) {
@@ -196,7 +206,7 @@ export async function runIndexWorkflow({
           },
           chunking: {
             strategy: "default",
-            version: 1,
+            version: 2,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -214,6 +224,7 @@ export async function runIndexWorkflow({
         };
       }
 
+
       await chunkRepository.deleteByRepository(identity.provider, identity.id);
     } else {
       await repositorySource.listFiles();
@@ -228,6 +239,7 @@ export async function runIndexWorkflow({
       });
       changedFiles = diff.changed;
       deletedFiles = diff.deleted;
+
 
       await chunkRepository.deleteByPaths(identity.provider, identity.id, [
         ...changedFiles,
@@ -260,7 +272,7 @@ export async function runIndexWorkflow({
         },
         chunking: {
           strategy: "default",
-          version: 1,
+          version: 2,
         },
         prsenseVersion: version,
         createdAt: new Date().toISOString(),
@@ -293,23 +305,6 @@ export async function runIndexWorkflow({
     eventBus.emit(CoreEvents.ContextChunksBuilt, {
       count: chunks.length,
     });
-
-    // -------------------------------------------------
-    // DRY RUN (no mutations beyond this point)
-    // -------------------------------------------------
-
-    if (dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: chunks.length,
-          commitSha: revision.commitSha,
-          upToDate: false,
-        },
-      };
-    }
 
     // -------------------------------------------------
     // Embed + Persist Chunks
@@ -366,7 +361,7 @@ export async function runIndexWorkflow({
       },
       chunking: {
         strategy: "default",
-        version: 1,
+        version: 2,
       },
       prsenseVersion: version,
       createdAt: new Date().toISOString(),
