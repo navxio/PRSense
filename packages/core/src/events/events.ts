@@ -34,7 +34,7 @@ export const CoreEvents = {
   WorkflowIndexFailed: "workflow.index.failed",
   WorkflowIndexUpToDate: "workflow.index.up_to_date",
   WorkflowIndexOutdated: "workflow.index.outdated",
-  WorkflowIndexRebuildRequired: "workflow.index.rebuild_required",
+  WorkflowIndexRebuildRequired: "workflow.index.rebuild.required",
   WorkflowIndexPlanComputed: "workflow.index.plan.computed",
   WorkflowIndexFilesChanged: "workflow.index.files.changed",
   WorkflowIndexFilesDeleted: "workflow.index.files.deleted",
