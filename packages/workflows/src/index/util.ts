@@ -59,19 +59,26 @@ export function planIndex({
   currentFingerprint: any;
   force?: boolean;
 }): IndexPlan {
-  if (!stored) return { type: "full" };
 
+  if (!stored) return { type: "full" };
   if (force) return { type: "full" };
 
-  const fingerprintChanged =
-    stored.revision.commitSha !== currentFingerprint.commitSha ||
+  const commitChanged =
+    stored.revision.commitSha !== currentFingerprint.commitSha;
+
+  const embeddingChanged =
     stored.embedding.provider !== currentFingerprint.embeddingProvider ||
-    stored.embedding.model !== currentFingerprint.embeddingModel ||
+    stored.embedding.model !== currentFingerprint.embeddingModel;
+
+  const chunkingChanged =
     stored.chunking.strategy !== currentFingerprint.chunkStrategy ||
     stored.chunking.version !== currentFingerprint.chunkVersion;
 
-  if (!fingerprintChanged) return { type: "noop" };
+  if (embeddingChanged || chunkingChanged) {
+    return { type: "full" }
+  }
 
+  if (!commitChanged) return { type: "noop" }
 
   return {
     type: "incremental",
