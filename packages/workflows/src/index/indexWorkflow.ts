@@ -135,9 +135,22 @@ export async function runIndexWorkflow({
 
     let incompatible = false;
 
+    const incompatibilityReasons: string[] = [];
+
     if (stored) {
       if (!stored.chunking || stored.chunking.version !== 2) {
-        incompatible = true;
+        incompatibilityReasons.push(
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`
+        );
+      }
+
+      if (
+        stored.embedding.provider !== config.embeddings.provider ||
+        stored.embedding.model !== config.embeddings.model
+      ) {
+        incompatibilityReasons.push(
+          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`
+        );
       }
     }
 
@@ -146,13 +159,42 @@ export async function runIndexWorkflow({
       currentFingerprint,
       force: force || false,
     });
-    if (incompatible) {
+    if (
+      incompatibilityReasons.length > 0 &&
+      !force
+    ) {
       eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
-        reason: "incompatible-index",
+        reason: [
+          "Index is incompatible with current configuration.",
+          "",
+          "Reasons:",
+          ...incompatibilityReasons.map((r: string) => `- ${r}`),
+          "",
+          "Run with --force to rebuild:",
+          "  prsense index . --force",
+        ].join("\n"),
       });
-      plan = { type: "full" };
-    }
 
+      return {
+        outcome: "failure",
+        payload: {
+          chunksIndexed: 0,
+        },
+      };
+    }
+    if (incompatibilityReasons.length > 0) {
+      if (force) {
+        eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
+          reason: [
+            "Rebuilding index due to incompatible configuration.",
+            ...incompatibilityReasons.map((r: string) => `- ${r}`),
+          ].join("\n"),
+          forced: true,
+        });
+
+        plan = { type: "full" };
+      }
+    }
     eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
       type: plan.type,
     });
