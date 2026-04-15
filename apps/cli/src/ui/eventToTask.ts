@@ -77,7 +77,15 @@ export function eventToCliTask(
           state: "succeeded",
         },
       };
-
+    case CoreEvents.WorkflowIndexRebuildRequired:
+      return {
+        kind: "finish",
+        task: {
+          id: "index",
+          state: "failed",
+          label: "Index outdated. Run with --force to rebuild",
+        },
+      };
 
     case CoreEvents.WorkflowIndexProgress: {
       if (!event.fields) return null;
