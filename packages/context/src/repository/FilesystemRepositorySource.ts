@@ -9,7 +9,10 @@ import {
 } from "./RepositorySource.js";
 
 export class FileSystemRepositorySource implements RepositorySource {
-  constructor(private readonly root: string) { }
+  private readonly root: string;
+  constructor(root: string) {
+    this.root = path.resolve(root)
+  }
 
   async listFiles(): Promise<string[]> {
     try {
@@ -22,13 +25,13 @@ export class FileSystemRepositorySource implements RepositorySource {
         .toString("utf8")
         .split("\0")
         .filter(Boolean)
-        .map((relative) => relative);
 
       const files: string[] = [];
 
       for (const filePath of candidates) {
         try {
-          const stat = await fs.stat(filePath);
+          const absolutePath = path.resolve(this.root, filePath)
+          const stat = await fs.stat(absolutePath);
 
           if (stat.isFile()) {
             files.push(filePath);
@@ -69,12 +72,13 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    const absolutePath = path.resolve(this.root, filePath);
+    const root = this.root
+    const absolutePath = path.resolve(root, filePath)
 
     // SECURITY CHECK
     if (
-      absolutePath !== this.root &&
-      !absolutePath.startsWith(this.root + path.sep)
+      absolutePath !== root &&
+      !absolutePath.startsWith(root + path.sep)
     ) {
       throw new Error("PATH_OUTSIDE_REPOSITORY");
     }
