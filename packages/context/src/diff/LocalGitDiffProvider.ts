@@ -64,6 +64,12 @@ export class LocalGitDiffProvider implements DiffProvider {
 
     if (hasUncommittedChanges) {
       // FULL current state vs base
+      // Intentional:
+      // When working tree is dirty, we diff from merge-base to include:
+      // - committed branch changes
+      // - staged changes
+      // - unstaged changes
+      // This ensures full PR-style review coverage.
       const mergeBase = execSync(
         `git merge-base ${baseBranch} HEAD`,
         { cwd, encoding: "utf8" }
