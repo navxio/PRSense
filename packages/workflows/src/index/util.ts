@@ -114,20 +114,22 @@ export function computeDiff({
 
     if (!status) break;
 
+    const oldPath = tokens[i++];
+    const newPath = tokens[i++];
     // Rename / copy
-    if (status.startsWith("R") || status.startsWith("C")) {
-      const oldPath = tokens[i++];
-      const newPath = tokens[i++];
 
-      if (!oldPath || !newPath) {
-        throw new Error("Malformed git diff output (rename)");
-      }
-
-      deleted.push(oldPath);
-      changed.push(newPath);
+    if (status.startsWith("R")) {
+      //rename
+      deleted.push(oldPath)
+      changed.push(newPath)
       continue;
     }
 
+    if (status.startsWith("C")) {
+      //copy
+      changed.push(newPath)
+      continue;
+    }
     // Normal case
     const file = tokens[i++];
 
