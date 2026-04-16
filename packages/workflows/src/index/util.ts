@@ -87,6 +87,7 @@ export function planIndex({
   };
 }
 
+//TODO: move this to context
 export function computeDiff({
   repoPath,
   baseSha,
