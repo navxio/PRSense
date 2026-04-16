@@ -27,9 +27,12 @@ export async function writeFile(
   await fs.writeFile(full, content);
 }
 
-export function commitAll(repo: string, message: string) {
+export function commitAll(repo: string, message: string, options?: { allowEmpty?: boolean }) {
   git("git add .", repo);
-  git(`git commit -m "${message}"`, repo);
+
+  const allowEmptyFlag = options?.allowEmpty ? " --allow-empty" : "";
+
+  git(`git commit${allowEmptyFlag} -m "${message}"`, repo);
 }
 
 export class TestEventBus {

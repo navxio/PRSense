@@ -143,8 +143,14 @@ export function computeDiff({
       changed.push(file);
     }
   }
+  const clean = (arr: string[]) =>
+    arr.map(f => f.trim()).filter(Boolean);
 
-  return { changed, deleted };
+  return {
+    changed: clean(changed),
+    deleted: clean(deleted),
+  };
+
 }
 
 export async function buildChunks({

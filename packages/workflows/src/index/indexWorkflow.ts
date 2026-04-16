@@ -17,6 +17,7 @@ import {
   computeDiff,
   buildChunks,
 } from "./util.js";
+import { execFileSync } from "node:child_process";
 
 export async function runIndexWorkflow({
   config,
@@ -79,6 +80,8 @@ export async function runIndexWorkflow({
       identity.provider,
       identity.id,
     );
+    console.log("IDENTITY:", identity);
+    console.log("STORED:", stored);
 
     // -------------------------------------------------
     // Create Embedding Client
@@ -194,9 +197,6 @@ export async function runIndexWorkflow({
         plan = { type: "full" };
       }
     }
-    eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
-      type: plan.type,
-    });
 
     // -------------------------------------------------
     // Up-to-date Case
@@ -204,12 +204,60 @@ export async function runIndexWorkflow({
 
     let deleteAll = false;
     let pathsToDelete: string[] = []
+
+    let changedFiles: string[] = [];
+    let deletedFiles: string[] = [];
+
+    const repoPath = repositorySource.getLocalPath();
+
+    if (plan.type === "incremental") {
+      if (revision.commitSha !== plan.targetSha) {
+        throw new Error(
+          `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+        );
+      }
+      const hasChanges = (() => {
+        try {
+          execFileSync("git", ["diff", "--quiet", plan.baseSha, plan.targetSha], { cwd: repoPath });
+          return false;
+        } catch {
+          return true;
+        }
+      })();
+
+      if (!hasChanges) {
+        plan = { type: "noop" }
+      } else {
+        const diff = computeDiff({
+          repoPath,
+          baseSha: plan.baseSha,
+          targetSha: plan.targetSha,
+        });
+        changedFiles = diff.changed;
+        deletedFiles = diff.deleted;
+
+        pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
+
+      }
+
+    }
+
+
+    if (plan.type === "full") {
+      changedFiles = await repositorySource.listFiles();
+      deleteAll = true;
+    }
+
+
     if (plan.type === "noop") {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
         commitSha: revision.commitSha,
       });
 
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
+      eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
+        type: plan.type,
+      });
 
       return {
         outcome: "success",
@@ -219,28 +267,6 @@ export async function runIndexWorkflow({
           upToDate: true,
         },
       };
-    }
-
-    let changedFiles: string[] = [];
-    let deletedFiles: string[] = [];
-
-    if (plan.type === "full") {
-      changedFiles = await repositorySource.listFiles();
-      deleteAll = true;
-    }
-    const repoPath = repositorySource.getLocalPath();
-
-    if (plan.type === "incremental") {
-
-      const diff = computeDiff({
-        repoPath,
-        baseSha: plan.baseSha,
-        targetSha: plan.targetSha,
-      });
-      changedFiles = diff.changed;
-      deletedFiles = diff.deleted;
-
-      pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
     }
 
     eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
