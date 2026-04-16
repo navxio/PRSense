@@ -80,8 +80,6 @@ export async function runIndexWorkflow({
       identity.provider,
       identity.id,
     );
-    console.log("IDENTITY:", identity);
-    console.log("STORED:", stored);
 
     // -------------------------------------------------
     // Create Embedding Client
