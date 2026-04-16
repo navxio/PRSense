@@ -28,25 +28,19 @@ export class LocalGitDiffProvider implements DiffProvider {
   constructor(
     private readonly repoRoot: string,
     private readonly baseBranch?: string,
-  ) {}
+  ) { }
 
   async load() {
     const cwd = path.resolve(this.repoRoot);
 
-    const hasUncommittedChanges =
-      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim()
-        .length > 0;
+    // -------------------------------------------------
+    // Resolve base branch
+    // -------------------------------------------------
 
-    let diffText = "";
-    let mode: "working-tree" | "branch" = "working-tree";
+    let baseBranch;
 
-    if (hasUncommittedChanges) {
-      diffText = execSync("git diff", {
-        cwd,
-        encoding: "utf8",
-      });
-    } else {
-      const baseBranch =
+    try {
+      baseBranch =
         this.baseBranch ??
         execSync("git symbolic-ref refs/remotes/origin/HEAD", {
           cwd,
@@ -55,25 +49,58 @@ export class LocalGitDiffProvider implements DiffProvider {
           .trim()
           .split("/")
           .pop();
+    } catch {
+      throw new Error("Could not determine base branch")
+    }
 
-      if (!baseBranch) {
-        throw new Error("Unable to determine base branch");
-      }
+    // -------------------------------------------------
+    // Compute diff
+    // -------------------------------------------------
 
+    const hasUncommittedChanges =
+      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim().length > 0;
+
+    let diffText = "";
+
+    if (hasUncommittedChanges) {
+      // FULL current state vs base
+      // Intentional:
+      // When working tree is dirty, we diff from merge-base to include:
+      // - committed branch changes
+      // - staged changes
+      // - unstaged changes
+      // This ensures full PR-style review coverage.
+      const mergeBase = execSync(
+        `git merge-base ${baseBranch} HEAD`,
+        { cwd, encoding: "utf8" }
+      ).trim();
+
+      diffText = execSync(`git diff ${mergeBase}`, {
+        cwd,
+        encoding: "utf8",
+      });
+    } else {
+      // clean branch diff
       diffText = execSync(`git diff ${baseBranch}...HEAD`, {
         cwd,
         encoding: "utf8",
       });
-
-      mode = "branch";
     }
+
+    // -------------------------------------------------
+    // Parse diff
+    // -------------------------------------------------
+
+    const diff: UnifiedDiff = parseUnifiedDiff(diffText);
+
+    // -------------------------------------------------
+    // Revision + metadata
+    // -------------------------------------------------
 
     const revision = execSync("git rev-parse HEAD", {
       cwd,
       encoding: "utf8",
     }).trim();
-
-    const diff: UnifiedDiff = parseUnifiedDiff(diffText);
 
     const identity: RepositoryIdentity = {
       provider: "filesystem",

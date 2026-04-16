@@ -3,13 +3,16 @@ import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
-  RepositorySource,
+  GitBackedRepositorySource,
   RepositoryIdentity,
   RepositoryRevision,
-} from "./RepositorySource.js";
+} from "./GitBackedRepositorySource.js";
 
-export class FileSystemRepositorySource implements RepositorySource {
-  constructor(private readonly root: string) {}
+export class FileSystemRepositorySource implements GitBackedRepositorySource {
+  private readonly root: string;
+  constructor(root: string) {
+    this.root = path.resolve(root);
+  }
 
   async listFiles(): Promise<string[]> {
     try {
@@ -18,17 +21,14 @@ export class FileSystemRepositorySource implements RepositorySource {
         { cwd: this.root },
       );
 
-      const candidates = output
-        .toString("utf8")
-        .split("\0")
-        .filter(Boolean)
-        .map((relative) => path.join(this.root, relative));
+      const candidates = output.toString("utf8").split("\0").filter(Boolean);
 
       const files: string[] = [];
 
       for (const filePath of candidates) {
         try {
-          const stat = await fs.stat(filePath);
+          const absolutePath = path.resolve(this.root, filePath);
+          const stat = await fs.stat(absolutePath);
 
           if (stat.isFile()) {
             files.push(filePath);
@@ -46,6 +46,7 @@ export class FileSystemRepositorySource implements RepositorySource {
 
   private async walkDirectory(dir: string): Promise<string[]> {
     const files: string[] = [];
+    const root = this.root;
 
     async function walk(current: string) {
       const entries = await fs.readdir(current, { withFileTypes: true });
@@ -58,7 +59,7 @@ export class FileSystemRepositorySource implements RepositorySource {
         if (entry.isDirectory()) {
           await walk(fullPath);
         } else if (entry.isFile()) {
-          files.push(fullPath);
+          files.push(path.relative(root, fullPath));
         }
       }
     }
@@ -68,14 +69,23 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    const stat = await fs.stat(filePath);
+    const root = this.root;
+    const absolutePath = path.resolve(root, filePath);
+
+    // SECURITY CHECK
+    if (absolutePath !== root && !absolutePath.startsWith(root + path.sep)) {
+      throw new Error("PATH_OUTSIDE_REPOSITORY");
+    }
+
+    const stat = await fs.stat(absolutePath);
 
     if (!stat.isFile()) {
       throw new Error("NOT_A_FILE");
     }
-    const buffer = await fs.readFile(filePath);
 
-    // Detect binary via NULL byte
+    const buffer = await fs.readFile(absolutePath);
+
+    // binary detection...
     const sampleSize = Math.min(buffer.length, 8000);
     for (let i = 0; i < sampleSize; i++) {
       if (buffer[i] === 0) {
@@ -83,15 +93,11 @@ export class FileSystemRepositorySource implements RepositorySource {
       }
     }
 
-    // Convert to UTF-8 safely
     let content = buffer.toString("utf8");
-
-    // Defensive: strip remaining NULL characters if any
     content = content.replace(/\u0000/g, "");
 
     return content;
   }
-
   async getRevision(): Promise<RepositoryRevision> {
     try {
       const sha = execSync("git rev-parse HEAD", {
@@ -120,5 +126,9 @@ export class FileSystemRepositorySource implements RepositorySource {
       provider: "filesystem",
       id: this.root,
     };
+  }
+
+  getLocalPath(): string {
+    return this.root;
   }
 }

@@ -23,7 +23,8 @@
     "cli:doctor": "pnpm --filter @prsense/cli start -- doctor",
     "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev",
     "daemon": "pnpm --filter @prsense/daemon dev",
-    "bench": "pnpm --filter @prsense/bench start"
+    "bench": "pnpm --filter @prsense/bench start",
+    "test": "jest"
   },
   "keywords": [
     "cli",
@@ -48,7 +49,11 @@
   "bugs": "https://github.com/navxio/prsense/issues",
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0"
   }
 }

@@ -3,13 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
 import {
-  RepositorySource,
+  GitBackedRepositorySource,
   RepositoryIdentity,
   RepositoryRevision,
-} from "./RepositorySource.js";
+} from "./GitBackedRepositorySource.js";
 import { FileSystemRepositorySource } from "./FilesystemRepositorySource.js";
 
-export class GitLabRepositorySource implements RepositorySource {
+export class GitLabRepositorySource implements GitBackedRepositorySource {
   private tempDir: string | null = null;
   private fsSource: FileSystemRepositorySource | null = null;
 
@@ -56,5 +56,12 @@ export class GitLabRepositorySource implements RepositorySource {
       provider: "gitlab",
       id: `${this.namespace}/${this.repo}`,
     };
+  }
+
+  getLocalPath(): string {
+    if (!this.tempDir) {
+      throw new Error("Repository not cloned yet");
+    }
+    return this.tempDir;
   }
 }

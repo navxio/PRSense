@@ -807,12 +807,14 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 ## ToDo
 
-- [ ] incremental indexing with cache
+- [x] incremental indexing
 - [ ] hybrid retrieval strategy
 - [ ] ast based chunking
 - [ ] codeberg support
 - [ ] multiple embedding dimensions
 - [ ] automated tests
+- [ ] optional multi pass review
+- [ ] gh action
 
 ## Contributing
 

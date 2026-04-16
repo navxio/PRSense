@@ -34,12 +34,17 @@ export const CoreEvents = {
   WorkflowIndexFailed: "workflow.index.failed",
   WorkflowIndexUpToDate: "workflow.index.up_to_date",
   WorkflowIndexOutdated: "workflow.index.outdated",
+  WorkflowIndexRebuildRequired: "workflow.index.rebuild.required",
+  WorkflowIndexPlanComputed: "workflow.index.plan.computed",
+  WorkflowIndexFilesChanged: "workflow.index.files.changed",
+  WorkflowIndexFilesDeleted: "workflow.index.files.deleted",
   WorkflowIndexDryRun: "workflow.index.dry_run",
   WorkflowIndexProgress: "workflow.index.progress",
-  WorkflowIndexRebuildRequired: "workflow.index.rebuild.required",
   WorkflowIndexEmbeddingDimensionDetected:
     "workflow.index.embedding_dimension_detected",
   WorkflowIndexDimensionMismatch: "workflow.index.dimension_mismatch",
+  WorkflowIndexRepositorySourceResolved:
+    "workflow.index.repository_store.resolved",
   WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
   WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
   WorkflowReviewContextAvailable: "workflow.review.context_available",

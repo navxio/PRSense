@@ -1,48 +1,84 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
-
     "esModuleInterop": true,
     "resolveJsonModule": true,
-
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-
     "skipLibCheck": true,
-
+    "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@prsense/config": ["packages/config/src"],
-      "@prsense/core": ["packages/core/src"],
-      "@prsense/context": ["packages/context/src"],
-      "@prsense/llm": ["packages/llm/src"],
-      "@prsense/reporters": ["packages/reporters/src"],
-      "@prsense/workflows": ["packages/workflows/src"],
-      "@prsense/preflight": ["packages/preflight/src"],
-      "@prsense/logging": ["packages/logging/src"],
-      "@prsense/daemon": ["apps/daemon/src"]
+      "@prsense/config": [
+        "packages/config/src"
+      ],
+      "@prsense/core": [
+        "packages/core/src"
+      ],
+      "@prsense/context": [
+        "packages/context/src"
+      ],
+      "@prsense/llm": [
+        "packages/llm/src"
+      ],
+      "@prsense/reporters": [
+        "packages/reporters/src"
+      ],
+      "@prsense/workflows": [
+        "packages/workflows/src"
+      ],
+      "@prsense/preflight": [
+        "packages/preflight/src"
+      ],
+      "@prsense/logging": [
+        "packages/logging/src"
+      ],
+      "@prsense/daemon": [
+        "apps/daemon/src"
+      ]
     }
   },
   "files": [],
   "references": [
-    { "path": "packages/core" },
-    { "path": "packages/config" },
-    { "path": "packages/context" },
-    { "path": "packages/llm" },
-    { "path": "packages/reporters" },
-    { "path": "packages/workflows" },
-    { "path": "packages/preflight" },
-    { "path": "packages/logging" },
-    { "path": "apps/daemon" },
-    { "path": "apps/cli" }
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/context"
+    },
+    {
+      "path": "packages/llm"
+    },
+    {
+      "path": "packages/reporters"
+    },
+    {
+      "path": "packages/workflows"
+    },
+    {
+      "path": "packages/preflight"
+    },
+    {
+      "path": "packages/logging"
+    },
+    {
+      "path": "apps/daemon"
+    },
+    {
+      "path": "apps/cli"
+    }
   ]
 }

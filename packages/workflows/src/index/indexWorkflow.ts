@@ -1,16 +1,9 @@
 // packages/workflows/src/index/indexWorkflow.ts
-
-import path from "node:path";
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
-  FileSystemRepositorySource,
-  GitHubRepositorySource,
   PostgresIndexMetadataRepository,
-  GitLabRepositorySource,
   PostgresRagChunkRepository,
   createCharChunker,
-  detectKind,
-  detectLanguage,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -18,8 +11,14 @@ import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
+import {
+  resolveRepositorySource,
+  planIndex,
+  computeDiff,
+  buildChunks,
+} from "./util.js";
+import { execFileSync } from "node:child_process";
 
-//TODO: modularise this
 export async function runIndexWorkflow({
   config,
   credentials,
@@ -44,51 +43,19 @@ export async function runIndexWorkflow({
     // Resolve Repository Source
     // -------------------------------------------------
 
-    let repositorySource;
-
-    const isGithub = /github\.com/.test(target);
-    const isGitlab = /gitlab\.com/.test(target);
-
-    if (isGithub) {
-      const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-
-      if (!match) {
-        throw new Error("Invalid GitHub URL");
-      }
-
-      const owner = match[1];
-      const repo = match[2];
-
-      if (!owner || !repo) {
-        throw new Error("Invalid GitHub repository url");
-      }
-
-      repositorySource = new GitHubRepositorySource(
-        owner,
-        repo.replace(".git", ""),
-      );
-    } else if (isGitlab) {
-      const match = target.match(/gitlab\.com\/(.+?)\/([^\/]+)(?:\.git)?$/);
-
-      if (!match) throw new Error("Invalid GitLab URL");
-
-      const owner = match[1];
-      const repo = match[2];
-      if (!owner || !repo) throw new Error("Invalid GitLab repository url");
-      repositorySource = new GitLabRepositorySource(
-        owner,
-        repo.replace(".git", ""),
-      );
-    } else {
-      const absolute = path.resolve(target);
-      repositorySource = new FileSystemRepositorySource(absolute);
-    }
+    let repositorySource = resolveRepositorySource(target);
 
     // -------------------------------------------------
     // Resolve Identity + Revision
     // -------------------------------------------------
 
     const identity = repositorySource.getRepositoryIdentity();
+
+    eventBus.emit(CoreEvents.WorkflowIndexRepositorySourceResolved, {
+      provider: identity.provider,
+      id: identity.id,
+    });
+
     let revision;
 
     try {
@@ -164,32 +131,68 @@ export async function runIndexWorkflow({
       embeddingModel: config.embeddings.model,
       embeddingDimension,
       chunkStrategy: "default",
-      chunkVersion: 1,
+      chunkVersion: 2,
     };
 
-    let rebuildRequired = false;
 
-    if (!stored) {
-      rebuildRequired = true;
-    } else {
-      if (stored.revision.commitSha !== currentFingerprint.commitSha) {
-        rebuildRequired = true;
+    const incompatibilityReasons: string[] = [];
+
+    if (stored) {
+      if (!stored.chunking || stored.chunking.version !== 2) {
+        incompatibilityReasons.push(
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`
+        );
       }
 
-      if (stored.embedding.provider !== currentFingerprint.embeddingProvider) {
-        rebuildRequired = true;
+      if (
+        stored.embedding.provider !== config.embeddings.provider ||
+        stored.embedding.model !== config.embeddings.model
+      ) {
+        incompatibilityReasons.push(
+          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`
+        );
       }
+    }
 
-      if (stored.embedding.model !== currentFingerprint.embeddingModel) {
-        rebuildRequired = true;
-      }
+    let plan = planIndex({
+      stored,
+      currentFingerprint,
+      force: force || false,
+    });
+    if (
+      incompatibilityReasons.length > 0 &&
+      !force
+    ) {
+      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
+        reason: [
+          "Index is incompatible with current configuration.",
+          "",
+          "Reasons:",
+          ...incompatibilityReasons.map((r: string) => `- ${r}`),
+          "",
+          "Run with --force to rebuild:",
+          "  prsense index . --force",
+        ].join("\n"),
+      });
 
-      if (stored.chunking.strategy !== currentFingerprint.chunkStrategy) {
-        rebuildRequired = true;
-      }
+      return {
+        outcome: "failure",
+        payload: {
+          chunksIndexed: 0,
+        },
+      };
+    }
+    if (incompatibilityReasons.length > 0) {
+      if (force) {
+        eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
+          reason: [
+            "Rebuilding index due to incompatible configuration.",
+            ...incompatibilityReasons.map((r: string) => `- ${r}`),
+          ].join("\n"),
+          forced: true,
+        });
 
-      if (stored.chunking.version !== currentFingerprint.chunkVersion) {
-        rebuildRequired = true;
+        plan = { type: "full" };
       }
     }
 
@@ -197,12 +200,63 @@ export async function runIndexWorkflow({
     // Up-to-date Case
     // -------------------------------------------------
 
-    if (!rebuildRequired) {
+    let deleteAll = false;
+    let pathsToDelete: string[] = []
+
+    let changedFiles: string[] = [];
+    let deletedFiles: string[] = [];
+
+    const repoPath = repositorySource.getLocalPath();
+
+    if (plan.type === "incremental") {
+      if (revision.commitSha !== plan.targetSha) {
+        throw new Error(
+          `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+        );
+      }
+      const hasChanges = (() => {
+        try {
+          execFileSync("git", ["diff", "--quiet", plan.baseSha, plan.targetSha], { cwd: repoPath });
+          return false;
+        } catch {
+          return true;
+        }
+      })();
+
+      if (!hasChanges) {
+        plan = { type: "noop" }
+      } else {
+        const diff = computeDiff({
+          repoPath,
+          baseSha: plan.baseSha,
+          targetSha: plan.targetSha,
+        });
+        changedFiles = diff.changed;
+        deletedFiles = diff.deleted;
+
+        pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
+
+      }
+
+    }
+
+
+    if (plan.type === "full") {
+      changedFiles = await repositorySource.listFiles();
+      deleteAll = true;
+    }
+
+
+    if (plan.type === "noop") {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
         commitSha: revision.commitSha,
       });
 
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
+      // after this plan must never change
+      eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
+        type: plan.type,
+      });
 
       return {
         outcome: "success",
@@ -214,17 +268,81 @@ export async function runIndexWorkflow({
       };
     }
 
-    // -------------------------------------------------
-    // Outdated Case
-    // -------------------------------------------------
-
-    eventBus.emit(CoreEvents.WorkflowIndexOutdated, {
-      commitSha: revision.commitSha,
+    eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
+      changedFiles,
+    });
+    eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
+      deletedFiles,
     });
 
-    if (!force && stored && !dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
-        reason: "index-outdated",
+    const chunker = createCharChunker({
+      maxChars: config.index.chunkSizeChars,
+      overlapChars: config.index.chunkOverlapChars,
+    });
+
+    const chunks: ContextChunk[] = await buildChunks({
+      files: changedFiles,
+      repositorySource,
+      chunker,
+      eventBus,
+    });
+
+    eventBus.emit(CoreEvents.ContextChunksBuilt, {
+      count: chunks.length,
+    });
+    if (dryRun) {
+      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+      return {
+        outcome: "success",
+        payload: {
+          chunksIndexed: chunks.length,
+          commitSha: revision.commitSha,
+          upToDate: false,
+          summary: {
+            filesChanged: changedFiles.length,
+            filesDeleted: deletedFiles.length,
+            deleteAll
+          }
+        },
+      };
+    }
+
+    if (deleteAll) {
+      await chunkRepository.deleteByRepository(identity.provider, identity.id);
+    }
+
+    if (pathsToDelete.length > 0) {
+      await chunkRepository.deleteByPaths(
+        identity.provider,
+        identity.id,
+        pathsToDelete,
+      );
+    }
+
+    if (changedFiles.length === 0 && deletedFiles.length > 0) {
+      await metadataRepository.save({
+        repository: {
+          provider: identity.provider,
+          id: identity.id,
+          ...(revision.defaultBranch
+            ? { defaultBranch: revision.defaultBranch }
+            : {}),
+        },
+        revision: {
+          commitSha: revision.commitSha,
+        },
+        embedding: {
+          provider: config.embeddings.provider,
+          model: config.embeddings.model,
+          dimension: embeddingDimension,
+        },
+        chunking: {
+          strategy: "default",
+          version: 2,
+        },
+        prsenseVersion: version,
+        createdAt: new Date().toISOString(),
       });
 
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
@@ -239,12 +357,36 @@ export async function runIndexWorkflow({
       };
     }
 
-    // -------------------------------------------------
-    // Rebuild
-    // -------------------------------------------------
 
-    const files = await repositorySource.listFiles();
-    if (files.length === 0) {
+    if (plan.type === "full" && changedFiles.length === 0) {
+      if (!dryRun) {
+        await chunkRepository.deleteByRepository(identity.provider, identity.id);
+      }
+
+      await metadataRepository.save({
+        repository: {
+          provider: identity.provider,
+          id: identity.id,
+          ...(revision.defaultBranch
+            ? { defaultBranch: revision.defaultBranch }
+            : {}),
+        },
+        revision: {
+          commitSha: revision.commitSha,
+        },
+        embedding: {
+          provider: config.embeddings.provider,
+          model: config.embeddings.model,
+          dimension: embeddingDimension,
+        },
+        chunking: {
+          strategy: "default",
+          version: 2,
+        },
+        prsenseVersion: version,
+        createdAt: new Date().toISOString(),
+      });
+
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
       return {
@@ -256,82 +398,11 @@ export async function runIndexWorkflow({
         },
       };
     }
-    const chunker = createCharChunker({
-      maxChars: config.index.chunkSizeChars,
-      overlapChars: config.index.chunkOverlapChars,
-    });
-
-    const chunks: ContextChunk[] = [];
-    for (const file of files) {
-      try {
-        const content = await repositorySource.readFile(file);
-        const kind = detectKind(file);
-        const language = detectLanguage(file);
-
-        const fileChunks = chunker.chunk({
-          content,
-          source: { kind: "file", path: file },
-        });
-
-        for (const chunk of fileChunks) {
-          const metadata: typeof chunk.metadata = {
-            ...chunk.metadata,
-            path: file,
-            kind,
-          };
-          if (language !== undefined) metadata.language = language;
-          chunk.metadata = metadata;
-        }
-
-        chunks.push(...fileChunks);
-      } catch (err) {
-        if (err instanceof Error && err.message === "BINARY_FILE_DETECTED") {
-          eventBus.emit(CoreEvents.ContextFileSkipped, {
-            path: file,
-            reason: "binary",
-          });
-          continue;
-        }
-
-        throw err;
-      }
-    }
-
-    eventBus.emit(CoreEvents.ContextChunksBuilt, {
-      count: chunks.length,
-    });
-
-    // -------------------------------------------------
-    // DRY RUN (no mutations beyond this point)
-    // -------------------------------------------------
-
-    if (dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: chunks.length,
-          commitSha: revision.commitSha,
-          upToDate: false,
-        },
-      };
-    }
-
-    // -------------------------------------------------
-    // Delete Existing Chunks (Rebuild)
-    // -------------------------------------------------
-
-    await chunkRepository.deleteByRepository(identity.provider, identity.id);
-
     // -------------------------------------------------
     // Embed + Persist Chunks
     // -------------------------------------------------
 
-    const allRows = [];
-
     //PERF: different batch size for openai based embedding
-    //PERF: multi threaded?
     const BATCH_SIZE = 32;
 
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
@@ -360,15 +431,9 @@ export async function runIndexWorkflow({
           embedding,
         };
       });
-
-      allRows.push(...rows);
+      await chunkRepository.insertChunks(rows);
     }
 
-    await chunkRepository.rebuildRepository(
-      identity.provider,
-      identity.id,
-      allRows,
-    );
     await metadataRepository.save({
       repository: {
         provider: identity.provider,
@@ -387,7 +452,7 @@ export async function runIndexWorkflow({
       },
       chunking: {
         strategy: "default",
-        version: 1,
+        version: 2,
       },
       prsenseVersion: version,
       createdAt: new Date().toISOString(),
