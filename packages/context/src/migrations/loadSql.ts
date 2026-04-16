@@ -1,15 +1,19 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-let filename: string;
-
-if (typeof __filename !== "undefined") {
-  // CJS (Jest)
-  filename = __filename;
-} else {
-  // ESM (runtime)
-  const metaUrl = (new Function("return import.meta.url"))();
-  filename = fileURLToPath(metaUrl);
+function getDirname() {
+  if (typeof __filename !== "undefined") {
+    return path.dirname(__filename);
+  } else {
+    const metaUrl = (new Function("return import.meta.url"))();
+    const filename = fileURLToPath(metaUrl);
+    return path.dirname(filename);
+  }
 }
 
-const dirname = path.dirname(filename);
+export function loadMigrationSql(filename: string): string {
+  const dirname = getDirname();
+  const sqlPath = path.join(dirname, filename);
+  return fs.readFileSync(sqlPath, "utf8");
+}
