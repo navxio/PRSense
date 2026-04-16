@@ -3,15 +3,15 @@ import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
-  RepositorySource,
+  GitBackedRepositorySource,
   RepositoryIdentity,
   RepositoryRevision,
-} from "./RepositorySource.js";
+} from "./GitBackedRepositorySource.js";
 
-export class FileSystemRepositorySource implements RepositorySource {
+export class FileSystemRepositorySource implements GitBackedRepositorySource {
   private readonly root: string;
   constructor(root: string) {
-    this.root = path.resolve(root)
+    this.root = path.resolve(root);
   }
 
   async listFiles(): Promise<string[]> {
@@ -21,16 +21,13 @@ export class FileSystemRepositorySource implements RepositorySource {
         { cwd: this.root },
       );
 
-      const candidates = output
-        .toString("utf8")
-        .split("\0")
-        .filter(Boolean)
+      const candidates = output.toString("utf8").split("\0").filter(Boolean);
 
       const files: string[] = [];
 
       for (const filePath of candidates) {
         try {
-          const absolutePath = path.resolve(this.root, filePath)
+          const absolutePath = path.resolve(this.root, filePath);
           const stat = await fs.stat(absolutePath);
 
           if (stat.isFile()) {
@@ -49,7 +46,7 @@ export class FileSystemRepositorySource implements RepositorySource {
 
   private async walkDirectory(dir: string): Promise<string[]> {
     const files: string[] = [];
-    const root = this.root
+    const root = this.root;
 
     async function walk(current: string) {
       const entries = await fs.readdir(current, { withFileTypes: true });
@@ -72,14 +69,11 @@ export class FileSystemRepositorySource implements RepositorySource {
   }
 
   async readFile(filePath: string): Promise<string> {
-    const root = this.root
-    const absolutePath = path.resolve(root, filePath)
+    const root = this.root;
+    const absolutePath = path.resolve(root, filePath);
 
     // SECURITY CHECK
-    if (
-      absolutePath !== root &&
-      !absolutePath.startsWith(root + path.sep)
-    ) {
+    if (absolutePath !== root && !absolutePath.startsWith(root + path.sep)) {
       throw new Error("PATH_OUTSIDE_REPOSITORY");
     }
 

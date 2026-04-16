@@ -3,13 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
 import {
-  RepositorySource,
+  GitBackedRepositorySource,
   RepositoryIdentity,
   RepositoryRevision,
-} from "./RepositorySource.js";
+} from "./GitBackedRepositorySource.js";
 import { FileSystemRepositorySource } from "./FilesystemRepositorySource.js";
 
-export class GitHubRepositorySource implements RepositorySource {
+export class GitHubRepositorySource implements GitBackedRepositorySource {
   private tempDir: string | null = null;
   private fsSource: FileSystemRepositorySource | null = null;
 

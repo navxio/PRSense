@@ -10,7 +10,7 @@ export type RepositoryRevision = {
   defaultBranch?: string;
 };
 
-export interface RepositorySource {
+export interface GitBackedRepositorySource {
   listFiles(): Promise<string[]>;
   /** Read file contents */
   readFile(path: string): Promise<string>;
