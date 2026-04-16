@@ -6,7 +6,7 @@ import type { IndexMetadata, ContextChunk } from "@prsense/core";
 import { EventBus, CoreEvents } from "@prsense/core";
 
 import type { IndexPlan } from "./types.js";
-import type { RepositorySource } from "@prsense/context";
+import type { GitBackedRepositorySource } from "@prsense/context";
 import {
   createCharChunker,
   detectKind,
@@ -59,7 +59,6 @@ export function planIndex({
   currentFingerprint: any;
   force?: boolean;
 }): IndexPlan {
-
   if (!stored) return { type: "full" };
   if (force) return { type: "full" };
 
@@ -75,10 +74,10 @@ export function planIndex({
     stored.chunking.version !== currentFingerprint.chunkVersion;
 
   if (embeddingChanged || chunkingChanged) {
-    return { type: "full" }
+    return { type: "full" };
   }
 
-  if (!commitChanged) return { type: "noop" }
+  if (!commitChanged) return { type: "noop" };
 
   return {
     type: "incremental",
@@ -100,7 +99,7 @@ export function computeDiff({
   const output = execFileSync(
     "git",
     ["diff", "--name-status", "-z", baseSha, targetSha],
-    { cwd: repoPath }
+    { cwd: repoPath },
   );
 
   const tokens = output.toString("utf8").split("\0").filter(Boolean);
@@ -144,14 +143,12 @@ export function computeDiff({
       changed.push(file);
     }
   }
-  const clean = (arr: string[]) =>
-    arr.map(f => f.trim()).filter(Boolean);
+  const clean = (arr: string[]) => arr.map((f) => f.trim()).filter(Boolean);
 
   return {
     changed: clean(changed),
     deleted: clean(deleted),
   };
-
 }
 
 export async function buildChunks({
@@ -161,7 +158,7 @@ export async function buildChunks({
   eventBus,
 }: {
   files: string[];
-  repositorySource: RepositorySource;
+  repositorySource: GitBackedRepositorySource;
   chunker: ReturnType<typeof createCharChunker>;
   eventBus: EventBus;
 }): Promise<ContextChunk[]> {

@@ -50,7 +50,7 @@ export class LocalGitDiffProvider implements DiffProvider {
           .split("/")
           .pop();
     } catch {
-      baseBranch = "main"; // fallback
+      throw new Error("Could not determine base branch")
     }
 
     // -------------------------------------------------
