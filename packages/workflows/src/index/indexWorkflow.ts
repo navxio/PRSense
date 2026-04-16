@@ -207,6 +207,9 @@ export async function runIndexWorkflow({
     let deletedFiles: string[] = [];
 
     const repoPath = repositorySource.getLocalPath();
+    if (!repoPath) {
+      throw new Error("Repository must be git-backed");
+    }
 
     if (plan.type === "incremental") {
       if (revision.commitSha !== plan.targetSha) {
