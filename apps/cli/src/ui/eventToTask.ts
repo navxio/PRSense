@@ -85,7 +85,7 @@ export function eventToCliTask(
         task: {
           id: "index",
           label: reason as string,
-          state: "running"
+          state: "failed"
         }
       };
     }
