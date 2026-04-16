@@ -227,19 +227,11 @@ export async function runIndexWorkflow({
     if (plan.type === "full") {
       changedFiles = await repositorySource.listFiles();
       deleteAll = true;
-    } else {
-      await repositorySource.listFiles();
     }
     const repoPath = repositorySource.getLocalPath();
 
     if (plan.type === "incremental") {
-      if (plan.type === "incremental") {
-        if (revision.commitSha !== plan.targetSha) {
-          throw new Error(
-            `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
-          );
-        }
-      }
+
       const diff = computeDiff({
         repoPath,
         baseSha: plan.baseSha,
@@ -248,7 +240,7 @@ export async function runIndexWorkflow({
       changedFiles = diff.changed;
       deletedFiles = diff.deleted;
 
-      pathsToDelete = [...changedFiles, ...deletedFiles]
+      pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
     }
 
     eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
@@ -257,8 +249,6 @@ export async function runIndexWorkflow({
     eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
       deletedFiles,
     });
-
-
 
     const chunker = createCharChunker({
       maxChars: config.index.chunkSizeChars,
@@ -342,6 +332,7 @@ export async function runIndexWorkflow({
       };
     }
 
+
     if (plan.type === "full" && changedFiles.length === 0) {
       if (!dryRun) {
         await chunkRepository.deleteByRepository(identity.provider, identity.id);
@@ -415,7 +406,6 @@ export async function runIndexWorkflow({
           embedding,
         };
       });
-
       await chunkRepository.insertChunks(rows);
     }
 

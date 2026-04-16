@@ -114,27 +114,27 @@ export function computeDiff({
 
     if (!status) break;
 
-    const oldPath = tokens[i++];
-    const newPath = tokens[i++];
-    // Rename / copy
+    // 🟢 Rename / Copy (2 paths)
+    if (status.startsWith("R") || status.startsWith("C")) {
+      const oldPath = tokens[i++];
+      const newPath = tokens[i++];
 
-    if (status.startsWith("R")) {
-      //rename
-      if (oldPath) deleted.push(oldPath)
-      if (newPath) changed.push(newPath)
+      if (status.startsWith("R")) {
+        if (oldPath) deleted.push(oldPath);
+        if (newPath) changed.push(newPath);
+      } else {
+        if (newPath) changed.push(newPath);
+      }
+
       continue;
     }
 
-    if (status.startsWith("C")) {
-      //copy
-      if (newPath) changed.push(newPath)
-      continue;
-    }
-    // Normal case
+    // 🟢 Normal case (1 path)
     const file = tokens[i++];
 
     if (!file) {
-      throw new Error("Malformed git diff output (file missing)");
+      console.warn("Malformed diff entry:", { status, tokens, i });
+      continue;
     }
 
     if (status === "D") {
