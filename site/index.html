@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>PRSense — Deterministic PR Review Engine</title>
     <meta
       name="description"
       content="Diff-first, deterministic pull request review. High-signal AI without noise. Self-hosted and private."
     />
+
     <style>
       body {
         font-family:
@@ -24,17 +26,30 @@
         padding: 40px 20px;
       }
 
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        font-size: 14px;
+      }
+
+      .nav a {
+        margin-left: 20px;
+        text-decoration: none;
+        color: #374151;
+      }
+
+      .nav a:hover {
+        text-decoration: underline;
+      }
+
       h1 {
         font-size: 48px;
         margin-bottom: 10px;
       }
 
-      h2 {
-        margin-top: 60px;
-        font-size: 28px;
-      }
-
-      p.lead {
+      .lead {
         font-size: 20px;
         color: #4b5563;
       }
@@ -46,11 +61,46 @@
         border-radius: 8px;
         margin: 30px 0;
         font-family: monospace;
-        font-size: 16px;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 10px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background: #111827;
+        color: #ffffff;
+      }
+
+      .btn-secondary {
+        border: 1px solid #e5e7eb;
+        color: #111827;
+      }
+
+      .btn:hover {
+        opacity: 0.85;
       }
 
       .section {
-        margin-top: 40px;
+        margin-top: 60px;
+      }
+
+      .contrast {
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
       }
 
       ul {
@@ -61,13 +111,6 @@
         margin-bottom: 10px;
       }
 
-      .contrast {
-        background: #f9fafb;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-      }
-
       .footer {
         margin-top: 80px;
         padding-top: 20px;
@@ -75,16 +118,13 @@
         display: flex;
         justify-content: space-between;
         color: #6b7280;
+        font-size: 14px;
       }
 
-      a {
-        color: #111827;
-        text-decoration: none;
-        font-weight: 500;
-      }
-
-      a:hover {
-        text-decoration: underline;
+      img {
+        width: 100%;
+        border-radius: 8px;
+        margin-top: 20px;
       }
 
       .badge {
@@ -92,16 +132,46 @@
         color: #6b7280;
         font-size: 14px;
       }
+
+      /* Subtle "fork me" style */
+      .corner {
+        position: fixed;
+        top: 0;
+        right: 0;
+        background: #111827;
+        color: white;
+        padding: 6px 10px;
+        font-size: 12px;
+        text-decoration: none;
+        border-bottom-left-radius: 6px;
+      }
+
+      .corner:hover {
+        opacity: 0.9;
+      }
     </style>
   </head>
-
   <body>
+    <!-- Fork me -->
+    <a class="corner" href="https://github.com/navxio/prsense"
+      >Star on GitHub</a
+    >
+
     <div class="container">
+      <!-- NAV -->
+      <div class="nav">
+        <strong>PRSense</strong>
+        <div>
+          <a href="/what-is-prsense.html">What is PRSense?</a>
+          <a href="https://github.com/navxio/prsense">GitHub</a>
+          <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+        </div>
+      </div>
+
       <!-- HERO -->
       <h1>PRSense</h1>
-      <h2>Deterministic, diff-first pull request review</h2>
       <p class="lead">Deterministic, diff-first pull request review.</p>
-      <p>High-signal AI review without sending your code to the cloud.</p>
+      <p>High-signal AI without noise. Private and self-hosted.</p>
 
       <!-- INSTALL -->
       <div class="install">
@@ -109,39 +179,51 @@
         prsense review .
       </div>
 
+      <!-- CTA -->
+      <div class="cta-buttons">
+        <a
+          class="btn btn-primary"
+          href="https://www.npmjs.com/package/@prsense/cli"
+          >Install via npm</a
+        >
+        <a class="btn btn-secondary" href="https://github.com/navxio/prsense"
+          >Star on GitHub</a
+        >
+      </div>
+
       <div class="badge">
         Open-source · Self-hosted · No code leaves your machine
       </div>
 
-      <!-- VISUAL PLACEHOLDER -->
+      <!-- VISUAL -->
       <div class="section">
         <h2>See what matters</h2>
         <p>
-          PRSense surfaces grounded review signals directly from your diff — no
-          hallucinations, no noise.
+          PRSense surfaces grounded signals directly from your diff — no
+          hallucinations.
         </p>
-        <!-- Replace with your screenshot -->
+
         <img
-          src="docs/example.png"
-          alt="PRSense CLI output"
-          style="width: 100%; border-radius: 8px; margin-top: 20px"
+          src="https://raw.githubusercontent.com/navxio/prsense/main/docs/example.png"
+          alt="PRSense output"
         />
       </div>
 
       <!-- PROBLEM -->
       <div class="section">
         <h2>Why PRSense exists</h2>
+
         <div class="contrast">
           <strong>Most AI code reviewers:</strong>
           <ul>
             <li>Comment on code that didn’t change</li>
-            <li>Hallucinate files, symbols, and context</li>
-            <li>Flood pull requests with low-signal noise</li>
+            <li>Hallucinate files and symbols</li>
+            <li>Flood PRs with noise</li>
           </ul>
 
           <strong>PRSense:</strong>
           <ul>
-            <li>Analyzes only what actually changed (diff-first)</li>
+            <li>Analyzes only what changed (diff-first)</li>
             <li>Produces grounded, inspectable signals</li>
             <li>Keeps humans in control</li>
           </ul>
@@ -152,14 +234,10 @@
       <div class="section">
         <h2>How it works</h2>
         <ul>
-          <li>
-            <strong>Diff-first analysis</strong> — focuses only on modified code
-          </li>
-          <li><strong>Signal-based output</strong> — no generic comments</li>
-          <li>
-            <strong>Deterministic pipeline</strong> — reproducible results
-          </li>
-          <li><strong>Pluggable LLMs</strong> — local or cloud</li>
+          <li><strong>Diff-first analysis</strong></li>
+          <li><strong>Signal-based output</strong></li>
+          <li><strong>Deterministic pipeline</strong></li>
+          <li><strong>Pluggable LLMs</strong></li>
         </ul>
       </div>
 
@@ -168,8 +246,8 @@
         <h2>Run it anywhere</h2>
         <ul>
           <li>CLI — local development</li>
-          <li>CI — automated checks</li>
-          <li>Daemon — webhook-based review service</li>
+          <li>CI — automated review</li>
+          <li>Daemon — webhook service</li>
         </ul>
       </div>
 
@@ -177,18 +255,15 @@
       <div class="section">
         <p><strong>PRSense is not a repo memory layer.</strong></p>
         <p>
-          It is a deterministic review engine built to surface high-confidence
-          signals from pull request changes.
+          It is a deterministic engine for understanding pull request changes.
         </p>
       </div>
 
       <!-- FOOTER -->
       <div class="footer">
+        <div>PRSense</div>
         <div>
-          <a href="https://github.com/navxio/prsense">GitHub</a>
-        </div>
-        <div>
-          <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+          <a href="/what-is-prsense.html">Docs</a>
         </div>
       </div>
     </div>
