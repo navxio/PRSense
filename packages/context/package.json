@@ -1,6 +1,6 @@
 {
   "name": "@prsense/context",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Context retrieval (RAG) subsystem for PRsense",
   "type": "module",
   "main": "./dist/index.js",
