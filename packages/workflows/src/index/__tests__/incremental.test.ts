@@ -13,6 +13,7 @@ import {
 
 import { initTestDb, resetTestDb } from "./db.js";
 import { testConfig, testCredentials } from "./config.js";
+import { PostgresIndexMetadataRepository } from "@prsense/context";
 
 const DB_CONFIG = {
   host: "localhost",
@@ -685,6 +686,111 @@ describe("Incremental indexing (real DB)", () => {
 
     expect(last?.fields?.changedFiles).toEqual(["f10.ts"]);
   });
+  it("handles delete-only commit (removes chunks and updates metadata)", async () => {
+    const eventBus = new TestEventBus();
 
+    // initial commit
+    await writeFile(repo, "a.ts", "const a = 1;");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus,
+      version: "test",
+    });
+
+    // delete file
+    await fs.unlink(path.join(repo, "a.ts"));
+    commitAll(repo, "delete");
+
+    await runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      eventBus,
+      version: "test",
+    });
+
+    const client = new Client(DB_CONFIG);
+    await client.connect();
+
+    // chunks should be gone
+    const res = await client.query(
+      `SELECT * FROM rag_chunks WHERE path = 'a.ts'`
+    );
+
+    expect(res.rows.length).toBe(0);
+
+    await client.end();
+
+    // verify delete-only plan emitted
+    const planEvent = eventBus.events
+      .filter(e => e.event === CoreEvents.WorkflowIndexPlanComputed)
+      .at(-1);
+
+    expect(planEvent?.fields?.type).toBe("delete-only");
+  });
+
+  it("delete-only dry-run does not mutate chunks or metadata", async () => {
+    const eventBus = new TestEventBus();
+
+    // initial commit
+    await writeFile(repo, "a.ts", "const a = 1;");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus,
+      version: "test",
+    });
+
+    // capture metadata BEFORE
+    const metadataRepo = new PostgresIndexMetadataRepository(DB_CONFIG.connectionString ?? "postgres://prsense:prsense@localhost:10001/prsense_test");
+
+    const before = await metadataRepo.load("local", path.basename(repo));
+
+    // delete file
+    await fs.unlink(path.join(repo, "a.ts"));
+    commitAll(repo, "delete");
+
+    await runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      dryRun: true,
+      eventBus,
+      version: "test",
+    });
+
+    const client = new Client(DB_CONFIG);
+    await client.connect();
+
+    // chunks should STILL exist
+    const res = await client.query(
+      `SELECT * FROM rag_chunks WHERE path = 'a.ts'`
+    );
+
+    expect(res.rows.length).toBeGreaterThan(0);
+
+    await client.end();
+
+    // metadata should NOT change
+    const after = await metadataRepo.load("local", path.basename(repo));
+
+    expect(after?.revision.commitSha).toBe(before?.revision.commitSha);
+
+    // ensure plan is delete-only
+    const planEvent = eventBus.events
+      .filter(e => e.event === CoreEvents.WorkflowIndexPlanComputed)
+      .at(-1);
+
+    expect(planEvent?.fields?.type).toBe("delete-only");
+  });
 
 });
