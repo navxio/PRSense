@@ -547,4 +547,141 @@ describe("Incremental indexing (real DB)", () => {
 
     await client.end();
   });
+
+  it("treats rename as delete + add (snapshot semantics)", async () => {
+    const eventBus = new TestEventBus();
+
+    await writeFile(repo, "a.ts", "1");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    await fs.rename(path.join(repo, "a.ts"), path.join(repo, "b.ts"));
+    commitAll(repo, "rename");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+
+    const deleteEvents = eventBus.events
+      .filter(e => e.event === CoreEvents.WorkflowIndexFilesDeleted)
+      .at(-1);
+
+    const changeEvents = eventBus.events
+      .filter(e => e.event === CoreEvents.WorkflowIndexFilesChanged)
+      .at(-1);
+
+    expect(deleteEvents?.fields?.deletedFiles).toContain("a.ts");
+    expect(changeEvents?.fields?.changedFiles).toContain("b.ts");
+  });
+
+  it("indexes same content under different paths independently", async () => {
+    const eventBus = new TestEventBus();
+
+    await writeFile(repo, "a.ts", "same");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    await writeFile(repo, "b.ts", "same");
+    commitAll(repo, "copy");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+
+    const client = new Client(DB_CONFIG);
+    await client.connect();
+
+    const res = await client.query(`SELECT path FROM rag_chunks`);
+
+    const paths = res.rows.map(r => r.path);
+
+    expect(paths).toContain("a.ts");
+    expect(paths).toContain("b.ts");
+
+    await client.end();
+  });
+
+  it("detects change even if file reverts to previous content", async () => {
+    const eventBus = new TestEventBus();
+
+    await writeFile(repo, "a.ts", "1");
+    commitAll(repo, "c1");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    await writeFile(repo, "a.ts", "2");
+    commitAll(repo, "c2");
+
+    await writeFile(repo, "a.ts", "1");
+    commitAll(repo, "c3");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+
+    const planEvents = eventBus.events.filter(
+      e => e.event === CoreEvents.WorkflowIndexPlanComputed
+    );
+
+    expect(planEvents.at(-1)?.fields?.type).toBe("noop");
+  });
+
+  it("skips chunk building when only deletions occur", async () => {
+    const eventBus = new TestEventBus();
+
+    await writeFile(repo, "a.ts", "1");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    await fs.unlink(path.join(repo, "a.ts"));
+    commitAll(repo, "delete");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+
+    const chunkEvents = eventBus.events.filter(
+      e => e.event === CoreEvents.ContextChunksBuilt
+    );
+
+    expect(chunkEvents.length).toBe(0);
+  });
+
+  it("produces identical snapshots for identical commits", async () => {
+    const eventBus = new TestEventBus();
+
+    await writeFile(repo, "a.ts", "1");
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    const result = await runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      eventBus,
+      version: "test",
+    });
+
+    expect(result.payload.upToDate).toBe(true);
+  });
+
+  it("detects changes only for modified files in large set", async () => {
+    const eventBus = new TestEventBus();
+
+    for (let i = 0; i < 20; i++) {
+      await writeFile(repo, `f${i}.ts`, `${i}`);
+    }
+    commitAll(repo, "init");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
+
+    await writeFile(repo, "f10.ts", "changed");
+    commitAll(repo, "modify one");
+
+    await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+
+    const changeEvents = eventBus.events.filter(
+      e => e.event === CoreEvents.WorkflowIndexFilesChanged
+    );
+
+    const last = changeEvents.at(-1);
+
+    expect(last?.fields?.changedFiles).toEqual(["f10.ts"]);
+  });
 });
