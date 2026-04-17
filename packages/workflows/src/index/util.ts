@@ -86,71 +86,6 @@ export function planIndex({
   };
 }
 
-//TODO: move this to context
-export function computeDiff({
-  repoPath,
-  baseSha,
-  targetSha,
-}: {
-  repoPath: string;
-  baseSha: string;
-  targetSha: string;
-}) {
-  const output = execFileSync(
-    "git",
-    ["diff", "--name-status", "-z", baseSha, targetSha],
-    { cwd: repoPath },
-  );
-
-  const tokens = output.toString("utf8").split("\0").filter(Boolean);
-
-  const changed: string[] = [];
-  const deleted: string[] = [];
-
-  let i = 0;
-
-  while (i < tokens.length) {
-    const status = tokens[i++];
-
-    if (!status) break;
-
-    // 🟢 Rename / Copy (2 paths)
-    if (status.startsWith("R") || status.startsWith("C")) {
-      const oldPath = tokens[i++];
-      const newPath = tokens[i++];
-
-      if (status.startsWith("R")) {
-        if (oldPath) deleted.push(oldPath);
-        if (newPath) changed.push(newPath);
-      } else {
-        if (newPath) changed.push(newPath);
-      }
-
-      continue;
-    }
-
-    // 🟢 Normal case (1 path)
-    const file = tokens[i++];
-
-    if (!file) {
-      console.warn("Malformed diff entry:", { status, tokens, i });
-      continue;
-    }
-
-    if (status === "D") {
-      deleted.push(file);
-    } else {
-      changed.push(file);
-    }
-  }
-  const clean = (arr: string[]) => arr.map((f) => f.trim()).filter(Boolean);
-
-  return {
-    changed: clean(changed),
-    deleted: clean(deleted),
-  };
-}
-
 export async function buildChunks({
   files,
   repositorySource,
@@ -198,4 +133,66 @@ export async function buildChunks({
   }
 
   return chunks;
+}
+
+export function getGitFileSnapshot({
+  repoPath,
+  commitSha,
+}: {
+  repoPath: string;
+  commitSha: string;
+}): Map<string, string> {
+  const output = execFileSync(
+    "git",
+    ["ls-tree", "-r", commitSha],
+    { cwd: repoPath }
+  ).toString("utf8");
+
+  const map = new Map<string, string>();
+
+  for (const line of output.split("\n")) {
+    if (!line.trim()) continue;
+
+    // format: mode type sha\tpath
+    const [meta, filePath] = line.split("\t");
+    if (!meta || !filePath) continue;
+
+    const parts = meta.split(" ");
+    const sha = parts[2];
+
+    if (sha) {
+      map.set(filePath, sha);
+    }
+  }
+
+  return map;
+}
+
+export function computeSnapshotDiff({
+  base,
+  target,
+}: {
+  base: Map<string, string>;
+  target: Map<string, string>;
+}) {
+  const changed: string[] = [];
+  const deleted: string[] = [];
+
+  // detect changed + added
+  for (const [path, sha] of target) {
+    if (!base.has(path)) {
+      changed.push(path); // new file
+    } else if (base.get(path) !== sha) {
+      changed.push(path); // modified
+    }
+  }
+
+  // detect deleted
+  for (const path of base.keys()) {
+    if (!target.has(path)) {
+      deleted.push(path);
+    }
+  }
+
+  return { changed, deleted };
 }
