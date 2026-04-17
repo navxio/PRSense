@@ -18,6 +18,8 @@
   <img src="https://img.shields.io/npm/v/@prsense/cli" />
 </p>
 
+> PRSense is experimental software, expect bugs.
+
 ## Example Review
 
 Review of a real-world pull request:
