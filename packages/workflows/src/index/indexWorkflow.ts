@@ -14,10 +14,9 @@ import {
 import {
   resolveRepositorySource,
   planIndex,
-  computeDiff,
   buildChunks,
+  resolveExecutionPlan
 } from "./util.js";
-import { execFileSync } from "node:child_process";
 
 export async function runIndexWorkflow({
   config,
@@ -196,281 +195,318 @@ export async function runIndexWorkflow({
       }
     }
 
-    // -------------------------------------------------
-    // Up-to-date Case
-    // -------------------------------------------------
-
-    let deleteAll = false;
-    let pathsToDelete: string[] = []
-
-    let changedFiles: string[] = [];
-    let deletedFiles: string[] = [];
-
     const repoPath = repositorySource.getLocalPath();
     if (!repoPath) {
       throw new Error("Repository must be git-backed");
     }
 
-    if (plan.type === "incremental") {
-      if (revision.commitSha !== plan.targetSha) {
-        throw new Error(
-          `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
-        );
-      }
-      const hasChanges = (() => {
-        try {
-          execFileSync("git", ["diff", "--quiet", plan.baseSha, plan.targetSha], { cwd: repoPath });
-          return false;
-        } catch {
-          return true;
-        }
-      })();
-
-      if (!hasChanges) {
-        plan = { type: "noop" }
-      } else {
-        const diff = computeDiff({
-          repoPath,
-          baseSha: plan.baseSha,
-          targetSha: plan.targetSha,
-        });
-        changedFiles = diff.changed;
-        deletedFiles = diff.deleted;
-
-        pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
-
-      }
-
+    if (
+      plan.type === "incremental" &&
+      revision.commitSha !== plan.targetSha
+    ) {
+      throw new Error(
+        `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+      );
     }
+    let executionPlan = resolveExecutionPlan({
+      plan,
+      repoPath,
+    });
+
+    // fill full plan files lazily
+    if (executionPlan.kind === "full") {
+      executionPlan = {
+        kind: "full",
+        files: await repositorySource.listFiles(),
+      };
+    }
+
     eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
-      type: plan.type,
+      type: executionPlan.kind,
     });
 
 
-    if (plan.type === "full") {
-      changedFiles = await repositorySource.listFiles();
-      deleteAll = true;
-    }
-
-
-    if (plan.type === "noop") {
-      eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
-        commitSha: revision.commitSha,
-      });
-
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-      // after this plan must never change
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: 0,
+    switch (executionPlan.kind) {
+      case "noop": {
+        eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
           commitSha: revision.commitSha,
-          upToDate: true,
-        },
-      };
-    }
+        });
 
-    eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
-      changedFiles,
-    });
-    eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
-      deletedFiles,
-    });
+        eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
-    const chunker = createCharChunker({
-      maxChars: config.index.chunkSizeChars,
-      overlapChars: config.index.chunkOverlapChars,
-    });
-
-    const chunks: ContextChunk[] = await buildChunks({
-      files: changedFiles,
-      repositorySource,
-      chunker,
-      eventBus,
-    });
-
-    eventBus.emit(CoreEvents.ContextChunksBuilt, {
-      count: chunks.length,
-    });
-    if (dryRun) {
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: chunks.length,
-          commitSha: revision.commitSha,
-          upToDate: false,
-          summary: {
-            filesChanged: changedFiles.length,
-            filesDeleted: deletedFiles.length,
-            deleteAll
-          }
-        },
-      };
-    }
-
-    if (deleteAll) {
-      await chunkRepository.deleteByRepository(identity.provider, identity.id);
-    }
-
-    if (pathsToDelete.length > 0) {
-      await chunkRepository.deleteByPaths(
-        identity.provider,
-        identity.id,
-        pathsToDelete,
-      );
-    }
-
-    if (changedFiles.length === 0 && deletedFiles.length > 0) {
-      await metadataRepository.save({
-        repository: {
-          provider: identity.provider,
-          id: identity.id,
-          ...(revision.defaultBranch
-            ? { defaultBranch: revision.defaultBranch }
-            : {}),
-        },
-        revision: {
-          commitSha: revision.commitSha,
-        },
-        embedding: {
-          provider: config.embeddings.provider,
-          model: config.embeddings.model,
-          dimension: embeddingDimension,
-        },
-        chunking: {
-          strategy: "default",
-          version: 2,
-        },
-        prsenseVersion: version,
-        createdAt: new Date().toISOString(),
-      });
-
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-          commitSha: revision.commitSha,
-          upToDate: false,
-        },
-      };
-    }
-
-
-    if (plan.type === "full" && changedFiles.length === 0) {
-      if (!dryRun) {
-        await chunkRepository.deleteByRepository(identity.provider, identity.id);
+        return {
+          outcome: "success",
+          payload: {
+            chunksIndexed: 0,
+            commitSha: revision.commitSha,
+            upToDate: true,
+          },
+        };
       }
 
-      await metadataRepository.save({
-        repository: {
-          provider: identity.provider,
-          id: identity.id,
-          ...(revision.defaultBranch
-            ? { defaultBranch: revision.defaultBranch }
-            : {}),
-        },
-        revision: {
-          commitSha: revision.commitSha,
-        },
-        embedding: {
-          provider: config.embeddings.provider,
-          model: config.embeddings.model,
-          dimension: embeddingDimension,
-        },
-        chunking: {
-          strategy: "default",
-          version: 2,
-        },
-        prsenseVersion: version,
-        createdAt: new Date().toISOString(),
-      });
+      case "delete-only": {
+        eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
+          changedFiles: [],
+        });
 
-      eventBus.emit(CoreEvents.WorkflowIndexFinished);
+        eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
+          deletedFiles: executionPlan.deletedFiles,
+        });
+        if (dryRun) {
+          eventBus.emit(CoreEvents.WorkflowIndexFinished);
 
-      return {
-        outcome: "success",
-        payload: {
-          chunksIndexed: 0,
-          commitSha: revision.commitSha,
-          upToDate: false,
-        },
-      };
-    }
-    // -------------------------------------------------
-    // Embed + Persist Chunks
-    // -------------------------------------------------
-
-    //PERF: different batch size for openai based embedding
-    const BATCH_SIZE = 32;
-
-    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-      const batch = chunks.slice(i, i + BATCH_SIZE);
-
-      eventBus.emit(CoreEvents.WorkflowIndexProgress, {
-        processed: Math.min(i + BATCH_SIZE, chunks.length),
-        total: chunks.length,
-      });
-
-      const embeddings = await embeddingClient.embed(
-        batch.map((c) => c.content),
-      );
-
-      const rows = batch.map((chunk, idx) => {
-        const embedding = embeddings[idx];
-
-        if (!embedding) {
-          throw new Error("Embedding generation mismatch");
+          return {
+            outcome: "success",
+            payload: {
+              chunksIndexed: 0,
+              commitSha: revision.commitSha,
+              upToDate: false,
+              summary: {
+                filesChanged: 0,
+                filesDeleted: executionPlan.deletedFiles.length,
+                deleteAll: false,
+              },
+            },
+          };
         }
+
+        if (!dryRun && executionPlan.pathsToDelete.length > 0) {
+          await chunkRepository.deleteByPaths(
+            identity.provider,
+            identity.id,
+            executionPlan.pathsToDelete,
+          );
+        }
+
+        await metadataRepository.save({
+          repository: {
+            provider: identity.provider,
+            id: identity.id,
+            ...(revision.defaultBranch
+              ? { defaultBranch: revision.defaultBranch }
+              : {}),
+          },
+          revision: {
+            commitSha: revision.commitSha,
+          },
+          embedding: {
+            provider: config.embeddings.provider,
+            model: config.embeddings.model,
+            dimension: embeddingDimension,
+          },
+          chunking: {
+            strategy: "default",
+            version: 2,
+          },
+          prsenseVersion: version,
+          createdAt: new Date().toISOString(),
+        });
+
+        eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
         return {
-          chunk,
-          repoProvider: identity.provider,
-          repoName: identity.id,
-          repoRef: revision.commitSha,
-          embedding,
+          outcome: "success",
+          payload: {
+            chunksIndexed: 0,
+            commitSha: revision.commitSha,
+            upToDate: false,
+          },
         };
-      });
-      await chunkRepository.insertChunks(rows);
+      }
+
+      case "full":
+      case "incremental": {
+        const changedFiles =
+          executionPlan.kind === "full"
+            ? executionPlan.files
+            : executionPlan.changedFiles;
+
+        const deletedFiles =
+          executionPlan.kind === "full"
+            ? []
+            : executionPlan.deletedFiles;
+
+        const pathsToDelete =
+          executionPlan.kind === "full"
+            ? []
+            : executionPlan.pathsToDelete;
+
+        eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
+          changedFiles,
+        });
+
+        eventBus.emit(CoreEvents.WorkflowIndexFilesDeleted, {
+          deletedFiles,
+        });
+        if (executionPlan.kind === "full" && changedFiles.length === 0) {
+          if (!dryRun) {
+            await chunkRepository.deleteByRepository(
+              identity.provider,
+              identity.id,
+            );
+          }
+
+          await metadataRepository.save({
+            repository: {
+              provider: identity.provider,
+              id: identity.id,
+              ...(revision.defaultBranch
+                ? { defaultBranch: revision.defaultBranch }
+                : {}),
+            },
+            revision: {
+              commitSha: revision.commitSha,
+            },
+            embedding: {
+              provider: config.embeddings.provider,
+              model: config.embeddings.model,
+              dimension: embeddingDimension,
+            },
+            chunking: {
+              strategy: "default",
+              version: 2,
+            },
+            prsenseVersion: version,
+            createdAt: new Date().toISOString(),
+          });
+
+          eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+          return {
+            outcome: "success",
+            payload: {
+              chunksIndexed: 0,
+              commitSha: revision.commitSha,
+              upToDate: false,
+            },
+          };
+        }
+
+        const chunker = createCharChunker({
+          maxChars: config.index.chunkSizeChars,
+          overlapChars: config.index.chunkOverlapChars,
+        });
+
+        const chunks: ContextChunk[] = await buildChunks({
+          files: changedFiles,
+          repositorySource,
+          chunker,
+          eventBus,
+        });
+
+        eventBus.emit(CoreEvents.ContextChunksBuilt, {
+          count: chunks.length,
+        });
+
+        if (dryRun) {
+          eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+          return {
+            outcome: "success",
+            payload: {
+              chunksIndexed: chunks.length,
+              commitSha: revision.commitSha,
+              upToDate: false,
+              summary: {
+                filesChanged: changedFiles.length,
+                filesDeleted: deletedFiles.length,
+                deleteAll: executionPlan.kind === "full",
+              },
+            },
+          };
+        }
+
+        if (executionPlan.kind === "full") {
+          if (!dryRun) {
+            await chunkRepository.deleteByRepository(
+              identity.provider,
+              identity.id,
+            );
+          }
+        }
+
+        if (pathsToDelete.length > 0) {
+          await chunkRepository.deleteByPaths(
+            identity.provider,
+            identity.id,
+            pathsToDelete,
+          );
+        }
+
+        // -------------------------------------------------
+        // Embed + Persist Chunks
+        // -------------------------------------------------
+
+        //PERF: different batch size for openai based embedding
+        const BATCH_SIZE = 32;
+
+        for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+          const batch = chunks.slice(i, i + BATCH_SIZE);
+
+          eventBus.emit(CoreEvents.WorkflowIndexProgress, {
+            processed: Math.min(i + BATCH_SIZE, chunks.length),
+            total: chunks.length,
+          });
+
+          const embeddings = await embeddingClient.embed(
+            batch.map((c) => c.content),
+          );
+
+          const rows = batch.map((chunk, idx) => {
+            const embedding = embeddings[idx];
+
+            if (!embedding) {
+              throw new Error("Embedding generation mismatch");
+            }
+            return {
+              chunk,
+              repoProvider: identity.provider,
+              repoName: identity.id,
+              repoRef: revision.commitSha,
+              embedding,
+            };
+          });
+          await chunkRepository.insertChunks(rows);
+        }
+
+        await metadataRepository.save({
+          repository: {
+            provider: identity.provider,
+            id: identity.id,
+            ...(revision.defaultBranch
+              ? { defaultBranch: revision.defaultBranch }
+              : {}),
+          },
+          revision: {
+            commitSha: revision.commitSha,
+          },
+          embedding: {
+            provider: config.embeddings.provider,
+            model: config.embeddings.model,
+            dimension: embeddingDimension,
+          },
+          chunking: {
+            strategy: "default",
+            version: 2,
+          },
+          prsenseVersion: version,
+          createdAt: new Date().toISOString(),
+        });
+
+        eventBus.emit(CoreEvents.WorkflowIndexFinished);
+
+        return {
+          outcome: "success",
+          payload: {
+            chunksIndexed: chunks.length,
+            commitSha: revision.commitSha,
+            upToDate: false,
+          },
+        };
+
+      }
     }
 
-    await metadataRepository.save({
-      repository: {
-        provider: identity.provider,
-        id: identity.id,
-        ...(revision.defaultBranch
-          ? { defaultBranch: revision.defaultBranch }
-          : {}),
-      },
-      revision: {
-        commitSha: revision.commitSha,
-      },
-      embedding: {
-        provider: config.embeddings.provider,
-        model: config.embeddings.model,
-        dimension: embeddingDimension,
-      },
-      chunking: {
-        strategy: "default",
-        version: 2,
-      },
-      prsenseVersion: version,
-      createdAt: new Date().toISOString(),
-    });
-
-    eventBus.emit(CoreEvents.WorkflowIndexFinished);
-
-    return {
-      outcome: "success",
-      payload: {
-        chunksIndexed: chunks.length,
-        commitSha: revision.commitSha,
-        upToDate: false,
-      },
-    };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 

@@ -5,7 +5,7 @@ import path from "node:path";
 import type { IndexMetadata, ContextChunk } from "@prsense/core";
 import { EventBus, CoreEvents } from "@prsense/core";
 
-import type { IndexPlan } from "./types.js";
+import type { IndexPlan, ExecutionPlan } from "./types.js";
 import type { GitBackedRepositorySource } from "@prsense/context";
 import {
   createCharChunker,
@@ -86,71 +86,6 @@ export function planIndex({
   };
 }
 
-//TODO: move this to context
-export function computeDiff({
-  repoPath,
-  baseSha,
-  targetSha,
-}: {
-  repoPath: string;
-  baseSha: string;
-  targetSha: string;
-}) {
-  const output = execFileSync(
-    "git",
-    ["diff", "--name-status", "-z", baseSha, targetSha],
-    { cwd: repoPath },
-  );
-
-  const tokens = output.toString("utf8").split("\0").filter(Boolean);
-
-  const changed: string[] = [];
-  const deleted: string[] = [];
-
-  let i = 0;
-
-  while (i < tokens.length) {
-    const status = tokens[i++];
-
-    if (!status) break;
-
-    // 🟢 Rename / Copy (2 paths)
-    if (status.startsWith("R") || status.startsWith("C")) {
-      const oldPath = tokens[i++];
-      const newPath = tokens[i++];
-
-      if (status.startsWith("R")) {
-        if (oldPath) deleted.push(oldPath);
-        if (newPath) changed.push(newPath);
-      } else {
-        if (newPath) changed.push(newPath);
-      }
-
-      continue;
-    }
-
-    // 🟢 Normal case (1 path)
-    const file = tokens[i++];
-
-    if (!file) {
-      console.warn("Malformed diff entry:", { status, tokens, i });
-      continue;
-    }
-
-    if (status === "D") {
-      deleted.push(file);
-    } else {
-      changed.push(file);
-    }
-  }
-  const clean = (arr: string[]) => arr.map((f) => f.trim()).filter(Boolean);
-
-  return {
-    changed: clean(changed),
-    deleted: clean(deleted),
-  };
-}
-
 export async function buildChunks({
   files,
   repositorySource,
@@ -198,4 +133,128 @@ export async function buildChunks({
   }
 
   return chunks;
+}
+
+export function getGitFileSnapshot({
+  repoPath,
+  commitSha,
+}: {
+  repoPath: string;
+  commitSha: string;
+}): Map<string, string> {
+  const output = execFileSync(
+    "git",
+    [
+      "ls-tree",
+      "-r",
+      "-z",
+      "--format=%(objectname)%x00%(path)",
+      commitSha,
+    ],
+    { cwd: repoPath }
+  );
+
+  const parts = output.toString("utf8").split("\0");
+
+  if (parts[parts.length - 1] === "") parts.pop()
+
+  const snapshot = new Map<string, string>();
+
+  for (let i = 0; i < parts.length - 1; i += 2) {
+    const sha = parts[i];
+    const path = parts[i + 1];
+
+    if (!sha || !path) continue;
+
+    snapshot.set(path, sha);
+  }
+
+  return snapshot;
+}
+export function computeSnapshotDiff({
+  base,
+  target,
+}: {
+  base: Map<string, string>;
+  target: Map<string, string>;
+}) {
+  const changed: string[] = [];
+  const deleted: string[] = [];
+
+  // detect changed + added
+  for (const [path, sha] of target) {
+    if (!base.has(path)) {
+      changed.push(path); // new file
+    } else if (base.get(path) !== sha) {
+      changed.push(path); // modified
+    }
+  }
+
+  // detect deleted
+  for (const path of base.keys()) {
+    if (!target.has(path)) {
+      deleted.push(path);
+    }
+  }
+
+  return { changed, deleted };
+}
+
+export function resolveExecutionPlan({
+  plan,
+  repoPath,
+}: {
+  plan: IndexPlan;
+  repoPath: string;
+}): ExecutionPlan {
+  if (plan.type === "noop") {
+    return { kind: "noop" };
+  }
+
+  if (plan.type === "full") {
+    // NOTE: still async upstream, so just signal intent here
+    return { kind: "full", files: [] }; // files filled later
+  }
+
+  // incremental
+  const baseSnapshot = getGitFileSnapshot({
+    repoPath,
+    commitSha: plan.baseSha,
+  });
+
+  const targetSnapshot = getGitFileSnapshot({
+    repoPath,
+    commitSha: plan.targetSha,
+  });
+
+  const diff = computeSnapshotDiff({
+    base: baseSnapshot,
+    target: targetSnapshot,
+  });
+
+  const changedFiles = diff.changed;
+  const deletedFiles = diff.deleted;
+
+  if (changedFiles.length === 0 && deletedFiles.length === 0) {
+    return { kind: "noop" };
+  }
+
+  const pathsToDelete = Array.from(
+    new Set([...changedFiles, ...deletedFiles]),
+  );
+
+  if (changedFiles.length === 0 && deletedFiles.length > 0) {
+    return {
+      kind: "delete-only",
+      deletedFiles,
+      pathsToDelete,
+    };
+  }
+
+  return {
+    kind: "incremental",
+    changedFiles,
+    deletedFiles,
+    pathsToDelete,
+  };
 }
