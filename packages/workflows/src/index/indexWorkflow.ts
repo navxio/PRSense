@@ -14,10 +14,10 @@ import {
 import {
   resolveRepositorySource,
   planIndex,
-  computeDiff,
+  getGitFileSnapshot,
+  computeSnapshotDiff,
   buildChunks,
 } from "./util.js";
-import { execFileSync } from "node:child_process";
 
 export async function runIndexWorkflow({
   config,
@@ -217,34 +217,32 @@ export async function runIndexWorkflow({
           `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
         );
       }
-      const hasChanges = (() => {
-        try {
-          execFileSync("git", ["diff", "--quiet", plan.baseSha, plan.targetSha], { cwd: repoPath });
-          return false;
-        } catch {
-          return true;
-        }
-      })();
 
-      if (!hasChanges) {
-        plan = { type: "noop" }
-      } else {
-        const diff = computeDiff({
-          repoPath,
-          baseSha: plan.baseSha,
-          targetSha: plan.targetSha,
-        });
-        changedFiles = diff.changed;
-        deletedFiles = diff.deleted;
+      //PERF: store snapshot in repository metadata
+      const baseSnapshot = getGitFileSnapshot({
+        repoPath,
+        commitSha: plan.baseSha,
+      });
 
-        pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
+      const targetSnapshot = getGitFileSnapshot({
+        repoPath,
+        commitSha: plan.targetSha,
+      });
 
+      const diff = computeSnapshotDiff({
+        base: baseSnapshot,
+        target: targetSnapshot,
+      });
+
+      changedFiles = diff.changed;
+      deletedFiles = diff.deleted;
+      if (changedFiles.length === 0 && deletedFiles.length === 0) {
+        plan = { type: "noop" };
       }
 
+      pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
+
     }
-    eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
-      type: plan.type,
-    });
 
 
     if (plan.type === "full") {
@@ -252,6 +250,9 @@ export async function runIndexWorkflow({
       deleteAll = true;
     }
 
+    eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
+      type: plan.type,
+    });
 
     if (plan.type === "noop") {
       eventBus.emit(CoreEvents.WorkflowIndexUpToDate, {
