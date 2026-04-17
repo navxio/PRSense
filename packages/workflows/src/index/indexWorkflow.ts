@@ -242,6 +242,9 @@ export async function runIndexWorkflow({
       }
 
     }
+    eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
+      type: plan.type,
+    });
 
 
     if (plan.type === "full") {
@@ -257,9 +260,6 @@ export async function runIndexWorkflow({
 
       eventBus.emit(CoreEvents.WorkflowIndexFinished);
       // after this plan must never change
-      eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
-        type: plan.type,
-      });
 
       return {
         outcome: "success",
