@@ -203,8 +203,16 @@ export async function runIndexWorkflow({
     let executionPlan = resolveExecutionPlan({
       plan,
       repoPath,
-      repositorySource,
     });
+
+    if (
+      plan.type === "incremental" &&
+      revision.commitSha !== plan.targetSha
+    ) {
+      throw new Error(
+        `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+      );
+    }
 
 
     // fill full plan files lazily
@@ -341,6 +349,11 @@ export async function runIndexWorkflow({
               chunksIndexed: chunks.length,
               commitSha: revision.commitSha,
               upToDate: false,
+              summary: {
+                filesChanged: changedFiles.length,
+                filesDeleted: deletedFiles.length,
+                deleteAll: executionPlan.kind === "full",
+              },
             },
           };
         }
