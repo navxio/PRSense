@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>What is PRSense? — Deterministic PR Review Explained</title>
+    <meta
+      name="description"
+      content="PRSense is a deterministic, diff-first pull request review engine that surfaces high-confidence signals without hallucinations or noise. Learn how it works."
+    />
+
+    <!-- SEO keywords (optional but harmless) -->
+    <meta
+      name="keywords"
+      content="PRSense, AI code review, pull request review tool, diff-first analysis, deterministic code review, self-hosted AI dev tools"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="What is PRSense?" />
+    <meta
+      property="og:description"
+      content="Deterministic, diff-first pull request review with high-signal outputs."
+    />
+    <meta
+      property="og:url"
+      content="https://prsense.org/what-is-prsense.html"
+    />
+    <meta property="og:type" content="website" />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        background: #ffffff;
+        color: #111827;
+        line-height: 1.7;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      h1 {
+        font-size: 40px;
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        margin-top: 40px;
+        font-size: 26px;
+      }
+
+      p {
+        margin: 15px 0;
+        color: #374151;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+
+      li {
+        margin-bottom: 10px;
+      }
+
+      .install {
+        background: #111827;
+        color: #f9fafb;
+        padding: 18px;
+        border-radius: 8px;
+        margin: 30px 0;
+        font-family: monospace;
+      }
+
+      .highlight {
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      a {
+        color: #111827;
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .footer {
+        margin-top: 60px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>What is PRSense?</h1>
+
+      <p>
+        <strong>PRSense</strong> is a deterministic, diff-first pull request
+        review engine that surfaces high-confidence review signals from code
+        changes.
+      </p>
+
+      <p>
+        Unlike traditional AI code review tools, PRSense analyzes only what
+        changed in a pull request and produces grounded, inspectable signals —
+        without hallucinations, noise, or automated code modifications.
+      </p>
+
+      <div class="install">
+        npm i -g @prsense/cli<br />
+        prsense review .
+      </div>
+
+      <h2>Why PRSense exists</h2>
+
+      <div class="highlight">
+        <strong>Most AI code review tools:</strong>
+        <ul>
+          <li>Comment on code that did not change</li>
+          <li>Hallucinate files, symbols, or context</li>
+          <li>Generate verbose, low-signal feedback</li>
+        </ul>
+
+        <strong>PRSense takes a different approach:</strong>
+        <ul>
+          <li>Diff-first analysis — focuses only on modified code</li>
+          <li>Deterministic pipeline — reproducible and inspectable</li>
+          <li>Signal-based output — concise, high-confidence findings</li>
+        </ul>
+      </div>
+
+      <h2>How PRSense works</h2>
+
+      <p>PRSense processes pull requests through a structured pipeline:</p>
+
+      <ul>
+        <li>Ingests the git diff and metadata</li>
+        <li>Builds contextual understanding from the repository</li>
+        <li>Runs analysis using LLMs (local or cloud)</li>
+        <li>Emits structured review signals</li>
+      </ul>
+
+      <p>
+        Each signal is grounded in actual code changes and can be traced back to
+        specific lines in the diff.
+      </p>
+
+      <h2>Key characteristics</h2>
+
+      <ul>
+        <li>
+          <strong>Deterministic</strong> — results are consistent and
+          explainable
+        </li>
+        <li>
+          <strong>Diff-first</strong> — no irrelevant analysis outside the
+          change set
+        </li>
+        <li><strong>Human-in-the-loop</strong> — no autonomous code changes</li>
+        <li>
+          <strong>Self-hosted</strong> — run locally or within your
+          infrastructure
+        </li>
+        <li><strong>LLM-agnostic</strong> — supports local and cloud models</li>
+      </ul>
+
+      <h2>Where PRSense fits</h2>
+
+      <p>
+        PRSense is not a general-purpose repository memory system or autonomous
+        coding agent.
+      </p>
+
+      <p>
+        It is a focused review engine designed to assist engineers in
+        understanding risk, correctness, and impact within pull requests.
+      </p>
+
+      <h2>Getting started</h2>
+
+      <p>Install the CLI and review your first pull request in seconds:</p>
+
+      <div class="install">
+        npm i -g @prsense/cli<br />
+        prsense review .
+      </div>
+
+      <p>
+        You can also run PRSense in CI or as a long-lived daemon for automated
+        workflows.
+      </p>
+
+      <h2>Learn more</h2>
+
+      <ul>
+        <li><a href="https://prsense.org">Homepage</a></li>
+        <li>
+          <a href="https://github.com/navxio/prsense">GitHub repository</a>
+        </li>
+        <li>
+          <a href="https://www.npmjs.com/package/@prsense/cli">npm package</a>
+        </li>
+      </ul>
+
+      <div class="footer">
+        <div>PRSense</div>
+        <div>Open-source · Self-hosted</div>
+      </div>
+    </div>
+  </body>
+</html>
