@@ -662,7 +662,7 @@ describe("Incremental indexing (real DB)", () => {
     expect(result.payload.upToDate).toBe(true);
   });
 
-  it("detects changes only for modified files in large set", async () => {
+  it("treats reverted content as noop (content-based diff)", async () => {
     const eventBus = new TestEventBus();
 
     for (let i = 0; i < 20; i++) {
@@ -685,4 +685,6 @@ describe("Incremental indexing (real DB)", () => {
 
     expect(last?.fields?.changedFiles).toEqual(["f10.ts"]);
   });
+
+
 });
