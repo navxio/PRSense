@@ -1,192 +1,197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRSense — Deterministic PR Review Engine</title>
+    <meta
+      name="description"
+      content="Diff-first, deterministic pull request review. High-signal AI without noise. Self-hosted and private."
+    />
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        background: #ffffff;
+        color: #111827;
+        line-height: 1.6;
+      }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PRSense — Deterministic PR Review</title>
-  <meta name="description"
-    content="Deterministic, diff-first pull request review. High-signal AI without noise. Self-hosted and private." />
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      background: #ffffff;
-      color: #111827;
-      line-height: 1.6;
-    }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
+      h1 {
+        font-size: 48px;
+        margin-bottom: 10px;
+      }
 
-    h1 {
-      font-size: 48px;
-      margin-bottom: 10px;
-    }
+      h2 {
+        margin-top: 60px;
+        font-size: 28px;
+      }
 
-    h2 {
-      margin-top: 60px;
-      font-size: 28px;
-    }
+      p.lead {
+        font-size: 20px;
+        color: #4b5563;
+      }
 
-    p.lead {
-      font-size: 20px;
-      color: #4b5563;
-    }
+      .install {
+        background: #111827;
+        color: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 30px 0;
+        font-family: monospace;
+        font-size: 16px;
+      }
 
-    .install {
-      background: #111827;
-      color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 30px 0;
-      font-family: monospace;
-      font-size: 16px;
-    }
+      .section {
+        margin-top: 40px;
+      }
 
-    .section {
-      margin-top: 40px;
-    }
+      ul {
+        padding-left: 20px;
+      }
 
-    ul {
-      padding-left: 20px;
-    }
+      li {
+        margin-bottom: 10px;
+      }
 
-    li {
-      margin-bottom: 10px;
-    }
+      .contrast {
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
 
-    .contrast {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 20px;
-    }
+      .footer {
+        margin-top: 80px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        color: #6b7280;
+      }
 
-    .footer {
-      margin-top: 80px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      color: #6b7280;
-    }
+      a {
+        color: #111827;
+        text-decoration: none;
+        font-weight: 500;
+      }
 
-    a {
-      color: #111827;
-      text-decoration: none;
-      font-weight: 500;
-    }
+      a:hover {
+        text-decoration: underline;
+      }
 
-    a:hover {
-      text-decoration: underline;
-    }
+      .badge {
+        margin-top: 10px;
+        color: #6b7280;
+        font-size: 14px;
+      }
+    </style>
+  </head>
 
-    .badge {
-      margin-top: 10px;
-      color: #6b7280;
-      font-size: 14px;
-    }
-  </style>
-</head>
+  <body>
+    <div class="container">
+      <!-- HERO -->
+      <h1>PRSense</h1>
+      <h2>Deterministic, diff-first pull request review</h2>
+      <p class="lead">Deterministic, diff-first pull request review.</p>
+      <p>High-signal AI review without sending your code to the cloud.</p>
 
-<body>
+      <!-- INSTALL -->
+      <div class="install">
+        npm i -g @prsense/cli<br />
+        prsense review .
+      </div>
 
-  <div class="container">
+      <div class="badge">
+        Open-source · Self-hosted · No code leaves your machine
+      </div>
 
-    <!-- HERO -->
-    <h1>PRSense</h1>
-    <p class="lead">
-      Deterministic, diff-first pull request review.
-    </p>
-    <p>
-      High-signal AI review without sending your code to the cloud.
-    </p>
+      <!-- VISUAL PLACEHOLDER -->
+      <div class="section">
+        <h2>See what matters</h2>
+        <p>
+          PRSense surfaces grounded review signals directly from your diff — no
+          hallucinations, no noise.
+        </p>
+        <!-- Replace with your screenshot -->
+        <img
+          src="docs/example.png"
+          alt="PRSense CLI output"
+          style="width: 100%; border-radius: 8px; margin-top: 20px"
+        />
+      </div>
 
-    <!-- INSTALL -->
-    <div class="install">
-      npm i -g @prsense/cli<br />
-      prsense review .
-    </div>
+      <!-- PROBLEM -->
+      <div class="section">
+        <h2>Why PRSense exists</h2>
+        <div class="contrast">
+          <strong>Most AI code reviewers:</strong>
+          <ul>
+            <li>Comment on code that didn’t change</li>
+            <li>Hallucinate files, symbols, and context</li>
+            <li>Flood pull requests with low-signal noise</li>
+          </ul>
 
-    <div class="badge">
-      Open-source · Self-hosted · No code leaves your machine
-    </div>
+          <strong>PRSense:</strong>
+          <ul>
+            <li>Analyzes only what actually changed (diff-first)</li>
+            <li>Produces grounded, inspectable signals</li>
+            <li>Keeps humans in control</li>
+          </ul>
+        </div>
+      </div>
 
-    <!-- VISUAL PLACEHOLDER -->
-    <div class="section">
-      <h2>See what matters</h2>
-      <p>
-        PRSense surfaces grounded review signals directly from your diff — no hallucinations, no noise.
-      </p>
-      <!-- Replace with your screenshot -->
-      <img src="docs/example.png" alt="PRSense CLI output" style="width:100%; border-radius:8px; margin-top:20px;" />
-    </div>
-
-    <!-- PROBLEM -->
-    <div class="section">
-      <h2>Why PRSense exists</h2>
-      <div class="contrast">
-        <strong>Most AI code reviewers:</strong>
+      <!-- HOW -->
+      <div class="section">
+        <h2>How it works</h2>
         <ul>
-          <li>Comment on code that didn’t change</li>
-          <li>Hallucinate files, symbols, and context</li>
-          <li>Flood pull requests with low-signal noise</li>
+          <li>
+            <strong>Diff-first analysis</strong> — focuses only on modified code
+          </li>
+          <li><strong>Signal-based output</strong> — no generic comments</li>
+          <li>
+            <strong>Deterministic pipeline</strong> — reproducible results
+          </li>
+          <li><strong>Pluggable LLMs</strong> — local or cloud</li>
         </ul>
+      </div>
 
-        <strong>PRSense:</strong>
+      <!-- DEPLOYMENT -->
+      <div class="section">
+        <h2>Run it anywhere</h2>
         <ul>
-          <li>Analyzes only what actually changed (diff-first)</li>
-          <li>Produces grounded, inspectable signals</li>
-          <li>Keeps humans in control</li>
+          <li>CLI — local development</li>
+          <li>CI — automated checks</li>
+          <li>Daemon — webhook-based review service</li>
         </ul>
       </div>
-    </div>
 
-    <!-- HOW -->
-    <div class="section">
-      <h2>How it works</h2>
-      <ul>
-        <li><strong>Diff-first analysis</strong> — focuses only on modified code</li>
-        <li><strong>Signal-based output</strong> — no generic comments</li>
-        <li><strong>Deterministic pipeline</strong> — reproducible results</li>
-        <li><strong>Pluggable LLMs</strong> — local or cloud</li>
-      </ul>
-    </div>
-
-    <!-- DEPLOYMENT -->
-    <div class="section">
-      <h2>Run it anywhere</h2>
-      <ul>
-        <li>CLI — local development</li>
-        <li>CI — automated checks</li>
-        <li>Daemon — webhook-based review service</li>
-      </ul>
-    </div>
-
-    <!-- POSITIONING -->
-    <div class="section">
-      <p><strong>PRSense is not a repo memory layer.</strong></p>
-      <p>
-        It is a deterministic review engine built to surface high-confidence signals from pull request changes.
-      </p>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="footer">
-      <div>
-        <a href="https://github.com/navxio/prsense">GitHub</a>
+      <!-- POSITIONING -->
+      <div class="section">
+        <p><strong>PRSense is not a repo memory layer.</strong></p>
+        <p>
+          It is a deterministic review engine built to surface high-confidence
+          signals from pull request changes.
+        </p>
       </div>
-      <div>
-        <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <div>
+          <a href="https://github.com/navxio/prsense">GitHub</a>
+        </div>
+        <div>
+          <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+        </div>
       </div>
     </div>
-
-  </div>
-
-</body>
-
+  </body>
 </html>
+
