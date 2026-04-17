@@ -37,3 +37,6 @@ export interface GitBackedRepositorySource {
 
   getLocalPath(): string;
 }
+
+
+export type RepositorySource = GitBackedRepositorySource
