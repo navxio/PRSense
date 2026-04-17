@@ -5,7 +5,7 @@ import path from "node:path";
 import type { IndexMetadata, ContextChunk } from "@prsense/core";
 import { EventBus, CoreEvents } from "@prsense/core";
 
-import type { IndexPlan } from "./types.js";
+import type { IndexPlan, ExecutionPlan } from "./types.js";
 import type { GitBackedRepositorySource } from "@prsense/context";
 import {
   createCharChunker,
@@ -195,4 +195,65 @@ export function computeSnapshotDiff({
   }
 
   return { changed, deleted };
+}
+
+export function resolveExecutionPlan({
+  plan,
+  repoPath,
+  repositorySource,
+}: {
+  plan: IndexPlan;
+  repoPath: string;
+  repositorySource: GitBackedRepositorySource;
+}): ExecutionPlan {
+  if (plan.type === "noop") {
+    return { kind: "noop" };
+  }
+
+  if (plan.type === "full") {
+    // NOTE: still async upstream, so just signal intent here
+    return { kind: "full", files: [] }; // files filled later
+  }
+
+  // incremental
+  const baseSnapshot = getGitFileSnapshot({
+    repoPath,
+    commitSha: plan.baseSha,
+  });
+
+  const targetSnapshot = getGitFileSnapshot({
+    repoPath,
+    commitSha: plan.targetSha,
+  });
+
+  const diff = computeSnapshotDiff({
+    base: baseSnapshot,
+    target: targetSnapshot,
+  });
+
+  const changedFiles = diff.changed;
+  const deletedFiles = diff.deleted;
+
+  if (changedFiles.length === 0 && deletedFiles.length === 0) {
+    return { kind: "noop" };
+  }
+
+  const pathsToDelete = Array.from(
+    new Set([...changedFiles, ...deletedFiles]),
+  );
+
+  if (changedFiles.length === 0 && deletedFiles.length > 0) {
+    return {
+      kind: "delete-only",
+      deletedFiles,
+      pathsToDelete,
+    };
+  }
+
+  return {
+    kind: "incremental",
+    changedFiles,
+    deletedFiles,
+    pathsToDelete,
+  };
 }
