@@ -200,11 +200,6 @@ export async function runIndexWorkflow({
       throw new Error("Repository must be git-backed");
     }
 
-    let executionPlan = resolveExecutionPlan({
-      plan,
-      repoPath,
-    });
-
     if (
       plan.type === "incremental" &&
       revision.commitSha !== plan.targetSha
@@ -213,7 +208,10 @@ export async function runIndexWorkflow({
         `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
       );
     }
-
+    let executionPlan = resolveExecutionPlan({
+      plan,
+      repoPath,
+    });
 
     // fill full plan files lazily
     if (executionPlan.kind === "full") {
@@ -359,10 +357,12 @@ export async function runIndexWorkflow({
         }
 
         if (executionPlan.kind === "full") {
-          await chunkRepository.deleteByRepository(
-            identity.provider,
-            identity.id,
-          );
+          if (!dryRun) {
+            await chunkRepository.deleteByRepository(
+              identity.provider,
+              identity.id,
+            );
+          }
         }
 
         if (pathsToDelete.length > 0) {

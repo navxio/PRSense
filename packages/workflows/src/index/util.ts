@@ -156,6 +156,8 @@ export function getGitFileSnapshot({
 
   const parts = output.toString("utf8").split("\0");
 
+  if (parts[parts.length - 1] === "") parts.pop()
+
   const snapshot = new Map<string, string>();
 
   for (let i = 0; i < parts.length - 1; i += 2) {
