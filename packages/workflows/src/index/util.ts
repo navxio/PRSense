@@ -144,30 +144,31 @@ export function getGitFileSnapshot({
 }): Map<string, string> {
   const output = execFileSync(
     "git",
-    ["ls-tree", "-r", commitSha],
+    [
+      "ls-tree",
+      "-r",
+      "-z",
+      "--format=%(objectname)%x00%(path)",
+      commitSha,
+    ],
     { cwd: repoPath }
-  ).toString("utf8");
+  );
 
-  const map = new Map<string, string>();
+  const parts = output.toString("utf8").split("\0");
 
-  for (const line of output.split("\n")) {
-    if (!line.trim()) continue;
+  const snapshot = new Map<string, string>();
 
-    // format: mode type sha\tpath
-    const [meta, filePath] = line.split("\t");
-    if (!meta || !filePath) continue;
+  for (let i = 0; i < parts.length - 1; i += 2) {
+    const sha = parts[i];
+    const path = parts[i + 1];
 
-    const parts = meta.split(" ");
-    const sha = parts[2];
+    if (!sha || !path) continue;
 
-    if (sha) {
-      map.set(filePath, sha);
-    }
+    snapshot.set(path, sha);
   }
 
-  return map;
+  return snapshot;
 }
-
 export function computeSnapshotDiff({
   base,
   target,
@@ -200,11 +201,9 @@ export function computeSnapshotDiff({
 export function resolveExecutionPlan({
   plan,
   repoPath,
-  repositorySource,
 }: {
   plan: IndexPlan;
   repoPath: string;
-  repositorySource: GitBackedRepositorySource;
 }): ExecutionPlan {
   if (plan.type === "noop") {
     return { kind: "noop" };
