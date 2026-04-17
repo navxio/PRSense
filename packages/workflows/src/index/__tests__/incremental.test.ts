@@ -629,13 +629,14 @@ describe("Incremental indexing (real DB)", () => {
     commitAll(repo, "init");
 
     await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), force: true, eventBus, version: "test" });
-
+    const before = eventBus.events.length;
     await fs.unlink(path.join(repo, "a.ts"));
     commitAll(repo, "delete");
 
     await runIndexWorkflow({ target: repo, config: testConfig(), credentials: testCredentials(), eventBus, version: "test" });
+    const afterEvents = eventBus.events.slice(before);
 
-    const chunkEvents = eventBus.events.filter(
+    const chunkEvents = afterEvents.filter(
       e => e.event === CoreEvents.ContextChunksBuilt
     );
 
