@@ -75,6 +75,7 @@ export async function runFirstTimeSetup() {
   // ✅ API key instructions
   if (apiKey) {
     const envVar = getEnvVarName(provider);
+    process.env[envVar] = apiKey;
 
     console.log("👉 Add this to your shell:\n");
     console.log(`export ${envVar}=${apiKey}\n`);
