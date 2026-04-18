@@ -6,15 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- ── PRIMARY SEO ── -->
-  <title>
-    PRSense — Deterministic, Diff-First PR Review Engine | Open Source
-  </title>
+  <title>PRSense — Deterministic, Diff-First PR Review Engine | Open Source</title>
   <meta name="description"
     content="PRSense is an open-source, self-hosted PR review engine. Diff-first, deterministic analysis with no hallucinated files. Install in 10 seconds via npm." />
   <link rel="canonical" href="https://prsense.org/" />
   <meta name="robots" content="index, follow" />
   <meta name="author" content="PRSense" />
-  <meta name="google-site-verification" content="ev05izRBOH-wiMuxpejKXejZ1zNxi7dMbJ4fbriK5ds" />
+
   <!-- ── OPEN GRAPH ── -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://prsense.org/" />
@@ -36,28 +34,28 @@
 
   <!-- ── STRUCTURED DATA ── -->
   <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PRSense",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Cross-platform",
+      "url": "https://prsense.org/",
+      "downloadUrl": "https://www.npmjs.com/package/@prsense/cli",
+      "softwareVersion": "latest",
+      "description": "Deterministic, diff-first PR review engine. Open-source and self-hosted.",
+      "license": "https://github.com/navxio/prsense/blob/trunk/LICENSE",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
         "name": "PRSense",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Cross-platform",
-        "url": "https://prsense.org/",
-        "downloadUrl": "https://www.npmjs.com/package/@prsense/cli",
-        "softwareVersion": "latest",
-        "description": "Deterministic, diff-first PR review engine. Open-source and self-hosted.",
-        "license": "https://github.com/navxio/prsense/blob/trunk/LICENSE",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "author": {
-          "@type": "Organization",
-          "name": "PRSense",
-          "url": "https://prsense.org/"
-        }
+        "url": "https://prsense.org/"
       }
+    }
     </script>
 
   <!-- ── FONTS ── -->
@@ -73,7 +71,7 @@
     *::after {
       box-sizing: border-box;
       margin: 0;
-      padding: 0;
+      padding: 0
     }
 
     :root {
@@ -100,7 +98,7 @@
     }
 
     body {
-      font-family: "Outfit", sans-serif;
+      font-family: 'Outfit', sans-serif;
       background: var(--bg);
       color: var(--fg);
       line-height: 1.65;
@@ -153,7 +151,7 @@
     }
 
     .nav-logo span {
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-weight: 500;
       font-size: 15px;
       letter-spacing: -0.02em;
@@ -217,7 +215,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
       color: var(--muted);
       letter-spacing: 0.06em;
@@ -228,7 +226,7 @@
     }
 
     .hero-badge::before {
-      content: "";
+      content: '';
       width: 6px;
       height: 6px;
       background: var(--accent);
@@ -236,15 +234,15 @@
     }
 
     .hero-logo {
-      width: 160px;
+      width: 150px;
       height: auto;
-      margin-bottom: 12px;
+      margin-bottom: 24px;
       opacity: 0;
       animation: fadeUp 0.8s 0.25s forwards;
     }
 
     .hero h1 {
-      font-family: "Fraunces", serif;
+      font-family: 'Fraunces', serif;
       font-size: clamp(48px, 6.5vw, 82px);
       font-weight: 400;
       line-height: 1.08;
@@ -282,12 +280,10 @@
       color: var(--code-fg);
       padding: 14px 22px;
       border-radius: 8px;
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
       cursor: pointer;
-      transition:
-        transform 0.15s,
-        box-shadow 0.2s;
+      transition: transform 0.15s, box-shadow 0.2s;
     }
 
     .install-box:hover {
@@ -328,7 +324,7 @@
       transition: all 0.2s;
       cursor: pointer;
       border: none;
-      font-family: "Outfit", sans-serif;
+      font-family: 'Outfit', sans-serif;
     }
 
     .btn-primary {
@@ -412,7 +408,7 @@
     .terminal-title {
       flex: 1;
       text-align: center;
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
       color: var(--code-muted);
       margin-right: 34px;
@@ -420,7 +416,7 @@
 
     .terminal-body {
       padding: 24px 28px 32px;
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       line-height: 1.75;
       overflow-x: auto;
@@ -485,7 +481,7 @@
 
     /* ── SECTIONS ── */
     .section-label {
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -494,7 +490,7 @@
     }
 
     .section-title {
-      font-family: "Fraunces", serif;
+      font-family: 'Fraunces', serif;
       font-size: clamp(30px, 4vw, 44px);
       font-weight: 400;
       letter-spacing: -0.02em;
@@ -525,7 +521,7 @@
     }
 
     .comp-label {
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -579,7 +575,7 @@
     }
 
     .step-num {
-      font-family: "Fraunces", serif;
+      font-family: 'Fraunces', serif;
       font-size: 36px;
       color: var(--accent);
       opacity: 0.3;
@@ -616,7 +612,7 @@
     }
 
     .deploy-card h3 {
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
       font-weight: 500;
       margin-bottom: 10px;
@@ -674,7 +670,7 @@
     }
 
     .footer-left {
-      font-family: "JetBrains Mono", monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       color: var(--muted);
       display: flex;
@@ -714,8 +710,7 @@
     .reveal {
       opacity: 0;
       transform: translateY(20px);
-      transition:
-        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
         transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -787,7 +782,7 @@
   <nav id="nav" aria-label="Main navigation">
     <a class="nav-logo" href="/" aria-label="PRSense home">
       <img src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
-        alt="PRSense owl logo" width="28" height="28" />
+        alt="PRSense owl logo" width="120" height="120" />
       <span>PRSense</span>
     </a>
     <div class="nav-links">
@@ -802,18 +797,20 @@
     <!-- ── HERO ── -->
     <div class="container">
       <section class="hero">
-        <div class="hero-badge" aria-hidden="true">
-          Open-source &middot; Self-hosted &middot; Private
-        </div>
+        <div class="hero-badge" aria-hidden="true">Open-source &middot; Self-hosted &middot; Private</div>
 
         <img class="hero-logo" src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
           alt="PRSense — deterministic PR review engine logo" width="72" height="72" />
 
-        <h1>PR review that<br />makes <em>sense</em></h1>
+        <h1>PR review that<br>makes <em>sense</em></h1>
 
         <p class="hero-sub">
-          Deterministic, diff-first code review. High-signal findings grounded
-          in real changes — no hallucinated files, no noise.
+          Deterministic, diff-first code review. High-signal findings grounded in real changes — no hallucinated files,
+          no noise.
+        </p>
+
+        <p style="font-size:14px; color:var(--muted); max-width:520px;">
+          First run includes interactive setup (choose provider + API key or local Ollama).
         </p>
 
         <div class="hero-install">
@@ -821,7 +818,7 @@
             aria-label="Copy install command to clipboard">
             <span class="prompt" aria-hidden="true">$</span>
             <code>npm i -g @prsense/cli && prsense review .</code>
-            <span class="copy-hint" aria-live="polite">first run sets up environment</span>
+            <span class="copy-hint" aria-live="polite">first run: ~15–30s setup (auto-configures)</span>
           </div>
         </div>
 
@@ -864,6 +861,13 @@
             </svg>
             No code leaves your machine
           </div>
+          <div class="proof-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Works locally with Ollama (no API key required)
+          </div>
         </div>
       </section>
     </div>
@@ -880,65 +884,32 @@
           </div>
           <div class="terminal-body" role="img"
             aria-label="Example PRSense terminal output showing a high-severity missing super constructor call and a medium-severity return type mismatch found in a Spring Framework pull request">
-            <div class="terminal-line">
-              <span class="t-prompt">❯</span>
-              <span class="t-cmd">prsense review</span>
-              <span class="t-url">"https://github.com/spring-projects/spring-framework/pull/36373"</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-check">✔</span>
-              <span class="t-dim">PRSense completed repository context</span>
-            </div>
+            <div class="terminal-line"><span class="t-prompt">❯</span> <span class="t-cmd">prsense review</span> <span
+                class="t-url">"https://github.com/spring-projects/spring-framework/pull/36373"</span></div>
+            <div class="terminal-line"><span class="t-check">✔</span> <span class="t-dim">Analysis complete</span></div>
             <br />
-            <div class="terminal-line">
-              <span class="t-severity-high">[HIGH]</span>
-              <span class="t-file">spring-core/…/buffer/JettyDataBuffer.java</span>
+            <div class="terminal-line"><span class="t-severity-high">[HIGH]</span> <span
+                class="t-file">spring-core/…/buffer/JettyDataBuffer.java</span></div>
+            <div class="terminal-line"><span class="t-desc"> Constructor is missing a call to super(BufferFactory,
+                delegate);</span></div>
+            <div class="terminal-line"><span class="t-desc"> ↳ The class extends JettyVirtualDataBuffer, which
+                requires</span></div>
+            <div class="terminal-line"><span class="t-desc"> initialization of its superclass in the constructor.</span>
             </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                Constructor is missing a call to super(BufferFactory,
-                delegate);</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                ↳ The class extends JettyVirtualDataBuffer, which
-                requires</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                initialization of its superclass in the constructor.</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-fix">
-                ▼ Add 'super(bufferFactory, delegate);' at the beginning</span>
-            </div>
+            <div class="terminal-line"><span class="t-fix"> ▼ Add 'super(bufferFactory, delegate);' at the
+                beginning</span></div>
             <br />
-            <div class="terminal-line">
-              <span class="t-severity-med">[MEDIUM]</span>
-              <span class="t-file">spring-core/…/buffer/JettyDataBufferFactory.java</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                Method 'allocateBuffer()' should return a type that
-                implements</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                'JettyDataBuffer', but returns 'JettyVirtualDataBuffer'.</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-desc">
-                This discrepancy could lead to runtime errors.</span>
-            </div>
-            <div class="terminal-line">
-              <span class="t-fix">
-                ▼ Change return type to 'DataBuffer' or
-                'JettyDataBuffer'</span>
-            </div>
+            <div class="terminal-line"><span class="t-severity-med">[MEDIUM]</span> <span
+                class="t-file">spring-core/…/buffer/JettyDataBufferFactory.java</span></div>
+            <div class="terminal-line"><span class="t-desc"> Method 'allocateBuffer()' should return a type that
+                implements</span></div>
+            <div class="terminal-line"><span class="t-desc"> 'JettyDataBuffer', but returns
+                'JettyVirtualDataBuffer'.</span></div>
+            <div class="terminal-line"><span class="t-desc"> This discrepancy could lead to runtime errors.</span></div>
+            <div class="terminal-line"><span class="t-fix"> ▼ Change return type to 'DataBuffer' or
+                'JettyDataBuffer'</span></div>
             <br />
-            <div class="terminal-line">
-              <span class="t-dim">── 2 issues found · 1 high · 1 medium ──</span>
-            </div>
+            <div class="terminal-line"><span class="t-dim">── 2 issues found · 1 high · 1 medium ──</span></div>
           </div>
         </div>
       </section>
@@ -950,9 +921,7 @@
     <div class="container">
       <section class="problem-section" id="why" aria-labelledby="why-title">
         <p class="section-label reveal">The problem</p>
-        <h2 class="section-title reveal" id="why-title">
-          Most AI reviewers are<br />guessing. PRSense isn't.
-        </h2>
+        <h2 class="section-title reveal" id="why-title">Most AI reviewers guess.<br>PRSense is grounded.</h2>
 
         <div class="comparison reveal">
           <div class="comp-col others">
@@ -1020,42 +989,28 @@
     <div class="container">
       <section id="how" aria-labelledby="how-title">
         <p class="section-label reveal">How it works</p>
-        <h2 class="section-title reveal" id="how-title">
-          Four steps to<br />deterministic review
-        </h2>
+        <h2 class="section-title reveal" id="how-title">Four steps to<br>deterministic review</h2>
 
         <div class="steps reveal">
           <article class="step">
             <div class="step-num" aria-hidden="true">1</div>
             <h3>Parse the diff</h3>
-            <p>
-              Extracts only the changed lines and their surrounding context
-              from the PR.
-            </p>
+            <p>Extracts only the changed lines and their surrounding context from the PR.</p>
           </article>
           <article class="step">
             <div class="step-num" aria-hidden="true">2</div>
             <h3>Build signals</h3>
-            <p>
-              Runs a deterministic pipeline to identify patterns, issues, and
-              semantic changes.
-            </p>
+            <p>Runs a deterministic pipeline to identify patterns, issues, and semantic changes.</p>
           </article>
           <article class="step">
             <div class="step-num" aria-hidden="true">3</div>
             <h3>Ground check</h3>
-            <p>
-              Verifies every finding against the actual diff — no hallucinated
-              references.
-            </p>
+            <p>Verifies every finding against the actual diff — no hallucinated references.</p>
           </article>
           <article class="step">
             <div class="step-num" aria-hidden="true">4</div>
             <h3>Report</h3>
-            <p>
-              Delivers structured, actionable output with severity, location,
-              and fix suggestions.
-            </p>
+            <p>Delivers structured, actionable output with severity, location, and fix suggestions.</p>
           </article>
         </div>
       </section>
@@ -1067,9 +1022,7 @@
     <div class="container">
       <section aria-labelledby="deploy-title">
         <p class="section-label reveal">Deployment</p>
-        <h2 class="section-title reveal" id="deploy-title">
-          Run it anywhere
-        </h2>
+        <h2 class="section-title reveal" id="deploy-title">Run it anywhere</h2>
 
         <div class="deploy-grid reveal">
           <article class="deploy-card">
@@ -1081,10 +1034,7 @@
               </svg>
               CLI
             </h3>
-            <p>
-              Local development. Review PRs from your terminal with a single
-              command.
-            </p>
+            <p>Local development. Review PRs from your terminal with a single command.</p>
           </article>
           <article class="deploy-card">
             <h3>
@@ -1094,11 +1044,8 @@
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               CI
-              <span style="color: var(--muted); font-weight: 400">(coming soon)</span>
             </h3>
-            <p>
-              Automated review in GitHub Actions, GitLab CI, or any pipeline.
-            </p>
+            <p>Automated review in CI pipelines (coming soon).</p>
           </article>
           <article class="deploy-card">
             <h3>
@@ -1122,11 +1069,9 @@
     <div class="container">
       <section class="cta-section" aria-labelledby="cta-title">
         <p class="section-label reveal">Get started</p>
-        <h2 class="section-title reveal" id="cta-title">
-          Get your first signal<br />in under a minute
-        </h2>
+        <h2 class="section-title reveal" id="cta-title">Get your first signal<br>in under a minute</h2>
         <p class="reveal">
-          Install once, run against any PR, get grounded signals.
+          Includes first-time setup. Install once, then run against any PR instantly.
         </p>
 
         <div class="cta-install reveal">
@@ -1134,14 +1079,13 @@
             aria-label="Copy install command to clipboard">
             <span class="prompt" aria-hidden="true">$</span>
             <code>npm i -g @prsense/cli</code>
-            <span class="copy-hint" aria-live="polite">then run prsense review .</span>
+            <span class="copy-hint" aria-live="polite">click to copy</span>
           </div>
-          <div style="
-                display: flex;
-                gap: 16px;
-                flex-wrap: wrap;
-                justify-content: center;
-              ">
+          <div style="font-size:13px;color:var(--muted)">
+            Then run <code style="font-family:'JetBrains Mono',monospace;font-size:12px">prsense review .</code> to
+            start setup
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
             <a class="btn btn-primary" href="https://www.npmjs.com/package/@prsense/cli">
               Install via npm
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1162,8 +1106,8 @@
       <div class="footer-inner">
         <div class="footer-left">
           <span>PRSense</span>
-          <span style="opacity: 0.4" aria-hidden="true">&middot;</span>
-          <span style="opacity: 0.6">Open-source PR review engine</span>
+          <span style="opacity:0.4" aria-hidden="true">&middot;</span>
+          <span style="opacity:0.6">Open-source PR review engine</span>
         </div>
         <nav class="footer-links" aria-label="Footer navigation">
           <a href="/what-is-prsense.html">Docs</a>
@@ -1176,78 +1120,58 @@
 
   <script>
     // Nav scroll
-    const nav = document.getElementById("nav");
-    window.addEventListener(
-      "scroll",
-      () => {
-        nav.classList.toggle("scrolled", window.scrollY > 20);
-      },
-      { passive: true },
-    );
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
 
     // Reveal on scroll
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
-    );
-    document
-      .querySelectorAll(".reveal")
-      .forEach((el) => observer.observe(el));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
     // Terminal typing
-    const terminalObs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target
-              .querySelectorAll(".terminal-line")
-              .forEach((line, i) => {
-                setTimeout(() => {
-                  line.style.transition = "opacity 0.4s, transform 0.4s";
-                  line.style.opacity = "1";
-                  line.style.transform = "translateY(0)";
-                }, i * 80);
-              });
-            terminalObs.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.2 },
-    );
-    terminalObs.observe(document.getElementById("terminal"));
+    const terminalObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.terminal-line').forEach((line, i) => {
+            setTimeout(() => {
+              line.style.transition = 'opacity 0.4s, transform 0.4s';
+              line.style.opacity = '1';
+              line.style.transform = 'translateY(0)';
+            }, i * 80);
+          });
+          terminalObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    terminalObs.observe(document.getElementById('terminal'));
 
     // Copy
     function copyInstall(el) {
-      const code = el.querySelector("code");
+      const code = el.querySelector('code');
       if (!code) return;
       navigator.clipboard.writeText(code.textContent).then(() => {
-        const hint = el.querySelector(".copy-hint");
+        const hint = el.querySelector('.copy-hint');
         if (hint) {
           const orig = hint.textContent;
-          hint.textContent = "copied!";
-          hint.style.opacity = "1";
-          setTimeout(() => {
-            hint.textContent = orig;
-            hint.style.opacity = "0.7";
-          }, 1500);
+          hint.textContent = 'copied!';
+          hint.style.opacity = '1';
+          setTimeout(() => { hint.textContent = orig; hint.style.opacity = '0.7'; }, 1500);
         }
       });
     }
 
     // Keyboard support for install boxes
-    document.querySelectorAll(".install-box").forEach((box) => {
-      box.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          copyInstall(box);
-        }
+    document.querySelectorAll('.install-box').forEach(box => {
+      box.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyInstall(box); }
       });
     });
   </script>

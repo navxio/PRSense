@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.1 — First-time setup and validation
+
+### Added
+- Interactive first-time setup triggered automatically when no config is found
+- LLM provider selection (Ollama, OpenAI, Anthropic, Google)
+- Default model assignment per provider
+- API key validation before completing setup
+- Graceful cancellation handling during setup
+
+### Changed
+- Setup now validates API keys before writing config
+- Configuration is generated with required `llm.model` for all providers
+- Improved onboarding flow: setup → validation → ready to run
+- Environment variable is set in-process after validation for immediate use
+
+### Fixed
+- Invalid API keys no longer pass silently during first run
+- Prevented broken configs being written when validation fails
+- Fixed TypeScript issues around provider/model typing and API error parsing
+- Ensured consistent provider handling across setup and runtime
+
 ## v0.2.0
 
 Incremental Indexing
