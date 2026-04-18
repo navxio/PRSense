@@ -4,221 +4,973 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>What is PRSense? — Deterministic PR Review Explained</title>
+    <!-- ── PRIMARY SEO ── -->
+    <title>
+      What is PRSense? — Deterministic, Diff-First PR Review Explained
+    </title>
     <meta
       name="description"
       content="PRSense is a deterministic, diff-first pull request review engine that surfaces high-confidence signals without hallucinations or noise. Learn how it works."
     />
+    <link rel="canonical" href="https://prsense.org/what-is-prsense.html" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="PRSense" />
 
-    <!-- SEO keywords (optional but harmless) -->
-    <meta
-      name="keywords"
-      content="PRSense, AI code review, pull request review tool, diff-first analysis, deterministic code review, self-hosted AI dev tools"
-    />
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="What is PRSense?" />
-    <meta
-      property="og:description"
-      content="Deterministic, diff-first pull request review with high-signal outputs."
-    />
+    <!-- ── OPEN GRAPH ── -->
+    <meta property="og:type" content="article" />
     <meta
       property="og:url"
       content="https://prsense.org/what-is-prsense.html"
     />
-    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="What is PRSense? — Deterministic PR Review Explained"
+    />
+    <meta
+      property="og:description"
+      content="Deterministic, diff-first pull request review with high-signal outputs. No hallucinations, no noise."
+    />
+    <meta
+      property="og:image"
+      content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
+    />
+    <meta property="og:site_name" content="PRSense" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ── TWITTER CARD ── -->
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="What is PRSense? — Deterministic PR Review Explained"
+    />
+    <meta
+      name="twitter:description"
+      content="Deterministic, diff-first pull request review with high-signal outputs. No hallucinations, no noise."
+    />
+    <meta
+      name="twitter:image"
+      content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
+    />
+
+    <!-- ── STRUCTURED DATA ── -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "What is PRSense?",
+        "description": "PRSense is a deterministic, diff-first pull request review engine that surfaces high-confidence signals without hallucinations or noise.",
+        "author": {
+          "@type": "Organization",
+          "name": "PRSense",
+          "url": "https://prsense.org/"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "PRSense",
+          "url": "https://prsense.org/"
+        },
+        "mainEntityOfPage": "https://prsense.org/what-is-prsense.html"
+      }
+    </script>
+
+    <!-- ── FONTS ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
         margin: 0;
-        background: #ffffff;
-        color: #111827;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #f8f9fb;
+        --fg: #0f1729;
+        --muted: #5c6478;
+        --border: #dfe2e8;
+        --surface: #eceef3;
+        --accent: #0d7c66;
+        --accent-soft: rgba(13, 124, 102, 0.08);
+        --code-bg: #0f1729;
+        --code-fg: #cdd2dc;
+        --code-green: #34d399;
+        --code-yellow: #fbbf24;
+        --code-red: #f87171;
+        --code-blue: #60a5fa;
+        --code-muted: #5c6478;
+        --radius: 10px;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        font-size: 16px;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background: var(--bg);
+        color: var(--fg);
         line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
       }
 
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 40px 20px;
+      ::selection {
+        background: var(--accent);
+        color: #fff;
       }
-
-      h1 {
-        font-size: 40px;
-        margin-bottom: 10px;
-      }
-
-      h2 {
-        margin-top: 40px;
-        font-size: 26px;
-      }
-
-      p {
-        margin: 15px 0;
-        color: #374151;
-      }
-
-      ul {
-        padding-left: 20px;
-      }
-
-      li {
-        margin-bottom: 10px;
-      }
-
-      .install {
-        background: #111827;
-        color: #f9fafb;
-        padding: 18px;
-        border-radius: 8px;
-        margin: 30px 0;
-        font-family: monospace;
-      }
-
-      .highlight {
-        background: #f9fafb;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-      }
-
       a {
-        color: #111827;
-        font-weight: 500;
-        text-decoration: none;
+        color: inherit;
       }
 
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .footer {
-        margin-top: 60px;
-        border-top: 1px solid #e5e7eb;
-        padding-top: 20px;
+      /* ── NAV ── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
         display: flex;
         justify-content: space-between;
-        color: #6b7280;
+        align-items: center;
+        padding: 14px 40px;
+        background: rgba(248, 249, 251, 0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.3s;
+      }
+      nav.scrolled {
+        border-bottom-color: var(--border);
+      }
+
+      .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .nav-logo img {
+        height: 28px;
+        width: auto;
+        flex-shrink: 0;
+      }
+      .nav-logo span {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 500;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        text-decoration: none;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        transition: color 0.2s;
+      }
+      .nav-links a:hover {
+        color: var(--fg);
+      }
+
+      .nav-cta {
+        font-size: 13px !important;
+        background: var(--fg);
+        color: #fff !important;
+        padding: 7px 16px;
+        border-radius: 6px;
+        transition: opacity 0.2s;
+      }
+      .nav-cta:hover {
+        opacity: 0.85;
+      }
+
+      /* ── LAYOUT ── */
+      .container {
+        max-width: 740px;
+        margin: 0 auto;
+        padding: 0 40px;
+      }
+
+      /* ── ARTICLE HERO ── */
+      .article-hero {
+        padding-top: 140px;
+        padding-bottom: 60px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .article-hero .breadcrumb {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 28px;
+        opacity: 0;
+        animation: fadeUp 0.7s 0.15s forwards;
+      }
+      .article-hero .breadcrumb a {
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .article-hero .breadcrumb a:hover {
+        color: var(--fg);
+      }
+      .article-hero .breadcrumb span {
+        opacity: 0.4;
+        margin: 0 8px;
+      }
+
+      .article-hero h1 {
+        font-family: "Fraunces", serif;
+        font-size: clamp(36px, 5vw, 52px);
+        font-weight: 400;
+        line-height: 1.12;
+        letter-spacing: -0.03em;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fadeUp 0.7s 0.25s forwards;
+      }
+
+      .article-hero .lead {
+        font-size: 18px;
+        color: var(--muted);
+        max-width: 560px;
+        line-height: 1.65;
+        opacity: 0;
+        animation: fadeUp 0.7s 0.35s forwards;
+      }
+
+      /* ── ARTICLE BODY ── */
+      .article-body {
+        padding: 60px 0 100px;
+      }
+
+      .article-body h2 {
+        font-family: "Fraunces", serif;
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        margin-top: 64px;
+        margin-bottom: 20px;
+      }
+
+      .article-body p {
+        font-size: 16px;
+        color: var(--muted);
+        line-height: 1.75;
+        margin-bottom: 20px;
+      }
+
+      .article-body strong {
+        color: var(--fg);
+        font-weight: 600;
+      }
+
+      .article-body ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 24px;
+      }
+
+      .article-body ul li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+
+      .article-body ul li::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+        margin-top: 9px;
+      }
+
+      /* ── INSTALL BOX ── */
+      .install-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background: var(--code-bg);
+        color: var(--code-fg);
+        padding: 14px 22px;
+        border-radius: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.2s;
+        margin: 8px 0 28px;
+      }
+      .install-box:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+      .install-box .prompt {
+        color: var(--code-green);
+        user-select: none;
+      }
+      .install-box .copy-hint {
+        font-size: 11px;
+        color: var(--code-muted);
+        margin-left: 12px;
+        opacity: 0.7;
+      }
+
+      /* ── COMPARISON CARD ── */
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin: 24px 0 32px;
+      }
+      .comp-col {
+        padding: 32px 28px;
+      }
+      .comp-col.others {
+        background: var(--surface);
+      }
+      .comp-col.prsense {
+        background: var(--code-bg);
+        color: var(--code-fg);
+      }
+
+      .comp-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+      .comp-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .comp-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 14px;
+        margin-bottom: 12px;
+        line-height: 1.5;
+      }
+      .comp-list li::before {
+        display: none;
+      }
+      .comp-list li svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        margin-top: 3px;
+      }
+      .comp-col.others .comp-list li svg {
+        color: var(--code-red);
+        opacity: 0.6;
+      }
+      .comp-col.prsense .comp-list li svg {
+        color: var(--code-green);
+      }
+
+      /* ── CHARACTERISTICS GRID ── */
+      .char-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin: 24px 0 32px;
+      }
+      .char-card {
+        background: var(--bg);
+        padding: 28px 24px;
+      }
+      .char-card h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .char-card h3 .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+      .char-card p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      /* ── POSITIONING BOX ── */
+      .positioning {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 32px;
+        margin: 24px 0 32px;
+      }
+      .positioning p {
+        font-size: 15px;
+        margin: 0;
+      }
+      .positioning p + p {
+        margin-top: 12px;
+      }
+
+      /* ── LINKS LIST ── */
+      .link-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 16px 0 32px;
+      }
+      .link-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        transition: padding-left 0.2s;
+      }
+      .link-item:first-child {
+        border-top: 1px solid var(--border);
+      }
+      .link-item:hover {
+        padding-left: 8px;
+      }
+      .link-item .link-label {
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .link-item .link-desc {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .link-item svg {
+        width: 16px;
+        height: 16px;
+        color: var(--muted);
+        flex-shrink: 0;
+        transition: transform 0.2s;
+      }
+      .link-item:hover svg {
+        transform: translateX(3px);
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        padding: 32px 0;
+        border-top: 1px solid var(--border);
+      }
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .footer-left {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .footer-links {
+        display: flex;
+        gap: 20px;
+      }
+      .footer-links a {
+        font-size: 13px;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: var(--fg);
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 768px) {
+        .container {
+          padding: 0 24px;
+        }
+        nav {
+          padding: 14px 20px;
+        }
+        .nav-links a:not(.nav-cta) {
+          display: none;
+        }
+        .article-hero {
+          padding-top: 110px;
+        }
+        .comparison {
+          grid-template-columns: 1fr;
+        }
+        .char-grid {
+          grid-template-columns: 1fr;
+        }
+        .install-box {
+          font-size: 12px;
+        }
+        .install-box .copy-hint {
+          display: none;
+        }
       }
     </style>
   </head>
+
   <body>
-    <div class="container">
-      <h1>What is PRSense?</h1>
+    <!-- ── NAV ── -->
+    <nav id="nav" aria-label="Main navigation">
+      <a class="nav-logo" href="/" aria-label="PRSense home">
+        <img
+          src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
+          alt="PRSense strix logo"
+          width="120"
+          height="120"
+        />
+        <span>PRSense</span>
+      </a>
+      <div class="nav-links">
+        <a href="/#how">How it works</a>
+        <a href="https://github.com/navxio/prsense">GitHub</a>
+        <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+        <a class="nav-cta" href="https://github.com/navxio/prsense"
+          >Star on GitHub</a
+        >
+      </div>
+    </nav>
 
-      <p>
-        <strong>PRSense</strong> is a deterministic, diff-first pull request
-        review engine that surfaces high-confidence review signals from code
-        changes.
-      </p>
-
-      <p>
-        Unlike traditional AI code review tools, PRSense analyzes only what
-        changed in a pull request and produces grounded, inspectable signals —
-        without hallucinations, noise, or automated code modifications.
-      </p>
-
-      <div class="install">
-        npm i -g @prsense/cli<br />
-        prsense review .
+    <main>
+      <!-- ── ARTICLE HERO ── -->
+      <div class="container">
+        <div class="article-hero">
+          <div class="breadcrumb">
+            <a href="/">PRSense</a>
+            <span>/</span>
+            Docs
+          </div>
+          <h1>What is PRSense?</h1>
+          <p class="lead">
+            A deterministic, diff-first pull request review engine that surfaces
+            high-confidence signals from code changes — without hallucinations,
+            noise, or automated modifications.
+          </p>
+        </div>
       </div>
 
-      <h2>Why PRSense exists</h2>
+      <!-- ── ARTICLE BODY ── -->
+      <div class="container">
+        <article class="article-body">
+          <!-- Install -->
+          <div class="reveal">
+            <div
+              class="install-box"
+              onclick="copyInstall(this)"
+              role="button"
+              tabindex="0"
+              aria-label="Copy install command to clipboard"
+            >
+              <span class="prompt" aria-hidden="true">$</span>
+              <code>npm i -g @prsense/cli && prsense review .</code>
+              <span class="copy-hint" aria-live="polite">click to copy</span>
+            </div>
+          </div>
 
-      <div class="highlight">
-        <strong>Most AI code review tools:</strong>
-        <ul>
-          <li>Comment on code that did not change</li>
-          <li>Hallucinate files, symbols, or context</li>
-          <li>Generate verbose, low-signal feedback</li>
-        </ul>
+          <!-- Why -->
+          <h2 class="reveal">Why PRSense exists</h2>
 
-        <strong>PRSense takes a different approach:</strong>
-        <ul>
-          <li>Diff-first analysis — focuses only on modified code</li>
-          <li>Deterministic pipeline — reproducible and inspectable</li>
-          <li>Signal-based output — concise, high-confidence findings</li>
-        </ul>
+          <div class="comparison reveal">
+            <div class="comp-col others">
+              <p class="comp-label">Other tools</p>
+              <ul class="comp-list">
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Comment on code that didn't change
+                </li>
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Hallucinate files, symbols, or context
+                </li>
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Generate verbose, low-signal feedback
+                </li>
+              </ul>
+            </div>
+            <div class="comp-col prsense">
+              <p class="comp-label">PRSense</p>
+              <ul class="comp-list">
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Diff-first — only analyzes what changed
+                </li>
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Deterministic — reproducible and inspectable
+                </li>
+                <li>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Signal-based — concise, high-confidence findings
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- How -->
+          <h2 class="reveal">How PRSense works</h2>
+
+          <p class="reveal">
+            PRSense processes pull requests through a structured pipeline:
+          </p>
+
+          <ul class="reveal">
+            <li>Ingests the git diff and metadata</li>
+            <li>Builds contextual understanding from the repository</li>
+            <li>Runs analysis using LLMs (local or cloud)</li>
+            <li>Emits structured review signals grounded in actual changes</li>
+          </ul>
+
+          <p class="reveal">
+            Each signal can be traced back to specific lines in the diff —
+            nothing is fabricated.
+          </p>
+
+          <!-- Characteristics -->
+          <h2 class="reveal">Key characteristics</h2>
+
+          <div class="char-grid reveal">
+            <div class="char-card">
+              <h3><span class="dot"></span> Deterministic</h3>
+              <p>
+                Results are consistent and explainable. Same input, same output.
+              </p>
+            </div>
+            <div class="char-card">
+              <h3><span class="dot"></span> Diff-first</h3>
+              <p>
+                No irrelevant analysis outside the change set. Only what
+                matters.
+              </p>
+            </div>
+            <div class="char-card">
+              <h3><span class="dot"></span> Human-in-the-loop</h3>
+              <p>
+                No autonomous code changes. Engineers stay in control of every
+                decision.
+              </p>
+            </div>
+            <div class="char-card">
+              <h3><span class="dot"></span> Self-hosted</h3>
+              <p>
+                Run locally or within your own infrastructure. No code leaves
+                your machine.
+              </p>
+            </div>
+            <div class="char-card" style="grid-column: span 2">
+              <h3><span class="dot"></span> LLM-agnostic</h3>
+              <p>
+                Supports both local and cloud models. Plug in whichever LLM fits
+                your workflow and privacy requirements.
+              </p>
+            </div>
+          </div>
+
+          <!-- Positioning -->
+          <h2 class="reveal">Where PRSense fits</h2>
+
+          <div class="positioning reveal">
+            <p>
+              <strong>PRSense is not</strong> a general-purpose repository
+              memory system or autonomous coding agent.
+            </p>
+            <p>
+              It is a focused review engine designed to assist engineers in
+              understanding
+              <strong>risk, correctness, and impact</strong> within pull
+              requests.
+            </p>
+          </div>
+
+          <!-- Getting started -->
+          <h2 class="reveal">Getting started</h2>
+
+          <p class="reveal">
+            Install the CLI and review your first pull request in seconds:
+          </p>
+
+          <div class="reveal">
+            <div
+              class="install-box"
+              onclick="copyInstall(this)"
+              role="button"
+              tabindex="0"
+              aria-label="Copy install command to clipboard"
+            >
+              <span class="prompt" aria-hidden="true">$</span>
+              <code>npm i -g @prsense/cli</code>
+              <span class="copy-hint" aria-live="polite">click to copy</span>
+            </div>
+          </div>
+
+          <p class="reveal">
+            You can also run PRSense in CI or as a long-lived daemon for
+            automated workflows.
+          </p>
+
+          <!-- Learn more -->
+          <h2 class="reveal">Learn more</h2>
+
+          <div class="link-list reveal">
+            <a class="link-item" href="/">
+              <div>
+                <div class="link-label">Homepage</div>
+                <div class="link-desc">prsense.org</div>
+              </div>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+            <a class="link-item" href="https://github.com/navxio/prsense">
+              <div>
+                <div class="link-label">GitHub repository</div>
+                <div class="link-desc">github.com/navxio/prsense</div>
+              </div>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+            <a
+              class="link-item"
+              href="https://www.npmjs.com/package/@prsense/cli"
+            >
+              <div>
+                <div class="link-label">npm package</div>
+                <div class="link-desc">@prsense/cli</div>
+              </div>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </article>
       </div>
+    </main>
 
-      <h2>How PRSense works</h2>
-
-      <p>PRSense processes pull requests through a structured pipeline:</p>
-
-      <ul>
-        <li>Ingests the git diff and metadata</li>
-        <li>Builds contextual understanding from the repository</li>
-        <li>Runs analysis using LLMs (local or cloud)</li>
-        <li>Emits structured review signals</li>
-      </ul>
-
-      <p>
-        Each signal is grounded in actual code changes and can be traced back to
-        specific lines in the diff.
-      </p>
-
-      <h2>Key characteristics</h2>
-
-      <ul>
-        <li>
-          <strong>Deterministic</strong> — results are consistent and
-          explainable
-        </li>
-        <li>
-          <strong>Diff-first</strong> — no irrelevant analysis outside the
-          change set
-        </li>
-        <li><strong>Human-in-the-loop</strong> — no autonomous code changes</li>
-        <li>
-          <strong>Self-hosted</strong> — run locally or within your
-          infrastructure
-        </li>
-        <li><strong>LLM-agnostic</strong> — supports local and cloud models</li>
-      </ul>
-
-      <h2>Where PRSense fits</h2>
-
-      <p>
-        PRSense is not a general-purpose repository memory system or autonomous
-        coding agent.
-      </p>
-
-      <p>
-        It is a focused review engine designed to assist engineers in
-        understanding risk, correctness, and impact within pull requests.
-      </p>
-
-      <h2>Getting started</h2>
-
-      <p>Install the CLI and review your first pull request in seconds:</p>
-
-      <div class="install">
-        npm i -g @prsense/cli<br />
-        prsense review .
+    <!-- ── FOOTER ── -->
+    <footer>
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-left">
+            <span>PRSense</span>
+            <span style="opacity: 0.4" aria-hidden="true">&middot;</span>
+            <span style="opacity: 0.6">Open-source PR review engine</span>
+          </div>
+          <nav class="footer-links" aria-label="Footer navigation">
+            <a href="/">Home</a>
+            <a href="https://github.com/navxio/prsense">GitHub</a>
+            <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+          </nav>
+        </div>
       </div>
+    </footer>
 
-      <p>
-        You can also run PRSense in CI or as a long-lived daemon for automated
-        workflows.
-      </p>
+    <script>
+      // Nav scroll
+      const nav = document.getElementById("nav");
+      window.addEventListener(
+        "scroll",
+        () => {
+          nav.classList.toggle("scrolled", window.scrollY > 20);
+        },
+        { passive: true },
+      );
 
-      <h2>Learn more</h2>
+      // Reveal on scroll
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
+      );
+      document
+        .querySelectorAll(".reveal")
+        .forEach((el) => observer.observe(el));
 
-      <ul>
-        <li><a href="https://prsense.org">Homepage</a></li>
-        <li>
-          <a href="https://github.com/navxio/prsense">GitHub repository</a>
-        </li>
-        <li>
-          <a href="https://www.npmjs.com/package/@prsense/cli">npm package</a>
-        </li>
-      </ul>
+      // Copy
+      function copyInstall(el) {
+        const code = el.querySelector("code");
+        if (!code) return;
+        navigator.clipboard.writeText(code.textContent).then(() => {
+          const hint = el.querySelector(".copy-hint");
+          if (hint) {
+            const orig = hint.textContent;
+            hint.textContent = "copied!";
+            hint.style.opacity = "1";
+            setTimeout(() => {
+              hint.textContent = orig;
+              hint.style.opacity = "0.7";
+            }, 1500);
+          }
+        });
+      }
 
-      <div class="footer">
-        <div>PRSense</div>
-        <div>Open-source · Self-hosted</div>
-      </div>
-    </div>
+      // Keyboard support for install boxes
+      document.querySelectorAll(".install-box").forEach((box) => {
+        box.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            copyInstall(box);
+          }
+        });
+      });
+    </script>
   </body>
 </html>

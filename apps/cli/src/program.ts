@@ -3,6 +3,7 @@ import { reviewCommand } from "./commands/review.js";
 import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
+import { initCommand } from "./init/init.js";
 import daemonCommand from "./commands/daemon.js";
 import pkg from "../package.json" with { type: "json" };
 
@@ -18,3 +19,4 @@ program.addCommand(indexCommand);
 program.addCommand(doctorCommand);
 program.addCommand(setupCommand);
 program.addCommand(daemonCommand);
+program.addCommand(initCommand);
