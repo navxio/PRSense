@@ -16,6 +16,7 @@ import {
   GitLabMrDiffProvider,
 } from "@prsense/context";
 import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
+import { ensureInit } from "../init/ensureInit.js";
 
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
@@ -42,6 +43,8 @@ export const reviewCommand = new Command("review")
   .option("-t, --llm-temperature <n>", "LLM temperature", Number)
   .option("-s, --stats", "Print Stats related to review")
   .action(async (target, options) => {
+    await ensureInit()
+    console.log("→ Running review...\n");
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
       pretty: true,
