@@ -63,10 +63,6 @@ export async function runFirstTimeSetup() {
   config.llm.model = DEFAULT_MODELS[provider];
   console.log(`✔ Using model: ${config.llm.model}\n`);
 
-  fs.writeFileSync(CONFIG_PATH, yaml.stringify(config));
-
-  console.log("\n✔ Config saved:", CONFIG_PATH);
-
   // ✅ print config (dev trust boost)
   console.log("\n---");
   console.log(yaml.stringify(config));
@@ -93,6 +89,10 @@ export async function runFirstTimeSetup() {
     console.log("ℹ Using local Ollama (no API key required)\n");
   }
 
+
+  fs.writeFileSync(CONFIG_PATH, yaml.stringify(config));
+
+  console.log("\n✔ Config saved:", CONFIG_PATH);
   console.log("✔ Setup complete\n");
 }
 
