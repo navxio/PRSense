@@ -20,7 +20,7 @@ export const DEFAULT_CONFIG = {
     maxChunks: 5,
   },
   git: {
-    baseBranch: "trunk",
+    baseBranch: "main",
   },
   delivery: {
     platform: "github",
