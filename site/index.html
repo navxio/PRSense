@@ -1,59 +1,41 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ── PRIMARY SEO ── -->
-    <title>
-      PRSense — Deterministic, Diff-First PR Review Engine | Open Source
-    </title>
-    <meta
-      name="description"
-      content="PRSense is an open-source, self-hosted PR review engine. Diff-first, deterministic analysis with no hallucinated files. Install in 10 seconds via npm."
-    />
-    <link rel="canonical" href="https://prsense.org/" />
-    <meta name="robots" content="index, follow" />
-    <meta name="author" content="PRSense" />
-    <meta
-      name="google-site-verification"
-      content="ev05izRBOH-wiMuxpejKXejZ1zNxi7dMbJ4fbriK5ds"
-    />
-    <!-- ── OPEN GRAPH ── -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://prsense.org/" />
-    <meta
-      property="og:title"
-      content="PRSense — Deterministic PR Review Engine"
-    />
-    <meta
-      property="og:description"
-      content="Diff-first, deterministic pull request review. High-signal AI code review without noise. Open-source and self-hosted."
-    />
-    <meta
-      property="og:image"
-      content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
-    />
-    <meta property="og:site_name" content="PRSense" />
-    <meta property="og:locale" content="en_US" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ── TWITTER CARD ── -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="PRSense — Deterministic PR Review Engine"
-    />
-    <meta
-      name="twitter:description"
-      content="Diff-first, deterministic pull request review. High-signal AI without noise. Self-hosted and private."
-    />
-    <meta
-      name="twitter:image"
-      content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
-    />
+  <!-- ── PRIMARY SEO ── -->
+  <title>
+    PRSense — Deterministic, Diff-First PR Review Engine | Open Source
+  </title>
+  <meta name="description"
+    content="PRSense is an open-source, self-hosted PR review engine. Diff-first, deterministic analysis with no hallucinated files. Install in 10 seconds via npm." />
+  <link rel="canonical" href="https://prsense.org/" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="PRSense" />
+  <meta name="google-site-verification" content="ev05izRBOH-wiMuxpejKXejZ1zNxi7dMbJ4fbriK5ds" />
+  <!-- ── OPEN GRAPH ── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://prsense.org/" />
+  <meta property="og:title" content="PRSense — Deterministic PR Review Engine" />
+  <meta property="og:description"
+    content="Diff-first, deterministic pull request review. High-signal AI code review without noise. Open-source and self-hosted." />
+  <meta property="og:image"
+    content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true" />
+  <meta property="og:site_name" content="PRSense" />
+  <meta property="og:locale" content="en_US" />
 
-    <!-- ── STRUCTURED DATA ── -->
-    <script type="application/ld+json">
+  <!-- ── TWITTER CARD ── -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PRSense — Deterministic PR Review Engine" />
+  <meta name="twitter:description"
+    content="Diff-first, deterministic pull request review. High-signal AI without noise. Self-hosted and private." />
+  <meta name="twitter:image"
+    content="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true" />
+
+  <!-- ── STRUCTURED DATA ── -->
+  <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -78,1284 +60,1197 @@
       }
     </script>
 
-    <!-- ── FONTS ── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+  <!-- ── FONTS ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
 
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      :root {
-        --bg: #f8f9fb;
-        --fg: #0f1729;
-        --muted: #5c6478;
-        --border: #dfe2e8;
-        --surface: #eceef3;
-        --accent: #0d7c66;
-        --accent-soft: rgba(13, 124, 102, 0.08);
-        --code-bg: #0f1729;
-        --code-fg: #cdd2dc;
-        --code-green: #34d399;
-        --code-yellow: #fbbf24;
-        --code-red: #f87171;
-        --code-blue: #60a5fa;
-        --code-muted: #5c6478;
-        --radius: 10px;
-      }
+    :root {
+      --bg: #f8f9fb;
+      --fg: #0f1729;
+      --muted: #5c6478;
+      --border: #dfe2e8;
+      --surface: #eceef3;
+      --accent: #0d7c66;
+      --accent-soft: rgba(13, 124, 102, 0.08);
+      --code-bg: #0f1729;
+      --code-fg: #cdd2dc;
+      --code-green: #34d399;
+      --code-yellow: #fbbf24;
+      --code-red: #f87171;
+      --code-blue: #60a5fa;
+      --code-muted: #5c6478;
+      --radius: 10px;
+    }
 
-      html {
-        scroll-behavior: smooth;
-        font-size: 16px;
-      }
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
 
-      body {
-        font-family: "Outfit", sans-serif;
-        background: var(--bg);
-        color: var(--fg);
-        line-height: 1.65;
-        -webkit-font-smoothing: antialiased;
-        overflow-x: hidden;
-      }
+    body {
+      font-family: "Outfit", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
 
-      ::selection {
-        background: var(--accent);
-        color: #fff;
-      }
+    ::selection {
+      background: var(--accent);
+      color: #fff;
+    }
 
-      a {
-        color: inherit;
-      }
+    a {
+      color: inherit;
+    }
 
-      /* ── NAV ── */
-      nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px 40px;
-        background: rgba(248, 249, 251, 0.82);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        border-bottom: 1px solid transparent;
-        transition: border-color 0.3s;
-      }
-      nav.scrolled {
-        border-bottom-color: var(--border);
-      }
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 40px;
+      background: rgba(248, 249, 251, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
 
-      .nav-logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-decoration: none;
-      }
-      .nav-logo img {
-        height: 28px;
-        width: auto;
-        flex-shrink: 0;
-      }
-      .nav-logo span {
-        font-family: "JetBrains Mono", monospace;
-        font-weight: 500;
-        font-size: 15px;
-        letter-spacing: -0.02em;
-      }
+    nav.scrolled {
+      border-bottom-color: var(--border);
+    }
 
-      .nav-links {
-        display: flex;
-        align-items: center;
-        gap: 28px;
-      }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
 
-      .nav-links a {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--muted);
-        text-decoration: none;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        transition: color 0.2s;
-      }
-      .nav-links a:hover {
-        color: var(--fg);
-      }
+    .nav-logo img {
+      height: 28px;
+      width: auto;
+      flex-shrink: 0;
+    }
 
-      .nav-cta {
-        font-size: 13px !important;
-        background: var(--fg);
-        color: #fff !important;
-        padding: 7px 16px;
-        border-radius: 6px;
-        transition: opacity 0.2s;
-      }
-      .nav-cta:hover {
-        opacity: 0.85;
-      }
+    .nav-logo span {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
 
-      /* ── LAYOUT ── */
-      .container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 40px;
-      }
-      section {
-        padding: 100px 0;
-      }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
 
-      /* ── HERO ── */
-      .hero {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-top: 80px;
-        padding-bottom: 60px;
-      }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
 
-      .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 12px;
-        color: var(--muted);
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        margin-bottom: 32px;
+    .nav-links a:hover {
+      color: var(--fg);
+    }
+
+    .nav-cta {
+      font-size: 13px !important;
+      background: var(--fg);
+      color: #fff !important;
+      padding: 7px 16px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .nav-cta:hover {
+      opacity: 0.85;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    section {
+      padding: 100px 0;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 80px;
+      padding-bottom: 60px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero-logo {
+      width: 160px;
+      height: auto;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.25s forwards;
+    }
+
+    .hero h1 {
+      font-family: "Fraunces", serif;
+      font-size: clamp(48px, 6.5vw, 82px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.35s forwards;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 19px;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.5s forwards;
+    }
+
+    .hero-install {
+      opacity: 0;
+      animation: fadeUp 0.8s 0.65s forwards;
+    }
+
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      padding: 14px 22px;
+      border-radius: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      cursor: pointer;
+      transition:
+        transform 0.15s,
+        box-shadow 0.2s;
+    }
+
+    .install-box:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .install-box .prompt {
+      color: var(--code-green);
+      user-select: none;
+    }
+
+    .install-box .copy-hint {
+      font-size: 11px;
+      color: var(--code-muted);
+      margin-left: 12px;
+      opacity: 0.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: "Outfit", sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--fg);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      padding: 11px 6px;
+    }
+
+    .btn-ghost:hover {
+      color: var(--fg);
+    }
+
+    .btn-ghost svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .hero-proof {
+      display: flex;
+      gap: 24px;
+      margin-top: 48px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.95s forwards;
+    }
+
+    .proof-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .proof-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--code-green);
+      flex-shrink: 0;
+    }
+
+    /* ── TERMINAL ── */
+    .terminal-section {
+      padding: 40px 0 100px;
+    }
+
+    .terminal {
+      background: var(--code-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 8px 40px rgba(0, 0, 0, 0.12),
+        0 40px 80px rgba(0, 0, 0, 0.06);
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--code-muted);
+      margin-right: 34px;
+    }
+
+    .terminal-body {
+      padding: 24px 28px 32px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      overflow-x: auto;
+    }
+
+    .t-prompt {
+      color: var(--code-green);
+    }
+
+    .t-cmd {
+      color: var(--code-fg);
+    }
+
+    .t-url {
+      color: var(--code-blue);
+    }
+
+    .t-check {
+      color: var(--code-green);
+    }
+
+    .t-severity-high {
+      color: var(--code-red);
+      font-weight: 500;
+    }
+
+    .t-severity-med {
+      color: var(--code-yellow);
+      font-weight: 500;
+    }
+
+    .t-file {
+      color: var(--code-fg);
+      opacity: 0.75;
+    }
+
+    .t-desc {
+      color: var(--code-muted);
+    }
+
+    .t-fix {
+      color: var(--code-yellow);
+    }
+
+    .t-dim {
+      color: var(--code-muted);
+      opacity: 0.5;
+    }
+
+    .terminal-line {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      margin: 0 auto;
+    }
+
+    /* ── SECTIONS ── */
+    .section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(30px, 4vw, 44px);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 48px;
+    }
+
+    /* ── COMPARISON ── */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .comp-col {
+      padding: 40px 36px;
+    }
+
+    .comp-col.others {
+      background: var(--surface);
+    }
+
+    .comp-col.prsense {
+      background: var(--code-bg);
+      color: var(--code-fg);
+    }
+
+    .comp-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+      opacity: 0.5;
+    }
+
+    .comp-list {
+      list-style: none;
+    }
+
+    .comp-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .comp-list li svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .comp-col.others .comp-list li svg {
+      color: var(--code-red);
+      opacity: 0.6;
+    }
+
+    .comp-col.prsense .comp-list li svg {
+      color: var(--code-green);
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .step {
+      background: var(--bg);
+      padding: 36px 28px;
+    }
+
+    .step-num {
+      font-family: "Fraunces", serif;
+      font-size: 36px;
+      color: var(--accent);
+      opacity: 0.3;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .step h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── DEPLOY ── */
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .deploy-card {
+      background: var(--bg);
+      padding: 36px 28px;
+    }
+
+    .deploy-card h3 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .deploy-card h3 svg {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+    }
+
+    .deploy-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 120px 0;
+      text-align: center;
+    }
+
+    .cta-section .section-title {
+      max-width: 550px;
+      margin: 0 auto 16px;
+    }
+
+    .cta-section p {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 36px;
+    }
+
+    .cta-install {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--fg);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from {
         opacity: 0;
-        animation: fadeUp 0.8s 0.2s forwards;
-      }
-      .hero-badge::before {
-        content: "";
-        width: 6px;
-        height: 6px;
-        background: var(--accent);
-        border-radius: 50%;
+        transform: translateY(16px);
       }
 
-      .hero-logo {
-        width: 160px;
-        height: auto;
-        margin-bottom: 12px;
-        opacity: 0;
-        animation: fadeUp 0.8s 0.25s forwards;
-      }
-
-      .hero h1 {
-        font-family: "Fraunces", serif;
-        font-size: clamp(48px, 6.5vw, 82px);
-        font-weight: 400;
-        line-height: 1.08;
-        letter-spacing: -0.03em;
-        margin-bottom: 28px;
-        opacity: 0;
-        animation: fadeUp 0.8s 0.35s forwards;
-      }
-      .hero h1 em {
-        font-style: italic;
-        color: var(--accent);
-      }
-
-      .hero-sub {
-        font-size: 19px;
-        color: var(--muted);
-        max-width: 520px;
-        line-height: 1.6;
-        margin-bottom: 40px;
-        opacity: 0;
-        animation: fadeUp 0.8s 0.5s forwards;
-      }
-
-      .hero-install {
-        opacity: 0;
-        animation: fadeUp 0.8s 0.65s forwards;
-      }
-
-      .install-box {
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        background: var(--code-bg);
-        color: var(--code-fg);
-        padding: 14px 22px;
-        border-radius: 8px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        cursor: pointer;
-        transition:
-          transform 0.15s,
-          box-shadow 0.2s;
-      }
-      .install-box:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-      }
-      .install-box .prompt {
-        color: var(--code-green);
-        user-select: none;
-      }
-      .install-box .copy-hint {
-        font-size: 11px;
-        color: var(--code-muted);
-        margin-left: 12px;
-        opacity: 0.7;
-      }
-
-      .hero-actions {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-top: 24px;
-        opacity: 0;
-        animation: fadeUp 0.8s 0.8s forwards;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 11px 22px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s;
-        cursor: pointer;
-        border: none;
-        font-family: "Outfit", sans-serif;
-      }
-      .btn-primary {
-        background: var(--fg);
-        color: #fff;
-      }
-      .btn-primary:hover {
-        opacity: 0.88;
-        transform: translateY(-1px);
-      }
-      .btn-ghost {
-        background: transparent;
-        color: var(--muted);
-        padding: 11px 6px;
-      }
-      .btn-ghost:hover {
-        color: var(--fg);
-      }
-      .btn-ghost svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      .hero-proof {
-        display: flex;
-        gap: 24px;
-        margin-top: 48px;
-        opacity: 0;
-        animation: fadeUp 0.8s 0.95s forwards;
-      }
-      .proof-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-      .proof-item svg {
-        width: 16px;
-        height: 16px;
-        color: var(--code-green);
-        flex-shrink: 0;
-      }
-
-      /* ── TERMINAL ── */
-      .terminal-section {
-        padding: 40px 0 100px;
-      }
-
-      .terminal {
-        background: var(--code-bg);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.08),
-          0 8px 40px rgba(0, 0, 0, 0.12),
-          0 40px 80px rgba(0, 0, 0, 0.06);
-      }
-      .terminal-bar {
-        display: flex;
-        align-items: center;
-        padding: 14px 18px;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.04);
-      }
-      .terminal-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.08);
-      }
-      .terminal-title {
-        flex: 1;
-        text-align: center;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 12px;
-        color: var(--code-muted);
-        margin-right: 34px;
-      }
-      .terminal-body {
-        padding: 24px 28px 32px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 13px;
-        line-height: 1.75;
-        overflow-x: auto;
-      }
-
-      .t-prompt {
-        color: var(--code-green);
-      }
-      .t-cmd {
-        color: var(--code-fg);
-      }
-      .t-url {
-        color: var(--code-blue);
-      }
-      .t-check {
-        color: var(--code-green);
-      }
-      .t-severity-high {
-        color: var(--code-red);
-        font-weight: 500;
-      }
-      .t-severity-med {
-        color: var(--code-yellow);
-        font-weight: 500;
-      }
-      .t-file {
-        color: var(--code-fg);
-        opacity: 0.75;
-      }
-      .t-desc {
-        color: var(--code-muted);
-      }
-      .t-fix {
-        color: var(--code-yellow);
-      }
-      .t-dim {
-        color: var(--code-muted);
-        opacity: 0.5;
-      }
-
-      .terminal-line {
-        opacity: 0;
-        transform: translateY(4px);
-      }
-
-      /* ── DIVIDER ── */
-      .divider {
-        width: 40px;
-        height: 1px;
-        background: var(--border);
-        margin: 0 auto;
-      }
-
-      /* ── SECTIONS ── */
-      .section-label {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--muted);
-        margin-bottom: 20px;
-      }
-      .section-title {
-        font-family: "Fraunces", serif;
-        font-size: clamp(30px, 4vw, 44px);
-        font-weight: 400;
-        letter-spacing: -0.02em;
-        line-height: 1.15;
-        margin-bottom: 48px;
-      }
-
-      /* ── COMPARISON ── */
-      .comparison {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2px;
-        border-radius: var(--radius);
-        overflow: hidden;
-      }
-      .comp-col {
-        padding: 40px 36px;
-      }
-      .comp-col.others {
-        background: var(--surface);
-      }
-      .comp-col.prsense {
-        background: var(--code-bg);
-        color: var(--code-fg);
-      }
-
-      .comp-label {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 24px;
-        opacity: 0.5;
-      }
-      .comp-list {
-        list-style: none;
-      }
-      .comp-list li {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        font-size: 15px;
-        margin-bottom: 16px;
-        line-height: 1.5;
-      }
-      .comp-list li svg {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-      .comp-col.others .comp-list li svg {
-        color: var(--code-red);
-        opacity: 0.6;
-      }
-      .comp-col.prsense .comp-list li svg {
-        color: var(--code-green);
-      }
-
-      /* ── STEPS ── */
-      .steps {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1px;
-        background: var(--border);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-      }
-      .step {
-        background: var(--bg);
-        padding: 36px 28px;
-      }
-      .step-num {
-        font-family: "Fraunces", serif;
-        font-size: 36px;
-        color: var(--accent);
-        opacity: 0.3;
-        margin-bottom: 16px;
-        line-height: 1;
-      }
-      .step h3 {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 10px;
-      }
-      .step p {
-        font-size: 13px;
-        color: var(--muted);
-        line-height: 1.55;
-      }
-
-      /* ── DEPLOY ── */
-      .deploy-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1px;
-        background: var(--border);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-      }
-      .deploy-card {
-        background: var(--bg);
-        padding: 36px 28px;
-      }
-      .deploy-card h3 {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .deploy-card h3 svg {
-        width: 16px;
-        height: 16px;
-        color: var(--muted);
-      }
-      .deploy-card p {
-        font-size: 14px;
-        color: var(--muted);
-        line-height: 1.55;
-      }
-
-      /* ── CTA ── */
-      .cta-section {
-        padding: 120px 0;
-        text-align: center;
-      }
-      .cta-section .section-title {
-        max-width: 550px;
-        margin: 0 auto 16px;
-      }
-      .cta-section p {
-        color: var(--muted);
-        font-size: 16px;
-        margin-bottom: 36px;
-      }
-      .cta-install {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-      }
-
-      /* ── FOOTER ── */
-      footer {
-        padding: 32px 0;
-        border-top: 1px solid var(--border);
-      }
-      .footer-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .footer-left {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 13px;
-        color: var(--muted);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-      .footer-links {
-        display: flex;
-        gap: 20px;
-      }
-      .footer-links a {
-        font-size: 13px;
-        color: var(--muted);
-        text-decoration: none;
-        transition: color 0.2s;
-      }
-      .footer-links a:hover {
-        color: var(--fg);
-      }
-
-      /* ── ANIMATIONS ── */
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(16px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .reveal {
-        opacity: 0;
-        transform: translateY(20px);
-        transition:
-          opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-          transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-      .reveal.visible {
+      to {
         opacity: 1;
         transform: translateY(0);
       }
+    }
 
-      /* ── RESPONSIVE ── */
-      @media (max-width: 768px) {
-        .container {
-          padding: 0 24px;
-        }
-        nav {
-          padding: 14px 20px;
-        }
-        .nav-links a:not(.nav-cta) {
-          display: none;
-        }
-        .hero {
-          min-height: auto;
-          padding-top: 120px;
-          padding-bottom: 60px;
-        }
-        .hero h1 {
-          font-size: 38px;
-        }
-        .hero-proof {
-          flex-direction: column;
-          gap: 12px;
-        }
-        .comparison {
-          grid-template-columns: 1fr;
-        }
-        .steps {
-          grid-template-columns: 1fr 1fr;
-        }
-        .deploy-grid {
-          grid-template-columns: 1fr;
-        }
-        .install-box {
-          font-size: 12px;
-        }
-        .install-box .copy-hint {
-          display: none;
-        }
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition:
+        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 24px;
       }
-      @media (max-width: 480px) {
-        .steps {
-          grid-template-columns: 1fr;
-        }
+
+      nav {
+        padding: 14px 20px;
       }
-    </style>
-  </head>
 
-  <body>
-    <!-- ── NAV ── -->
-    <nav id="nav" aria-label="Main navigation">
-      <a class="nav-logo" href="/" aria-label="PRSense home">
-        <img
-          src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
-          alt="PRSense owl logo"
-          width="28"
-          height="28"
-        />
-        <span>PRSense</span>
-      </a>
-      <div class="nav-links">
-        <a href="#how">How it works</a>
-        <a href="https://github.com/navxio/prsense">GitHub</a>
-        <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
-        <a class="nav-cta" href="https://github.com/navxio/prsense"
-          >Star on GitHub</a
-        >
-      </div>
-    </nav>
+      .nav-links a:not(.nav-cta) {
+        display: none;
+      }
 
-    <main>
-      <!-- ── HERO ── -->
-      <div class="container">
-        <section class="hero">
-          <div class="hero-badge" aria-hidden="true">
-            Open-source &middot; Self-hosted &middot; Private
+      .hero {
+        min-height: auto;
+        padding-top: 120px;
+        padding-bottom: 60px;
+      }
+
+      .hero h1 {
+        font-size: 38px;
+      }
+
+      .hero-proof {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .deploy-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .install-box {
+        font-size: 12px;
+      }
+
+      .install-box .copy-hint {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ── NAV ── -->
+  <nav id="nav" aria-label="Main navigation">
+    <a class="nav-logo" href="/" aria-label="PRSense home">
+      <img src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
+        alt="PRSense owl logo" width="28" height="28" />
+      <span>PRSense</span>
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="https://github.com/navxio/prsense">GitHub</a>
+      <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+      <a class="nav-cta" href="https://github.com/navxio/prsense">Star on GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ── HERO ── -->
+    <div class="container">
+      <section class="hero">
+        <div class="hero-badge" aria-hidden="true">
+          Open-source &middot; Self-hosted &middot; Private
+        </div>
+
+        <img class="hero-logo" src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
+          alt="PRSense — deterministic PR review engine logo" width="72" height="72" />
+
+        <h1>PR review that<br />makes <em>sense</em></h1>
+
+        <p class="hero-sub">
+          Deterministic, diff-first code review. High-signal findings grounded
+          in real changes — no hallucinated files, no noise.
+        </p>
+
+        <div class="hero-install">
+          <div class="install-box" onclick="copyInstall(this)" role="button" tabindex="0"
+            aria-label="Copy install command to clipboard">
+            <span class="prompt" aria-hidden="true">$</span>
+            <code>npm i -g @prsense/cli && prsense review .</code>
+            <span class="copy-hint" aria-live="polite">first run sets up environment</span>
           </div>
+        </div>
 
-          <img
-            class="hero-logo"
-            src="https://github.com/navxio/PRSense/blob/trunk/assets/prsense_logo_dark.png?raw=true"
-            alt="PRSense — deterministic PR review engine logo"
-            width="72"
-            height="72"
-          />
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://www.npmjs.com/package/@prsense/cli">
+            Get started
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/navxio/prsense" aria-label="View PRSense on GitHub">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z" />
+            </svg>
+            GitHub
+          </a>
+        </div>
 
-          <h1>PR review that<br />makes <em>sense</em></h1>
-
-          <p class="hero-sub">
-            Deterministic, diff-first code review. High-signal findings grounded
-            in real changes — no hallucinated files, no noise.
-          </p>
-
-          <div class="hero-install">
-            <div
-              class="install-box"
-              onclick="copyInstall(this)"
-              role="button"
-              tabindex="0"
-              aria-label="Copy install command to clipboard"
-            >
-              <span class="prompt" aria-hidden="true">$</span>
-              <code>npm i -g @prsense/cli && prsense review .</code>
-              <span class="copy-hint" aria-live="polite"
-                >first run sets up environment</span
-              >
-            </div>
+        <div class="hero-proof">
+          <div class="proof-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            No hallucinated files or symbols
           </div>
-
-          <div class="hero-actions">
-            <a
-              class="btn btn-primary"
-              href="https://www.npmjs.com/package/@prsense/cli"
-            >
-              Get started
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </a>
-            <a
-              class="btn btn-ghost"
-              href="https://github.com/navxio/prsense"
-              aria-label="View PRSense on GitHub"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path
-                  d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"
-                />
-              </svg>
-              GitHub
-            </a>
+          <div class="proof-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Signals derived directly from diff
           </div>
-
-          <div class="hero-proof">
-            <div class="proof-item">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              No hallucinated files or symbols
-            </div>
-            <div class="proof-item">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Signals derived directly from diff
-            </div>
-            <div class="proof-item">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              No code leaves your machine
-            </div>
+          <div class="proof-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            No code leaves your machine
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+    </div>
 
-      <!-- ── TERMINAL ── -->
-      <div class="container">
-        <section class="terminal-section" aria-label="PRSense output example">
-          <div class="terminal reveal" id="terminal">
-            <div class="terminal-bar" aria-hidden="true">
-              <div class="terminal-dot"></div>
-              <div class="terminal-dot"></div>
-              <div class="terminal-dot"></div>
-              <div class="terminal-title">prsense review</div>
+    <!-- ── TERMINAL ── -->
+    <div class="container">
+      <section class="terminal-section" aria-label="PRSense output example">
+        <div class="terminal reveal" id="terminal">
+          <div class="terminal-bar" aria-hidden="true">
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+            <div class="terminal-title">prsense review</div>
+          </div>
+          <div class="terminal-body" role="img"
+            aria-label="Example PRSense terminal output showing a high-severity missing super constructor call and a medium-severity return type mismatch found in a Spring Framework pull request">
+            <div class="terminal-line">
+              <span class="t-prompt">❯</span>
+              <span class="t-cmd">prsense review</span>
+              <span class="t-url">"https://github.com/spring-projects/spring-framework/pull/36373"</span>
             </div>
-            <div
-              class="terminal-body"
-              role="img"
-              aria-label="Example PRSense terminal output showing a high-severity missing super constructor call and a medium-severity return type mismatch found in a Spring Framework pull request"
-            >
-              <div class="terminal-line">
-                <span class="t-prompt">❯</span>
-                <span class="t-cmd">prsense review</span>
-                <span class="t-url"
-                  >"https://github.com/spring-projects/spring-framework/pull/36373"</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-check">✔</span>
-                <span class="t-dim">PRSense completed repository context</span>
-              </div>
-              <br />
-              <div class="terminal-line">
-                <span class="t-severity-high">[HIGH]</span>
-                <span class="t-file"
-                  >spring-core/…/buffer/JettyDataBuffer.java</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  Constructor is missing a call to super(BufferFactory,
-                  delegate);</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  ↳ The class extends JettyVirtualDataBuffer, which
-                  requires</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  initialization of its superclass in the constructor.</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-fix">
-                  ▼ Add 'super(bufferFactory, delegate);' at the beginning</span
-                >
-              </div>
-              <br />
-              <div class="terminal-line">
-                <span class="t-severity-med">[MEDIUM]</span>
-                <span class="t-file"
-                  >spring-core/…/buffer/JettyDataBufferFactory.java</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  Method 'allocateBuffer()' should return a type that
-                  implements</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  'JettyDataBuffer', but returns 'JettyVirtualDataBuffer'.</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-desc">
-                  This discrepancy could lead to runtime errors.</span
-                >
-              </div>
-              <div class="terminal-line">
-                <span class="t-fix">
-                  ▼ Change return type to 'DataBuffer' or
-                  'JettyDataBuffer'</span
-                >
-              </div>
-              <br />
-              <div class="terminal-line">
-                <span class="t-dim"
-                  >── 2 issues found · 1 high · 1 medium ──</span
-                >
-              </div>
+            <div class="terminal-line">
+              <span class="t-check">✔</span>
+              <span class="t-dim">PRSense completed repository context</span>
+            </div>
+            <br />
+            <div class="terminal-line">
+              <span class="t-severity-high">[HIGH]</span>
+              <span class="t-file">spring-core/…/buffer/JettyDataBuffer.java</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                Constructor is missing a call to super(BufferFactory,
+                delegate);</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                ↳ The class extends JettyVirtualDataBuffer, which
+                requires</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                initialization of its superclass in the constructor.</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-fix">
+                ▼ Add 'super(bufferFactory, delegate);' at the beginning</span>
+            </div>
+            <br />
+            <div class="terminal-line">
+              <span class="t-severity-med">[MEDIUM]</span>
+              <span class="t-file">spring-core/…/buffer/JettyDataBufferFactory.java</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                Method 'allocateBuffer()' should return a type that
+                implements</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                'JettyDataBuffer', but returns 'JettyVirtualDataBuffer'.</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-desc">
+                This discrepancy could lead to runtime errors.</span>
+            </div>
+            <div class="terminal-line">
+              <span class="t-fix">
+                ▼ Change return type to 'DataBuffer' or
+                'JettyDataBuffer'</span>
+            </div>
+            <br />
+            <div class="terminal-line">
+              <span class="t-dim">── 2 issues found · 1 high · 1 medium ──</span>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+    </div>
 
-      <div class="divider" role="separator"></div>
+    <div class="divider" role="separator"></div>
 
-      <!-- ── PROBLEM / SOLUTION ── -->
-      <div class="container">
-        <section class="problem-section" id="why" aria-labelledby="why-title">
-          <p class="section-label reveal">The problem</p>
-          <h2 class="section-title reveal" id="why-title">
-            Most AI reviewers are<br />guessing. PRSense isn't.
-          </h2>
+    <!-- ── PROBLEM / SOLUTION ── -->
+    <div class="container">
+      <section class="problem-section" id="why" aria-labelledby="why-title">
+        <p class="section-label reveal">The problem</p>
+        <h2 class="section-title reveal" id="why-title">
+          Most AI reviewers are<br />guessing. PRSense isn't.
+        </h2>
 
-          <div class="comparison reveal">
-            <div class="comp-col others">
-              <p class="comp-label">Other tools</p>
-              <ul class="comp-list">
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                  Comment on code that didn't change
-                </li>
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                  Hallucinate files and symbols
-                </li>
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                  Flood PRs with low-signal noise
-                </li>
-              </ul>
-            </div>
-            <div class="comp-col prsense">
-              <p class="comp-label">PRSense</p>
-              <ul class="comp-list">
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Analyzes only what changed
-                </li>
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Grounded, inspectable signals
-                </li>
-                <li>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Humans stay in control
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <div class="divider" role="separator"></div>
-
-      <!-- ── HOW IT WORKS ── -->
-      <div class="container">
-        <section id="how" aria-labelledby="how-title">
-          <p class="section-label reveal">How it works</p>
-          <h2 class="section-title reveal" id="how-title">
-            Four steps to<br />deterministic review
-          </h2>
-
-          <div class="steps reveal">
-            <article class="step">
-              <div class="step-num" aria-hidden="true">1</div>
-              <h3>Parse the diff</h3>
-              <p>
-                Extracts only the changed lines and their surrounding context
-                from the PR.
-              </p>
-            </article>
-            <article class="step">
-              <div class="step-num" aria-hidden="true">2</div>
-              <h3>Build signals</h3>
-              <p>
-                Runs a deterministic pipeline to identify patterns, issues, and
-                semantic changes.
-              </p>
-            </article>
-            <article class="step">
-              <div class="step-num" aria-hidden="true">3</div>
-              <h3>Ground check</h3>
-              <p>
-                Verifies every finding against the actual diff — no hallucinated
-                references.
-              </p>
-            </article>
-            <article class="step">
-              <div class="step-num" aria-hidden="true">4</div>
-              <h3>Report</h3>
-              <p>
-                Delivers structured, actionable output with severity, location,
-                and fix suggestions.
-              </p>
-            </article>
-          </div>
-        </section>
-      </div>
-
-      <div class="divider" role="separator"></div>
-
-      <!-- ── DEPLOY ── -->
-      <div class="container">
-        <section aria-labelledby="deploy-title">
-          <p class="section-label reveal">Deployment</p>
-          <h2 class="section-title reveal" id="deploy-title">
-            Run it anywhere
-          </h2>
-
-          <div class="deploy-grid reveal">
-            <article class="deploy-card">
-              <h3>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="4 17 10 11 4 5" />
-                  <line x1="12" y1="19" x2="20" y2="19" />
+        <div class="comparison reveal">
+          <div class="comp-col others">
+            <p class="comp-label">Other tools</p>
+            <ul class="comp-list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                CLI
-              </h3>
-              <p>
-                Local development. Review PRs from your terminal with a single
-                command.
-              </p>
-            </article>
-            <article class="deploy-card">
-              <h3>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
+                Comment on code that didn't change
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                CI
-                <span style="color: var(--muted); font-weight: 400"
-                  >(coming soon)</span
-                >
-              </h3>
-              <p>
-                Automated review in GitHub Actions, GitLab CI, or any pipeline.
-              </p>
-            </article>
-            <article class="deploy-card">
-              <h3>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
+                Hallucinate files and symbols
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                Daemon
-              </h3>
-              <p>Self-hosted webhook service that reviews PRs as they open.</p>
-            </article>
+                Flood PRs with low-signal noise
+              </li>
+            </ul>
           </div>
-        </section>
-      </div>
+          <div class="comp-col prsense">
+            <p class="comp-label">PRSense</p>
+            <ul class="comp-list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Analyzes only what changed
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Grounded, inspectable signals
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Humans stay in control
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
 
-      <div class="divider" role="separator"></div>
+    <div class="divider" role="separator"></div>
 
-      <!-- ── CTA ── -->
-      <div class="container">
-        <section class="cta-section" aria-labelledby="cta-title">
-          <p class="section-label reveal">Get started</p>
-          <h2 class="section-title reveal" id="cta-title">
-            Get your first signar<br />in under a minute
-          </h2>
-          <p class="reveal">
-            Install once, run against any PR, get grounded signals.
-          </p>
+    <!-- ── HOW IT WORKS ── -->
+    <div class="container">
+      <section id="how" aria-labelledby="how-title">
+        <p class="section-label reveal">How it works</p>
+        <h2 class="section-title reveal" id="how-title">
+          Four steps to<br />deterministic review
+        </h2>
 
-          <div class="cta-install reveal">
-            <div
-              class="install-box"
-              onclick="copyInstall(this)"
-              role="button"
-              tabindex="0"
-              aria-label="Copy install command to clipboard"
-            >
-              <span class="prompt" aria-hidden="true">$</span>
-              <code>npm i -g @prsense/cli</code>
-              <span class="copy-hint" aria-live="polite"
-                >then run prsense review .</span
-              >
-            </div>
-            <div
-              style="
+        <div class="steps reveal">
+          <article class="step">
+            <div class="step-num" aria-hidden="true">1</div>
+            <h3>Parse the diff</h3>
+            <p>
+              Extracts only the changed lines and their surrounding context
+              from the PR.
+            </p>
+          </article>
+          <article class="step">
+            <div class="step-num" aria-hidden="true">2</div>
+            <h3>Build signals</h3>
+            <p>
+              Runs a deterministic pipeline to identify patterns, issues, and
+              semantic changes.
+            </p>
+          </article>
+          <article class="step">
+            <div class="step-num" aria-hidden="true">3</div>
+            <h3>Ground check</h3>
+            <p>
+              Verifies every finding against the actual diff — no hallucinated
+              references.
+            </p>
+          </article>
+          <article class="step">
+            <div class="step-num" aria-hidden="true">4</div>
+            <h3>Report</h3>
+            <p>
+              Delivers structured, actionable output with severity, location,
+              and fix suggestions.
+            </p>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- ── DEPLOY ── -->
+    <div class="container">
+      <section aria-labelledby="deploy-title">
+        <p class="section-label reveal">Deployment</p>
+        <h2 class="section-title reveal" id="deploy-title">
+          Run it anywhere
+        </h2>
+
+        <div class="deploy-grid reveal">
+          <article class="deploy-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                aria-hidden="true">
+                <polyline points="4 17 10 11 4 5" />
+                <line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+              CLI
+            </h3>
+            <p>
+              Local development. Review PRs from your terminal with a single
+              command.
+            </p>
+          </article>
+          <article class="deploy-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              CI
+              <span style="color: var(--muted); font-weight: 400">(coming soon)</span>
+            </h3>
+            <p>
+              Automated review in GitHub Actions, GitLab CI, or any pipeline.
+            </p>
+          </article>
+          <article class="deploy-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                aria-hidden="true">
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              Daemon
+            </h3>
+            <p>Self-hosted webhook service that reviews PRs as they open.</p>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- ── CTA ── -->
+    <div class="container">
+      <section class="cta-section" aria-labelledby="cta-title">
+        <p class="section-label reveal">Get started</p>
+        <h2 class="section-title reveal" id="cta-title">
+          Get your first signal<br />in under a minute
+        </h2>
+        <p class="reveal">
+          Install once, run against any PR, get grounded signals.
+        </p>
+
+        <div class="cta-install reveal">
+          <div class="install-box" onclick="copyInstall(this)" role="button" tabindex="0"
+            aria-label="Copy install command to clipboard">
+            <span class="prompt" aria-hidden="true">$</span>
+            <code>npm i -g @prsense/cli</code>
+            <span class="copy-hint" aria-live="polite">then run prsense review .</span>
+          </div>
+          <div style="
                 display: flex;
                 gap: 16px;
                 flex-wrap: wrap;
                 justify-content: center;
-              "
-            >
-              <a
-                class="btn btn-primary"
-                href="https://www.npmjs.com/package/@prsense/cli"
-              >
-                Install via npm
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </a>
-              <a class="btn btn-ghost" href="/what-is-prsense.html"
-                >Read the docs</a
-              >
-            </div>
+              ">
+            <a class="btn btn-primary" href="https://www.npmjs.com/package/@prsense/cli">
+              Install via npm
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+            <a class="btn btn-ghost" href="/what-is-prsense.html">Read the docs</a>
           </div>
-        </section>
-      </div>
-    </main>
-
-    <!-- ── FOOTER ── -->
-    <footer>
-      <div class="container">
-        <div class="footer-inner">
-          <div class="footer-left">
-            <span>PRSense</span>
-            <span style="opacity: 0.4" aria-hidden="true">&middot;</span>
-            <span style="opacity: 0.6">Open-source PR review engine</span>
-          </div>
-          <nav class="footer-links" aria-label="Footer navigation">
-            <a href="/what-is-prsense.html">Docs</a>
-            <a href="https://github.com/navxio/prsense">GitHub</a>
-            <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
-          </nav>
         </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-left">
+          <span>PRSense</span>
+          <span style="opacity: 0.4" aria-hidden="true">&middot;</span>
+          <span style="opacity: 0.6">Open-source PR review engine</span>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="/what-is-prsense.html">Docs</a>
+          <a href="https://github.com/navxio/prsense">GitHub</a>
+          <a href="https://www.npmjs.com/package/@prsense/cli">npm</a>
+        </nav>
       </div>
-    </footer>
+    </div>
+  </footer>
 
-    <script>
-      // Nav scroll
-      const nav = document.getElementById("nav");
-      window.addEventListener(
-        "scroll",
-        () => {
-          nav.classList.toggle("scrolled", window.scrollY > 20);
-        },
-        { passive: true },
-      );
+  <script>
+    // Nav scroll
+    const nav = document.getElementById("nav");
+    window.addEventListener(
+      "scroll",
+      () => {
+        nav.classList.toggle("scrolled", window.scrollY > 20);
+      },
+      { passive: true },
+    );
 
-      // Reveal on scroll
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
-      );
-      document
-        .querySelectorAll(".reveal")
-        .forEach((el) => observer.observe(el));
-
-      // Terminal typing
-      const terminalObs = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target
-                .querySelectorAll(".terminal-line")
-                .forEach((line, i) => {
-                  setTimeout(() => {
-                    line.style.transition = "opacity 0.4s, transform 0.4s";
-                    line.style.opacity = "1";
-                    line.style.transform = "translateY(0)";
-                  }, i * 80);
-                });
-              terminalObs.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.2 },
-      );
-      terminalObs.observe(document.getElementById("terminal"));
-
-      // Copy
-      function copyInstall(el) {
-        const code = el.querySelector("code");
-        if (!code) return;
-        navigator.clipboard.writeText(code.textContent).then(() => {
-          const hint = el.querySelector(".copy-hint");
-          if (hint) {
-            const orig = hint.textContent;
-            hint.textContent = "copied!";
-            hint.style.opacity = "1";
-            setTimeout(() => {
-              hint.textContent = orig;
-              hint.style.opacity = "0.7";
-            }, 1500);
+    // Reveal on scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
           }
         });
-      }
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
+    );
+    document
+      .querySelectorAll(".reveal")
+      .forEach((el) => observer.observe(el));
 
-      // Keyboard support for install boxes
-      document.querySelectorAll(".install-box").forEach((box) => {
-        box.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            copyInstall(box);
+    // Terminal typing
+    const terminalObs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target
+              .querySelectorAll(".terminal-line")
+              .forEach((line, i) => {
+                setTimeout(() => {
+                  line.style.transition = "opacity 0.4s, transform 0.4s";
+                  line.style.opacity = "1";
+                  line.style.transform = "translateY(0)";
+                }, i * 80);
+              });
+            terminalObs.unobserve(entry.target);
           }
         });
+      },
+      { threshold: 0.2 },
+    );
+    terminalObs.observe(document.getElementById("terminal"));
+
+    // Copy
+    function copyInstall(el) {
+      const code = el.querySelector("code");
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(() => {
+        const hint = el.querySelector(".copy-hint");
+        if (hint) {
+          const orig = hint.textContent;
+          hint.textContent = "copied!";
+          hint.style.opacity = "1";
+          setTimeout(() => {
+            hint.textContent = orig;
+            hint.style.opacity = "0.7";
+          }, 1500);
+        }
       });
-    </script>
-  </body>
+    }
+
+    // Keyboard support for install boxes
+    document.querySelectorAll(".install-box").forEach((box) => {
+      box.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          copyInstall(box);
+        }
+      });
+    });
+  </script>
+</body>
+
 </html>
