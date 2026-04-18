@@ -74,11 +74,21 @@ export async function runFirstTimeSetup() {
 
   // ✅ API key instructions
   if (apiKey) {
-    const envVar = getEnvVarName(provider);
-    process.env[envVar] = apiKey;
+    process.stdout.write("⠋ Validating API key...\r");
 
-    console.log("👉 Add this to your shell:\n");
-    console.log(`export ${envVar}=${apiKey}\n`);
+    try {
+      await validateApiKey(provider, apiKey);
+      console.log("✔ API key valid\n");
+
+      const envVar = getEnvVarName(provider);
+      process.env[envVar] = apiKey;
+
+      console.log("👉 Add this to your shell:\n");
+      console.log(`export ${envVar}=${apiKey}\n`);
+    } catch (err: any) {
+      console.log(`✖ ${err.message}\n`);
+      process.exit(1);
+    }
   } else {
     console.log("ℹ Using local Ollama (no API key required)\n");
   }
@@ -96,5 +106,75 @@ function getEnvVarName(provider: Provider): string {
       return "PRSENSE_GOOGLE_API_KEY";
     default:
       return "";
+  }
+}
+
+async function validateApiKey(
+  provider: Provider,
+  apiKey: string
+): Promise<void> {
+  if (provider === "ollama") return;
+
+  try {
+    switch (provider) {
+      case "openai": {
+        const res = await fetch("https://api.openai.com/v1/models", {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
+
+        if (!res.ok) throw new Error(await extractError(res));
+        return;
+      }
+
+      case "anthropic": {
+        const res = await fetch("https://api.anthropic.com/v1/models", {
+          headers: {
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+        });
+
+        if (!res.ok) throw new Error(await extractError(res));
+        return;
+      }
+
+      case "google": {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+        );
+
+        if (!res.ok) throw new Error(await extractError(res));
+        return;
+      }
+
+      default:
+        throw new Error(`Unsupported provider: ${provider}`);
+    }
+  } catch (err: any) {
+    throw new Error(`API key validation failed: ${err.message}`);
+  }
+}
+
+async function extractError(res: Response): Promise<string> {
+  try {
+    const data: any = await res.json();
+
+    if (data && typeof data === "object") {
+      if ("error" in data) {
+        const err = data.error as any;
+        if (typeof err === "string") return err;
+        if (err?.message) return err.message;
+      }
+
+      if ("message" in data && typeof data.message === "string") {
+        return data.message;
+      }
+    }
+
+    return res.statusText || `HTTP ${res.status}`;
+  } catch {
+    return res.statusText || `HTTP ${res.status}`;
   }
 }
