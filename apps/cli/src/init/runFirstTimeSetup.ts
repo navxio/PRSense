@@ -34,7 +34,7 @@ export async function runFirstTimeSetup() {
       ],
     },
     { onCancel }
-  );
+  ) as { provider: Provider };
 
   let apiKey: string | null = null;
 
