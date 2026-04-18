@@ -5,6 +5,12 @@ import { PRSENSE_DIR, CONFIG_PATH } from "./firstRun.js";
 import { DEFAULT_CONFIG } from "./defaultConfig.js";
 
 type Provider = "ollama" | "openai" | "anthropic" | "google";
+const DEFAULT_MODELS: Record<Provider, string> = {
+  ollama: "qwen2.5-coder",
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-5-sonnet-latest",
+  google: "gemini-1.5-pro",
+};
 
 export async function runFirstTimeSetup() {
   console.log("\n⚡ PRSense first-time setup\n");
@@ -53,13 +59,9 @@ export async function runFirstTimeSetup() {
   // clone default config
   const config = structuredClone(DEFAULT_CONFIG);
 
-  // ✅ apply selected provider
   config.llm.provider = provider;
-
-  // optional: clean model if using cloud provider
-  if (provider !== "ollama") {
-    delete config.llm.model;
-  }
+  config.llm.model = DEFAULT_MODELS[provider];
+  console.log(`✔ Using model: ${config.llm.model}\n`);
 
   fs.writeFileSync(CONFIG_PATH, yaml.stringify(config));
 
