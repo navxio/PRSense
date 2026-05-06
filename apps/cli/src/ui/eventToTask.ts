@@ -78,15 +78,15 @@ export function eventToCliTask(
         },
       };
     case CoreEvents.WorkflowIndexRebuildRequired: {
-      if (!event.fields) return null
-      const { reason } = event.fields
+      if (!event.fields) return null;
+      const { reason } = event.fields;
       return {
         kind: "finish",
         task: {
           id: "index",
           label: reason as string,
-          state: "failed"
-        }
+          state: "failed",
+        },
       };
     }
 
@@ -134,16 +134,6 @@ export function eventToCliTask(
           id: "review",
           label: "Using indexed repository context",
           state: "running",
-        },
-      };
-
-    case CoreEvents.WorkflowReviewInvalidJson:
-      return {
-        kind: "update",
-        task: {
-          id: "review",
-          label: "Model returned invalid JSON (see debug logs)",
-          state: "failed",
         },
       };
 
