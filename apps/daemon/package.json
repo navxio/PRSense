@@ -1,7 +1,7 @@
 {
   "name": "@prsense/daemon",
   "private": false,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "description": "PRsense long-lived daemon (HTTP API + job scheduler)",
   "license": "Apache-2.0",
