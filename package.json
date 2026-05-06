@@ -24,7 +24,8 @@
     "db:shell": "psql -h localhost -p 10000 -U prsense prsense_dev",
     "daemon": "pnpm --filter @prsense/daemon dev",
     "bench": "pnpm --filter @prsense/bench start",
-    "test": "jest"
+    "test": "jest --runInBand",
+    "publish": "pnpm publish -r --access public --no-git-checks"
   },
   "keywords": [
     "cli",
