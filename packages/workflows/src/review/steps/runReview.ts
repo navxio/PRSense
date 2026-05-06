@@ -1,18 +1,12 @@
 // src/review/steps/runReview.ts
 import pLimit from "p-limit";
 import os from "node:os";
-import {
-  CoreEvents,
-  IndexMetadata,
-  DiffFile,
-  ReviewSignal,
-  EventBus,
-} from "@prsense/core";
+import { CoreEvents, DiffFile, ReviewSignal, EventBus } from "@prsense/core";
 import type { LlmClient } from "@prsense/llm";
 
 import { runFileReview } from "../lib/runFileReview.js";
 
-import { FileReviewResult } from "../types.js";
+import { FileReviewResult, ReviewMetadata } from "../types.js";
 import { LlmUsage } from "@prsense/llm";
 import { ResolvedConfig } from "@prsense/config";
 
@@ -20,7 +14,7 @@ type RunReviewParams = {
   files: DiffFile[];
   llmClient: LlmClient;
   contextText: string;
-  metadata: IndexMetadata;
+  metadata?: ReviewMetadata;
   config: ResolvedConfig;
   eventBus: EventBus;
 };
@@ -52,7 +46,7 @@ export async function runReview({
         file,
         llmClient,
         contextText,
-        metadata,
+        ...(metadata ? { metadata } : {}),
         config,
         eventBus,
       }),

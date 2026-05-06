@@ -32,3 +32,9 @@ export type FileReviewResult =
       file: string;
       error: string;
     };
+
+export type ReviewMetadata = {
+  title?: string;
+  description?: string;
+  branchName?: string;
+};

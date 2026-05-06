@@ -63,7 +63,7 @@ export async function runReviewWorkflow({
       files: diff.files,
       llmClient,
       contextText,
-      metadata,
+      ...(metadata ? { metadata } : {}),
       config,
       eventBus,
     });

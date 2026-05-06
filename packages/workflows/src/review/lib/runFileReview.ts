@@ -1,15 +1,10 @@
 // src/review/lib/runFileReview.ts
 // run single file review
-import {
-  CoreEvents,
-  DiffFile,
-  type EventBus,
-  type IndexMetadata,
-} from "@prsense/core";
+import { CoreEvents, DiffFile, type EventBus } from "@prsense/core";
 import { ResolvedConfig } from "@prsense/config";
 import { buildReviewPrompt } from "@prsense/core";
 import { extractJson } from "../extractJson.js";
-import type { FileReviewResult } from "../types.js";
+import type { FileReviewResult, ReviewMetadata } from "../types.js";
 import { validateReviewOutput } from "../validateReviewOutput.js";
 import { LlmClient } from "@prsense/llm";
 
@@ -24,7 +19,7 @@ export async function runFileReview({
   file: DiffFile;
   llmClient: LlmClient;
   contextText: string;
-  metadata: IndexMetadata;
+  metadata?: ReviewMetadata;
   config: ResolvedConfig;
   eventBus: EventBus;
 }): Promise<FileReviewResult> {
