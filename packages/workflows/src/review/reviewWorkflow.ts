@@ -7,7 +7,7 @@ import type { ReviewWorkflowResult } from "./types.js";
 import { loadDiff } from "./steps/loadDiff.js";
 import { resolveContext } from "./steps/resolveContext.js";
 import { createLlmClientSafe } from "./steps/createLlmClient.js";
-import { runFileReview } from "./steps/runFileReview.js";
+import { runReview } from "./steps/runReview.js";
 import { finalizeSignals } from "./steps/finaliseSignals.js";
 
 export async function runReviewWorkflow({
@@ -59,7 +59,7 @@ export async function runReviewWorkflow({
 
     const llmClient = createLlmClientSafe(config, credentials);
 
-    const { allSignals, totalUsage } = await runFileReview({
+    const { allSignals, totalUsage } = await runReview({
       files: diff.files,
       llmClient,
       contextText,

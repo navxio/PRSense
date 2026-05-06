@@ -26,11 +26,9 @@ export const CoreEvents = {
   WorkflowReviewStarted: "workflow.review.started",
   WorkflowReviewFinished: "workflow.review.finished",
   WorkflowReviewFailed: "workflow.review.failed",
-  WorkflowReviewLlmRetry: "workflow.review.llm.retry",
   WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
   WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
   WorkflowReviewContextAvailable: "workflow.review.context_available",
-  WorkflowReviewInvalidJson: "workflow.review.invalid_json",
   WorkflowReviewContextQueryBuilt: "workflow.review.context.query_built",
   WorkflowReviewContextEmbeddingGenerated:
     "workflow.review.context.embedding_generated",
