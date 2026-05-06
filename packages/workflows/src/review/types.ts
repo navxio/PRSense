@@ -19,3 +19,22 @@ export type RetrievalWorkflowResult = {
   payload?: RetrievedContext;
   error?: string;
 };
+
+export type FileReviewResult =
+  | {
+      outcome: "success";
+      file: string;
+      signals: ReviewSignal[];
+      usage?: LlmUsage;
+    }
+  | {
+      outcome: "failure";
+      file: string;
+      error: string;
+    };
+
+export type ReviewMetadata = {
+  title?: string;
+  description?: string;
+  branchName?: string;
+};

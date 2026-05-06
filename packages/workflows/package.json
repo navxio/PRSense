@@ -19,6 +19,7 @@
     "@prsense/llm": "workspace:*",
     "@prsense/preflight": "workspace:*",
     "@prsense/reporters": "workspace:*",
+    "p-limit": "^7.3.0",
     "pg": "^8.17.1"
   },
   "devDependencies": {

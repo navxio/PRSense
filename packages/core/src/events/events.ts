@@ -26,8 +26,20 @@ export const CoreEvents = {
   WorkflowReviewStarted: "workflow.review.started",
   WorkflowReviewFinished: "workflow.review.finished",
   WorkflowReviewFailed: "workflow.review.failed",
-  WorkflowReviewFileFailed: "workflow.review.file.failed",
-  WorkflowReviewLlmRetry: "workflow.review.llm.retry",
+  WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
+  WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
+  WorkflowReviewContextAvailable: "workflow.review.context_available",
+  WorkflowReviewContextQueryBuilt: "workflow.review.context.query_built",
+  WorkflowReviewContextEmbeddingGenerated:
+    "workflow.review.context.embedding_generated",
+  WorkflowReviewContextRetrieved: "workflow.review.context.retrieved",
+  WorkflowReviewContextChunkRetrieved:
+    "workflow.review.context.chunk_retrieved",
+  WorkflowReviewDiffLoaded: "workflow.review.diff.loaded",
+  WorkflowReviewConcurrencyConfigured: "workflow.review.concurrency_configured",
+  WorkflowReviewFileReviewStarted: "workflow.review.file.review.started",
+  WorkflowReviewFileReviewFinished: "workflow.review.file.review.finished",
+  WorkflowReviewFileReviewFailed: "workflow.review.file.review.failed",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",
@@ -45,18 +57,6 @@ export const CoreEvents = {
   WorkflowIndexDimensionMismatch: "workflow.index.dimension_mismatch",
   WorkflowIndexRepositorySourceResolved:
     "workflow.index.repository_store.resolved",
-  WorkflowReviewContextUnavailable: "workflow.review.context_unavailable",
-  WorkflowReviewIndexOutdated: "workflow.review.index_outdated",
-  WorkflowReviewContextAvailable: "workflow.review.context_available",
-  WorkflowReviewInvalidJson: "workflow.review.invalid_json",
-  WorkflowReviewContextQueryBuilt: "workflow.review.context.query_built",
-  WorkflowReviewContextEmbeddingGenerated:
-    "workflow.review.context.embedding_generated",
-  WorkflowReviewContextRetrieved: "workflow.review.context.retrieved",
-  WorkflowReviewContextChunkRetrieved:
-    "workflow.review.context.chunk_retrieved",
-  WorkflowReviewFileStarted: "workflow.review.file_started",
-  WorkflowReviewDiffLoaded: "workflow.review.diff.loaded",
 
   /* -------------------------------------------------
    * Capability lifecycle

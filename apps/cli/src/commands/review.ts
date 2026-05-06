@@ -43,7 +43,7 @@ export const reviewCommand = new Command("review")
   .option("-t, --llm-temperature <n>", "LLM temperature", Number)
   .option("-s, --stats", "Print Stats related to review")
   .action(async (target, options) => {
-    await ensureInit()
+    await ensureInit();
     console.log("→ Running review...\n");
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
@@ -239,7 +239,9 @@ export const reviewCommand = new Command("review")
       };
 
       const sortedSignals = [...result.payload.signals].sort((a, b) => {
-        return (severityOrder[b.severity] ?? -1) - (severityOrder[a.severity] ?? -1);
+        return (
+          (severityOrder[b.severity] ?? -1) - (severityOrder[a.severity] ?? -1)
+        );
       });
 
       for (const signal of sortedSignals) {
