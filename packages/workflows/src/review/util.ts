@@ -8,6 +8,9 @@ export async function runConcurrent<T, R>({
   concurrency: number;
   worker: (item: T) => Promise<R>;
 }): Promise<R[]> {
+  if (!Number.isInteger(concurrency) || concurrency < 1) {
+    throw new Error(`Invalid concurrency value: ${concurrency}`);
+  }
   if (items.length === 0) return [];
   const results: R[] = new Array(items.length);
 
