@@ -1,5 +1,4 @@
 // src/review/steps/runReview.ts
-import pLimit from "p-limit";
 import os from "node:os";
 import { CoreEvents, DiffFile, ReviewSignal, EventBus } from "@prsense/core";
 import type { LlmClient } from "@prsense/llm";
@@ -9,6 +8,7 @@ import { runFileReview } from "../lib/runFileReview.js";
 import { FileReviewResult, ReviewMetadata } from "../types.js";
 import { LlmUsage } from "@prsense/llm";
 import { ResolvedConfig } from "@prsense/config";
+import { runConcurrent } from "../util.js";
 
 type RunReviewParams = {
   files: DiffFile[];
@@ -39,22 +39,21 @@ export async function runReview({
     files: files.length,
   });
 
-  const limit = pLimit(concurrency);
-  const input = files.map((file: DiffFile) =>
-    limit(() =>
-      runFileReview({
-        file,
-        llmClient,
-        contextText,
-        ...(metadata ? { metadata } : {}),
-        config,
-        eventBus,
-      }),
-    ),
-  );
   let results: FileReviewResult[];
   try {
-    results = await Promise.all(input);
+    results = await runConcurrent({
+      items: files,
+      concurrency,
+      worker: (file) =>
+        runFileReview({
+          file,
+          llmClient,
+          contextText,
+          ...(metadata ? { metadata } : {}),
+          config,
+          eventBus,
+        }),
+    });
   } catch (err) {
     eventBus.emit(CoreEvents.WorkflowReviewFailed, {
       error: err instanceof Error ? err.message : String(err),
