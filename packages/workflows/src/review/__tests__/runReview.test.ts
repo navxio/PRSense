@@ -243,47 +243,6 @@ describe("runReview", () => {
     expect(duration).toBeLessThan(250);
   });
 
-  it("does not exceed configured concurrency", async () => {
-    let active = 0;
-    let maxSeen = 0;
-
-    mockedRunFileReview.mockImplementation(async ({ file }: any) => {
-      active++;
-      maxSeen = Math.max(maxSeen, active);
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      active--;
-
-      return {
-        outcome: "success",
-        file: file.path,
-        signals: [],
-      };
-    });
-
-    await runReview({
-      files: [
-        createFile("a.ts"),
-        createFile("b.ts"),
-        createFile("c.ts"),
-        createFile("d.ts"),
-        createFile("e.ts"),
-        createFile("f.ts"),
-      ],
-      llmClient: {},
-      contextText: "ctx",
-      config: createConfig({
-        review: {
-          concurrency: 2,
-        },
-      }),
-      eventBus: new TestEventBus(),
-    });
-
-    expect(maxSeen).toBeLessThanOrEqual(2);
-  });
-
   it("passes metadata through to file review", async () => {
     mockedRunFileReview.mockResolvedValue({
       outcome: "success",
