@@ -1,8 +1,23 @@
 # Changelog
 
+## v0.3.0
+
+Added
+
+- Concurrent file reviews for significantly faster review execution on multi-file diffs
+- Bounded concurrency orchestration with isolated per-file failure handling
+- New review workflow concurrency events for improved observability
+
+Improved
+
+- Reduced end-to-end review latency for large pull requests
+- Improved review workflow resilience and aggregation behavior
+- Refactored review execution pipeline for reusable orchestration primitives
+
 ## v0.2.1 — First-time setup and validation
 
 ### Added
+
 - Interactive first-time setup triggered automatically when no config is found
 - LLM provider selection (Ollama, OpenAI, Anthropic, Google)
 - Default model assignment per provider
@@ -10,12 +25,14 @@
 - Graceful cancellation handling during setup
 
 ### Changed
+
 - Setup now validates API keys before writing config
 - Configuration is generated with required `llm.model` for all providers
 - Improved onboarding flow: setup → validation → ready to run
 - Environment variable is set in-process after validation for immediate use
 
 ### Fixed
+
 - Invalid API keys no longer pass silently during first run
 - Prevented broken configs being written when validation fails
 - Fixed TypeScript issues around provider/model typing and API error parsing
