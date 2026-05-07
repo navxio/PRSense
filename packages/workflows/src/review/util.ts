@@ -8,6 +8,7 @@ export async function runConcurrent<T, R>({
   concurrency: number;
   worker: (item: T) => Promise<R>;
 }): Promise<R[]> {
+  if (items.length === 0) return [];
   const results: R[] = new Array(items.length);
 
   let next = 0;
@@ -20,7 +21,10 @@ export async function runConcurrent<T, R>({
         break;
       }
 
-      results[current] = await worker(items[current]);
+      const item = items[current];
+      if (item === undefined) break;
+
+      results[current] = await worker(item);
     }
   }
 
