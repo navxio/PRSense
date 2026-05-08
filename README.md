@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/prsense_logo_transparent.png">
-    <source media="(prefers-color-scheme: light)" srcset="assets/prsense_logo_dark.png">
-    <img src="assets/prsense_logo_dark.png" width="220">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/prsense-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/prsense-logo-light.svg">
+    <img src="assets/prsense-logo-light.svg" width="80" alt="PRSense">
   </picture>
 </p>
 <h1 align="center">PRSense</h1>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="PRSense">
+  <title>PRSense</title>
+  <g fill="none" stroke="#0f1729" stroke-width="14" stroke-linecap="round">
+    <circle cx="100" cy="100" r="80" stroke-dasharray="200 90"/>
+    <circle cx="100" cy="100" r="44" stroke-dasharray="110 28"/>
+  </g>
+  <circle cx="100" cy="100" r="12" fill="#0f1729"/>
+</svg>
