@@ -165,28 +165,13 @@ function resolveHooksDir(): string {
     );
   }
 
-  // Hooks live in <git-common-dir>/hooks. We use --git-common-dir (not
-  // --absolute-git-dir) because for worktrees the per-worktree git dir
-  // is not where git looks for hooks — the shared common dir is.
-  //
-  // --path-format=absolute (git 2.31+) forces git to emit absolute paths,
-  // eliminating cwd-sensitivity. The earlier form (resolving git's cwd-
-  // relative output against process.cwd()) was correct but non-obviously
-  // so; the absolute form is unambiguous.
-  const commonDir = execSync(
-    "git rev-parse --path-format=absolute --git-common-dir",
-    {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  ).trim();
-
-  // Honor core.hooksPath if set, but warn — a user with Husky or
-  // similar likely doesn't want prsense writing into their managed
-  // hooks directory.
-  let hooksPath: string | null = null;
+  // Detect core.hooksPath presence purely to warn the user — the actual
+  // path resolution is delegated to git (see below). This catches the
+  // Husky/lefthook case where prsense would otherwise install into a
+  // managed-hooks directory the user didn't realize was active.
+  let hooksPathSetting: string | null = null;
   try {
-    hooksPath = execSync("git config --get core.hooksPath", {
+    hooksPathSetting = execSync("git config --get core.hooksPath", {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();
@@ -194,33 +179,26 @@ function resolveHooksDir(): string {
     // exit code 1 means key not set; treat as unset.
   }
 
-  if (hooksPath) {
+  if (hooksPathSetting) {
     console.warn(
-      `Note: core.hooksPath is set to "${hooksPath}". prsense will install into that directory.`,
+      `Note: core.hooksPath is set to "${hooksPathSetting}". prsense will install into that directory.`,
     );
     console.warn(
       "If you use Husky, lefthook, or another hooks manager, you may want to integrate manually instead.",
     );
-
-    if (path.isAbsolute(hooksPath)) {
-      return hooksPath;
-    }
-
-    // Per githooks(5): a relative core.hooksPath is resolved against
-    // the working tree root, NOT cwd. Get the worktree top-level to
-    // anchor the resolution.
-    const topLevel = execSync(
-      "git rev-parse --path-format=absolute --show-toplevel",
-      {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    ).trim();
-
-    return path.resolve(topLevel, hooksPath);
   }
 
-  return path.join(commonDir, "hooks");
+  // Delegate path resolution to git entirely. `git rev-parse --git-path
+  // hooks` honors core.hooksPath, resolves relative values against the
+  // worktree root (per githooks(5)), handles worktrees correctly (uses
+  // the shared common dir, not the per-worktree git dir), and with
+  // --path-format=absolute is immune to cwd-sensitivity. Manually
+  // replicating any of this is error-prone — and we've shipped at least
+  // one bug doing exactly that. Let git own this.
+  return execSync("git rev-parse --path-format=absolute --git-path hooks", {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
 }
 
 function inspectHook(hookPath: string): HookState {
@@ -272,13 +250,23 @@ function writeShim(hookPath: string): void {
  *   the canonical entry point regardless of how the user installed
  *   (global, local, linked, pnpm, npm, yarn, volta).
  */
+/**
+ * The expected `name` field of the prsense CLI package. Used to
+ * disambiguate when the walk passes through other package.jsons
+ * (e.g. a monorepo root) on the way to ours.
+ */
+const CLI_PACKAGE_NAME = "@prsense/cli";
+
 function resolveLauncher(): { nodePath: string; cliEntry: string } {
   const nodePath = process.execPath;
 
-  // Walk up from this module to find the nearest package.json that
-  // declares a `bin` for the CLI. In a built install this module lives
-  // at .../dist/commands/hook.js and the package.json is two levels up.
-  // We're defensive and walk further if needed.
+  // Walk up from this module to find the prsense CLI's own package.json.
+  //
+  // We match by name rather than taking the first package.json found,
+  // because in a development checkout or unusual install layout the walk
+  // could pass through a workspace root package.json on the way to ours.
+  // Taking the first hit risks pointing the hook shim at the wrong
+  // entrypoint (e.g. the monorepo root's `main` field).
   //
   // fileURLToPath is required (not just `new URL(...).pathname`) because
   // on Windows the latter returns paths like `/C:/...` that aren't valid
@@ -288,12 +276,28 @@ function resolveLauncher(): { nodePath: string; cliEntry: string } {
   let dir = here;
   let pkgPath: string | null = null;
 
-  for (let i = 0; i < 6; i++) {
+  // Walk further than before — up to 10 levels — since monorepo or
+  // symlinked layouts can put more directories between us and the
+  // package.json we're looking for.
+  for (let i = 0; i < 10; i++) {
     const candidate = path.join(dir, "package.json");
+
     if (fs.existsSync(candidate)) {
-      pkgPath = candidate;
-      break;
+      try {
+        const pkg = JSON.parse(fs.readFileSync(candidate, "utf8")) as {
+          name?: string;
+        };
+        if (pkg.name === CLI_PACKAGE_NAME) {
+          pkgPath = candidate;
+          break;
+        }
+        // Wrong package.json — keep walking. This is the change: we no
+        // longer stop at the first match.
+      } catch {
+        // Malformed package.json — keep walking rather than failing.
+      }
     }
+
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -301,7 +305,8 @@ function resolveLauncher(): { nodePath: string; cliEntry: string } {
 
   if (!pkgPath) {
     throw new Error(
-      "Could not locate the prsense CLI package.json to resolve a hook launcher path.",
+      `Could not locate the ${CLI_PACKAGE_NAME} package.json starting from ${here}. ` +
+        "The prsense install may be broken or unusually laid out.",
     );
   }
 
