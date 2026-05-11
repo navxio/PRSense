@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
 
 /* ------------------------------------------------------------------ */
@@ -157,7 +158,11 @@ function resolveLauncher(): { nodePath: string; cliEntry: string } {
   // declares a `bin` for the CLI. In a built install this module lives
   // at .../dist/commands/hook.js and the package.json is two levels up.
   // We're defensive and walk further if needed.
-  const here = path.dirname(new URL(import.meta.url).pathname);
+  //
+  // fileURLToPath is required (not just `new URL(...).pathname`) because
+  // on Windows the latter returns paths like `/C:/...` that aren't valid
+  // filesystem paths and may still be percent-encoded.
+  const here = path.dirname(fileURLToPath(import.meta.url));
 
   let dir = here;
   let pkgPath: string | null = null;
