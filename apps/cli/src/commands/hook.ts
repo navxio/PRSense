@@ -88,13 +88,46 @@ type HookState =
 
 function resolveHooksDir(): string {
   try {
-    const out = execSync("git rev-parse --git-path hooks", {
+    // hooks live in <git-common-dir>/hooks. --git-common-dir (not
+    // --absolute-git-dir) is the right invariant: it returns the shared
+    // hooks directory for worktrees, where git actually looks for hooks
+    // to execute. --absolute-git-dir would return the per-worktree
+    // .git/worktrees/<name>/ directory, which is wrong — git does not
+    // run hooks from there by default.
+    const commonDir = execSync("git rev-parse --git-common-dir", {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();
 
-    // `git rev-parse --git-path` returns a path relative to cwd.
-    return path.resolve(process.cwd(), out);
+    // --git-common-dir can be cwd-relative, so resolve against cwd.
+    const absoluteCommonDir = path.resolve(process.cwd(), commonDir);
+
+    // Honor core.hooksPath if set, but warn — a user with Husky or
+    // similar likely doesn't want prsense writing into their managed
+    // hooks directory.
+    let hooksPath: string | null = null;
+    try {
+      hooksPath = execSync("git config --get core.hooksPath", {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      }).trim();
+    } catch {
+      // exit code 1 means key not set; treat as unset.
+    }
+
+    if (hooksPath) {
+      console.warn(
+        `Note: core.hooksPath is set to "${hooksPath}". prsense will install into that directory.`,
+      );
+      console.warn(
+        "If you use Husky, lefthook, or another hooks manager, you may want to integrate manually instead.",
+      );
+      return path.isAbsolute(hooksPath)
+        ? hooksPath
+        : path.resolve(process.cwd(), hooksPath);
+    }
+
+    return path.join(absoluteCommonDir, "hooks");
   } catch {
     throw new Error(
       "Not inside a git repository. Run `prsense hook install` from your repo root.",
