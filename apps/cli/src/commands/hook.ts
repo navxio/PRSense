@@ -88,19 +88,21 @@ type HookState =
 
 function resolveHooksDir(): string {
   try {
-    // hooks live in <git-common-dir>/hooks. --git-common-dir (not
-    // --absolute-git-dir) is the right invariant: it returns the shared
-    // hooks directory for worktrees, where git actually looks for hooks
-    // to execute. --absolute-git-dir would return the per-worktree
-    // .git/worktrees/<name>/ directory, which is wrong — git does not
-    // run hooks from there by default.
-    const commonDir = execSync("git rev-parse --git-common-dir", {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }).trim();
-
-    // --git-common-dir can be cwd-relative, so resolve against cwd.
-    const absoluteCommonDir = path.resolve(process.cwd(), commonDir);
+    // Hooks live in <git-common-dir>/hooks. We use --git-common-dir (not
+    // --absolute-git-dir) because for worktrees the per-worktree git dir
+    // is not where git looks for hooks — the shared common dir is.
+    //
+    // --path-format=absolute (git 2.31+, March 2021) forces git to emit
+    // absolute paths, eliminating cwd-sensitivity. The earlier form
+    // (resolving git's cwd-relative output against process.cwd()) was
+    // correct but non-obviously so; the absolute form is unambiguous.
+    const commonDir = execSync(
+      "git rev-parse --path-format=absolute --git-common-dir",
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    ).trim();
 
     // Honor core.hooksPath if set, but warn — a user with Husky or
     // similar likely doesn't want prsense writing into their managed
@@ -122,12 +124,26 @@ function resolveHooksDir(): string {
       console.warn(
         "If you use Husky, lefthook, or another hooks manager, you may want to integrate manually instead.",
       );
-      return path.isAbsolute(hooksPath)
-        ? hooksPath
-        : path.resolve(process.cwd(), hooksPath);
+
+      if (path.isAbsolute(hooksPath)) {
+        return hooksPath;
+      }
+
+      // Per githooks(5): a relative core.hooksPath is resolved against
+      // the working tree root, NOT cwd. Get the worktree top-level to
+      // anchor the resolution.
+      const topLevel = execSync(
+        "git rev-parse --path-format=absolute --show-toplevel",
+        {
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
+        },
+      ).trim();
+
+      return path.resolve(topLevel, hooksPath);
     }
 
-    return path.join(absoluteCommonDir, "hooks");
+    return path.join(commonDir, "hooks");
   } catch {
     throw new Error(
       "Not inside a git repository. Run `prsense hook install` from your repo root.",
