@@ -86,69 +86,141 @@ type HookState =
   | { kind: "ours"; version: number; path: string }
   | { kind: "foreign"; path: string };
 
-function resolveHooksDir(): string {
+/**
+ * The minimum git version PRSense's hook command supports. Tied to the
+ * availability of `git rev-parse --path-format=absolute`, which we use
+ * to make hooks-directory resolution unambiguous across cwds, worktrees,
+ * and `core.hooksPath` configurations.
+ *
+ * Older git versions could be supported by falling back to manual
+ * cwd-relative resolution, but the complexity isn't justified for the
+ * current target audience (modern dev environments). Documented in the
+ * README's requirements section.
+ */
+const MIN_GIT_MAJOR = 2;
+const MIN_GIT_MINOR = 31;
+
+/**
+ * Parse `git --version` output. Returns null if git is not installed
+ * or the output doesn't match the expected format.
+ *
+ * `git --version` emits "git version 2.43.0" or, on macOS with Apple's
+ * shipped git, "git version 2.39.3 (Apple Git-145)". Both parse.
+ */
+function getGitVersion(): { major: number; minor: number } | null {
   try {
-    // Hooks live in <git-common-dir>/hooks. We use --git-common-dir (not
-    // --absolute-git-dir) because for worktrees the per-worktree git dir
-    // is not where git looks for hooks — the shared common dir is.
-    //
-    // --path-format=absolute (git 2.31+, March 2021) forces git to emit
-    // absolute paths, eliminating cwd-sensitivity. The earlier form
-    // (resolving git's cwd-relative output against process.cwd()) was
-    // correct but non-obviously so; the absolute form is unambiguous.
-    const commonDir = execSync(
-      "git rev-parse --path-format=absolute --git-common-dir",
+    const out = execSync("git --version", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+
+    const match = out.match(/git version (\d+)\.(\d+)/);
+    if (!match || !match[1] || !match[2]) return null;
+
+    return {
+      major: Number(match[1]),
+      minor: Number(match[2]),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function assertGitVersion(): void {
+  const version = getGitVersion();
+
+  if (!version) {
+    throw new Error(
+      "Could not determine git version. Is git installed and on PATH?",
+    );
+  }
+
+  const ok =
+    version.major > MIN_GIT_MAJOR ||
+    (version.major === MIN_GIT_MAJOR && version.minor >= MIN_GIT_MINOR);
+
+  if (!ok) {
+    throw new Error(
+      `prsense hook requires git ${MIN_GIT_MAJOR}.${MIN_GIT_MINOR} or newer ` +
+        `(you have ${version.major}.${version.minor}). ` +
+        `Please upgrade git, or run \`prsense review\` directly without the hook.`,
+    );
+  }
+}
+
+function resolveHooksDir(): string {
+  assertGitVersion();
+
+  // Confirm we're in a git repository up-front, so subsequent failures
+  // from rev-parse can be attributed to the right cause rather than
+  // bundled into a misleading "not a git repository" catch-all.
+  try {
+    execSync("git rev-parse --is-inside-work-tree", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch {
+    throw new Error(
+      "Not inside a git repository. Run `prsense hook install` from your repo root.",
+    );
+  }
+
+  // Hooks live in <git-common-dir>/hooks. We use --git-common-dir (not
+  // --absolute-git-dir) because for worktrees the per-worktree git dir
+  // is not where git looks for hooks — the shared common dir is.
+  //
+  // --path-format=absolute (git 2.31+) forces git to emit absolute paths,
+  // eliminating cwd-sensitivity. The earlier form (resolving git's cwd-
+  // relative output against process.cwd()) was correct but non-obviously
+  // so; the absolute form is unambiguous.
+  const commonDir = execSync(
+    "git rev-parse --path-format=absolute --git-common-dir",
+    {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  ).trim();
+
+  // Honor core.hooksPath if set, but warn — a user with Husky or
+  // similar likely doesn't want prsense writing into their managed
+  // hooks directory.
+  let hooksPath: string | null = null;
+  try {
+    hooksPath = execSync("git config --get core.hooksPath", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    // exit code 1 means key not set; treat as unset.
+  }
+
+  if (hooksPath) {
+    console.warn(
+      `Note: core.hooksPath is set to "${hooksPath}". prsense will install into that directory.`,
+    );
+    console.warn(
+      "If you use Husky, lefthook, or another hooks manager, you may want to integrate manually instead.",
+    );
+
+    if (path.isAbsolute(hooksPath)) {
+      return hooksPath;
+    }
+
+    // Per githooks(5): a relative core.hooksPath is resolved against
+    // the working tree root, NOT cwd. Get the worktree top-level to
+    // anchor the resolution.
+    const topLevel = execSync(
+      "git rev-parse --path-format=absolute --show-toplevel",
       {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       },
     ).trim();
 
-    // Honor core.hooksPath if set, but warn — a user with Husky or
-    // similar likely doesn't want prsense writing into their managed
-    // hooks directory.
-    let hooksPath: string | null = null;
-    try {
-      hooksPath = execSync("git config --get core.hooksPath", {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      }).trim();
-    } catch {
-      // exit code 1 means key not set; treat as unset.
-    }
-
-    if (hooksPath) {
-      console.warn(
-        `Note: core.hooksPath is set to "${hooksPath}". prsense will install into that directory.`,
-      );
-      console.warn(
-        "If you use Husky, lefthook, or another hooks manager, you may want to integrate manually instead.",
-      );
-
-      if (path.isAbsolute(hooksPath)) {
-        return hooksPath;
-      }
-
-      // Per githooks(5): a relative core.hooksPath is resolved against
-      // the working tree root, NOT cwd. Get the worktree top-level to
-      // anchor the resolution.
-      const topLevel = execSync(
-        "git rev-parse --path-format=absolute --show-toplevel",
-        {
-          encoding: "utf8",
-          stdio: ["ignore", "pipe", "pipe"],
-        },
-      ).trim();
-
-      return path.resolve(topLevel, hooksPath);
-    }
-
-    return path.join(commonDir, "hooks");
-  } catch {
-    throw new Error(
-      "Not inside a git repository. Run `prsense hook install` from your repo root.",
-    );
+    return path.resolve(topLevel, hooksPath);
   }
+
+  return path.join(commonDir, "hooks");
 }
 
 function inspectHook(hookPath: string): HookState {
