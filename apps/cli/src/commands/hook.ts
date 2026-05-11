@@ -9,24 +9,54 @@ import { execSync } from "node:child_process";
 /* ------------------------------------------------------------------ */
 
 const HOOK_NAME = "pre-push";
-const HOOK_VERSION = 1;
+const HOOK_VERSION = 2;
 const MARKER = `# prsense-hook:v${HOOK_VERSION}`;
 
 /**
- * The shim written to .git/hooks/pre-push.
+ * Build the shim written to .git/hooks/pre-push.
  *
  * Kept intentionally small. Reads push refs from stdin (git's pre-push
- * protocol), skips branch deletions, and invokes `prsense review`
- * once per pushed ref with the remote SHA as the diff base.
+ * protocol), skips branch deletions, and invokes the CLI once per pushed
+ * ref with the remote SHA as the diff base.
+ *
+ * Node and CLI paths are resolved at install time and embedded as absolute
+ * paths. Git hooks run with a minimal PATH, so bare `prsense` or relying
+ * on shell PATH resolution is unreliable across local/global/version-
+ * managed installs. Invoking `node <entry>` also sidesteps Windows .cmd
+ * wrapper issues since sh cannot reliably exec .cmd files.
  *
  * PRSENSE_NON_INTERACTIVE prevents first-run setup from hanging the push.
  */
-const SHIM = `#!/bin/sh
+function buildShim(nodePath: string, cliEntry: string): string {
+  // sh single-quoting: paths are wrapped in single quotes, and any single
+  // quote inside a path is escaped via '\''. Pathological but correct.
+  const shQuote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
+
+  const node = shQuote(nodePath);
+  const cli = shQuote(cliEntry);
+
+  return `#!/bin/sh
 ${MARKER}
 # Managed by \`prsense hook\`. Do not edit by hand.
 # Remove with: prsense hook uninstall
+# Re-resolve paths with: prsense hook install
 
+NODE=${node}
+CLI=${cli}
 ZERO=0000000000000000000000000000000000000000
+
+# Sanity check — if Node or the CLI has moved (reinstall, Node upgrade,
+# package manager switch), fail loudly with an actionable message.
+if [ ! -x "$NODE" ]; then
+  echo "prsense hook: Node not found at $NODE" >&2
+  echo "Re-run: prsense hook install" >&2
+  exit 1
+fi
+if [ ! -f "$CLI" ]; then
+  echo "prsense hook: CLI not found at $CLI" >&2
+  echo "Re-run: prsense hook install" >&2
+  exit 1
+fi
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   # Branch deletion — nothing to review.
@@ -36,14 +66,15 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
   # New branch — let the CLI fall back to the configured base branch.
   if [ "$remote_sha" = "$ZERO" ]; then
-    PRSENSE_NON_INTERACTIVE=1 prsense review . || exit $?
+    PRSENSE_NON_INTERACTIVE=1 "$NODE" "$CLI" review . || exit $?
   else
-    PRSENSE_NON_INTERACTIVE=1 prsense review . --base-ref "$remote_sha" || exit $?
+    PRSENSE_NON_INTERACTIVE=1 "$NODE" "$CLI" review . --base-ref "$remote_sha" || exit $?
   fi
 done
 
 exit 0
 `;
+}
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
@@ -91,7 +122,11 @@ function inspectHook(hookPath: string): HookState {
 
 function writeShim(hookPath: string): void {
   fs.mkdirSync(path.dirname(hookPath), { recursive: true });
-  fs.writeFileSync(hookPath, SHIM, { mode: 0o755 });
+
+  const { nodePath, cliEntry } = resolveLauncher();
+  const shim = buildShim(nodePath, cliEntry);
+
+  fs.writeFileSync(hookPath, shim, { mode: 0o755 });
 
   // mode in writeFileSync is masked by umask on some systems —
   // chmod explicitly to be safe.
@@ -100,6 +135,78 @@ function writeShim(hookPath: string): void {
   } catch {
     // Windows: chmod is a no-op, ignore.
   }
+}
+
+/**
+ * Resolve the absolute paths to embed in the hook shim.
+ *
+ * - nodePath: the running Node binary. Stable for the lifetime of this
+ *   Node install. If the user reinstalls Node at a different prefix
+ *   (e.g. brew upgrade, fnm install), the hook's sanity check fails
+ *   loudly and tells them to re-run `prsense hook install`.
+ *
+ * - cliEntry: the CLI's main script. Resolved by walking up from this
+ *   module to the package.json and reading the `bin` field, which is
+ *   the canonical entry point regardless of how the user installed
+ *   (global, local, linked, pnpm, npm, yarn, volta).
+ */
+function resolveLauncher(): { nodePath: string; cliEntry: string } {
+  const nodePath = process.execPath;
+
+  // Walk up from this module to find the nearest package.json that
+  // declares a `bin` for the CLI. In a built install this module lives
+  // at .../dist/commands/hook.js and the package.json is two levels up.
+  // We're defensive and walk further if needed.
+  const here = path.dirname(new URL(import.meta.url).pathname);
+
+  let dir = here;
+  let pkgPath: string | null = null;
+
+  for (let i = 0; i < 6; i++) {
+    const candidate = path.join(dir, "package.json");
+    if (fs.existsSync(candidate)) {
+      pkgPath = candidate;
+      break;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
+  if (!pkgPath) {
+    throw new Error(
+      "Could not locate the prsense CLI package.json to resolve a hook launcher path.",
+    );
+  }
+
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as {
+    bin?: string | Record<string, string>;
+    main?: string;
+  };
+
+  let entryRel: string | undefined;
+  if (typeof pkg.bin === "string") {
+    entryRel = pkg.bin;
+  } else if (pkg.bin && typeof pkg.bin === "object") {
+    entryRel = pkg.bin["prsense"] ?? Object.values(pkg.bin)[0];
+  }
+  entryRel = entryRel ?? pkg.main;
+
+  if (!entryRel) {
+    throw new Error(
+      `Could not determine the CLI entry script from ${pkgPath} (no bin or main field).`,
+    );
+  }
+
+  const cliEntry = path.resolve(path.dirname(pkgPath), entryRel);
+
+  if (!fs.existsSync(cliEntry)) {
+    throw new Error(
+      `Resolved CLI entry does not exist at ${cliEntry}. The prsense install may be broken.`,
+    );
+  }
+
+  return { nodePath, cliEntry };
 }
 
 /* ------------------------------------------------------------------ */
