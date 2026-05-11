@@ -21,4 +21,4 @@ program.addCommand(doctorCommand);
 program.addCommand(setupCommand);
 program.addCommand(daemonCommand);
 program.addCommand(initCommand);
-
+program.addCommand(hookCommand);
