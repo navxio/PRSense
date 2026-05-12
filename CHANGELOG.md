@@ -1,14 +1,56 @@
 # Changelog
 
+## v0.3.1 — Pre-push review hook
+
+### Added
+
+- `prsense hook install/uninstall/status` for managing a pre-push git hook
+  that runs PRSense against each pushed ref before the push completes
+- `--base-ref <sha>` flag on `prsense review` for reviewing against an
+  explicit base commit (used internally by the hook; also useful for ad-hoc
+  diff scoping)
+- `PRSENSE_NON_INTERACTIVE` environment variable to suppress first-run setup
+  prompts in non-interactive contexts such as git hooks
+
+### Changed
+
+- Hook commands resolve git paths through `git rev-parse --path-format=absolute`
+  and `--git-path hooks`, delegating path resolution (including `core.hooksPath`,
+  worktrees, and submodules) to git rather than reimplementing it
+- Hook shim embeds absolute paths to Node and the CLI entry at install time,
+  avoiding PATH-dependence in git's reduced hook environment
+
+### Fixed
+
+- Cross-platform module path resolution uses `fileURLToPath` rather than
+  `URL.pathname`, fixing CLI initialization on Windows
+- Hook installation detects existing non-PRSense hooks and refuses to
+  overwrite them without `--force`
+- Hook installation warns when `core.hooksPath` is set (e.g. Husky, lefthook)
+  so users aren't surprised by hooks landing in a managed directory
+
+### Requirements
+
+- Git 2.31 or newer is now required (checked at runtime with a clear error
+  if older)
+
+### Notes
+
+- The hook is opt-in. Run `prsense hook install` from a repo root to enable;
+  bypass any individual push with `git push --no-verify`
+- This release was dogfooded end-to-end: PRSense reviewed the branch that
+  implements the hook across six iterations. See `docs/in-the-wild.md` for
+  the review log.
+
 ## v0.3.0
 
-Added
+### Added
 
 - Concurrent file reviews for significantly faster review execution on multi-file diffs
 - Bounded concurrency orchestration with isolated per-file failure handling
 - New review workflow concurrency events for improved observability
 
-Improved
+### Improved
 
 - Reduced end-to-end review latency for large pull requests
 - Improved review workflow resilience and aggregation behavior
