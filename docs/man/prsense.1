@@ -19,17 +19,17 @@ PRSense is an open-source AI-powered code review engine that surfaces high-confi
 
 It is delivery-agnostic. The same review engine can run:
 
-• As an interactive CLI
-• Behind webhooks
-• Inside CI pipelines
+- As an interactive CLI
+- Behind webhooks
+- Inside CI pipelines
 
 PRSense focuses on structured review signals rather than autonomous modification. It prioritizes:
 
-• Risk detection
-• Change comprehension
-• Explicit reasoning
-• Deterministic configuration
-• Self-hosted infrastructure
+- Risk detection
+- Change comprehension
+- Explicit reasoning
+- Deterministic configuration
+- Self-hosted infrastructure
 
 PRSense operates on diffs and optionally surrounding repository context using retrieval-augmented generation (RAG). Output is validated, normalized, deduplicated, and filtered by confidence before being emitted.
 
@@ -41,6 +41,7 @@ COMMANDS
 
 review      Review a code change and emit structured review signals
 index       Index a repository for contextual retrieval (RAG)
+hook        Manage git hooks that invoke PRSense (e.g. pre-push review)
 doctor      Diagnose PRSense installation and runtime environment
 setup       Perform setup readiness checks
 help        Show help for a command
@@ -74,11 +75,11 @@ CLI flags override configuration from global and repository config files.
 
 When --stats is provided, PRSense prints a structured summary including:
 
-• Model and provider
-• Indexing configuration
-• Signal counts
-• Token usage (if available)
-• Performance metrics (latency, duration)
+- Model and provider
+- Indexing configuration
+- Signal counts
+- Token usage (if available)
+- Performance metrics (latency, duration)
 
 TARGETS
 
@@ -127,6 +128,7 @@ prsense review . --base-branch main
 prsense review . -p openai -m gpt-5.4
 prsense review . --max-signals 5 --confidence-threshold 0.7
 prsense review https://github.com/org/repo/pull/42 --stats
+
 ⸻
 
 COMMAND: index
@@ -143,22 +145,22 @@ Indexes a repository for retrieval-augmented review (RAG).
 
 Indexing:
 
-• Scans repository files
-• Chunks content deterministically
-• Generates embeddings
-• Stores vectors in PostgreSQL with pgvector
-• Tracks repository fingerprint metadata
+- Scans repository files
+- Chunks content deterministically
+- Generates embeddings
+- Stores vectors in PostgreSQL with pgvector
+- Tracks repository fingerprint metadata
 
 The process is idempotent and safe to run repeatedly.
 
 Re-indexing is triggered when:
 
-• Commit SHA changes
-• Embedding provider changes
-• Embedding model changes
-• Embedding dimension changes
-• Chunking strategy changes
-• PRSense version changes
+- Commit SHA changes
+- Embedding provider changes
+- Embedding model changes
+- Embedding dimension changes
+- Chunking strategy changes
+- PRSense version changes
 
 CLI flags override configuration from global and repository config files.
 
@@ -203,10 +205,10 @@ OUTPUT (--list)
 
 Lists indexed repositories with:
 
-• Repository identifier (provider/owner/repo)
-• Indexed commit SHA
-• Embedding provider and model
-• Index timestamp
+- Repository identifier (provider/owner/repo)
+- Indexed commit SHA
+- Embedding provider and model
+- Index timestamp
 
 EXAMPLE OUTPUT
 
@@ -221,9 +223,9 @@ NOTES
 
 Indexing requires:
 
-• PostgreSQL
-• pgvector extension
-• Valid embedding provider credentials
+- PostgreSQL
+- pgvector extension
+- Valid embedding provider credentials
 
 Embedding dimension must match the database schema.
 
@@ -235,6 +237,85 @@ prsense index . --chunk-size-chars 2000
 prsense index . -p openai -m text-embedding-3-large
 prsense index --list
 prsense index https://github.com/org/repo
+
+⸻
+
+COMMAND: hook
+
+NAME
+prsense hook — manage git hooks that invoke PRSense
+
+SYNOPSIS
+prsense hook install   [--force]
+prsense hook uninstall
+prsense hook status
+
+DESCRIPTION
+
+Installs and manages a git pre-push hook that runs PRSense against
+each pushed ref before the push completes. The hook gates pushes on
+review outcome, with bypass available via `git push --no-verify`.
+
+The installed hook is a small, version-marked shim. It reads git's
+standard pre-push input from stdin and invokes `prsense review` once
+per pushed ref, scoped to the diff between the local and remote
+commits. Branch deletions are skipped. New branches fall back to the
+configured base branch.
+
+Hook resolution honors `core.hooksPath`, worktrees, and submodules.
+When `core.hooksPath` is set (e.g. by Husky or lefthook), PRSense
+emits a warning before installing into the managed directory.
+
+SUBCOMMANDS
+
+install
+    Install the pre-push hook for the current repository.
+
+    Refuses to overwrite a non-PRSense hook unless --force is given.
+    Upgrades a previously-installed PRSense hook in place when the
+    shim version has changed.
+
+uninstall
+    Remove the PRSense pre-push hook. Refuses to remove a hook not
+    installed by PRSense; remove such hooks manually.
+
+status
+    Report installation state: not installed, installed and current,
+    installed but out of date, or present-but-foreign. Prints the
+    resolved hook path.
+
+OPTIONS
+
+-f, --force
+    (install only) Overwrite an existing non-PRSense pre-push hook.
+
+ENVIRONMENT
+
+PRSENSE_NON_INTERACTIVE
+    Set to 1 to suppress first-run setup prompts. The installed hook
+    sets this automatically so `git push` never hangs on an uninitialized
+    PRSense configuration.
+
+REQUIREMENTS
+
+- Git 2.31 or newer (checked at runtime).
+
+EXAMPLES
+
+prsense hook install
+prsense hook install --force
+prsense hook status
+prsense hook uninstall
+
+NOTES
+
+The hook is opt-in. Once installed, every `git push` from the
+repository triggers a PRSense review of the pushed diff. The push
+proceeds if no blocking signals are emitted and is rejected
+otherwise. To bypass for a single push:
+
+    git push --no-verify
+
 ⸻
 
 COMMAND: doctor
@@ -249,12 +330,12 @@ DESCRIPTION
 
 Performs structured diagnostic checks:
 
-• Configuration validation
-• Credential validation
-• Database connectivity
-• pgvector availability
-• LLM provider configuration
-• Repository state
+- Configuration validation
+- Credential validation
+- Database connectivity
+- pgvector availability
+- LLM provider configuration
+- Repository state
 
 Each check emits structured, actionable results.
 
@@ -344,6 +425,7 @@ PRSENSE_OLLAMA_HOST
 PRSENSE_LOG_LEVEL
 PRSENSE_DAEMON_PORT
 PRSENSE_DAEMON_HOST
+PRSENSE_NON_INTERACTIVE
 
 Environment variables are validated before workflows execute.
 
@@ -368,19 +450,23 @@ prsense.yml
 ~/.local/state/prsense/
     Runtime state directory.
 
+<git-hooks-dir>/pre-push
+    PRSense pre-push hook shim, when installed via `prsense hook install`.
+    Location resolved via git (honors core.hooksPath and worktrees).
+
 ⸻
 
 DESIGN PRINCIPLES
 
 PRSense is intentionally:
 
-• Delivery-agnostic
-• Self-hosted
-• Retrieval-augmented
-• Deterministic
-• Structured in output
-• Explicit in configuration
-• Focused on high-signal review
+- Delivery-agnostic
+- Self-hosted
+- Retrieval-augmented
+- Deterministic
+- Structured in output
+- Explicit in configuration
+- Focused on high-signal review
 
 It prioritizes signal quality over verbosity.
 
@@ -388,7 +474,7 @@ It prioritizes signal quality over verbosity.
 
 SEE ALSO
 
-git(1)
+git(1), githooks(5)
 
 ⸻
 
