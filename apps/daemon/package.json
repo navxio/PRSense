@@ -3,8 +3,13 @@
   "private": false,
   "version": "0.3.1",
   "type": "module",
-  "description": "PRsense long-lived daemon (HTTP API + job scheduler)",
+  "description": "Self hosted PRSense daemon for automated PR review via webhooks",
   "license": "Apache-2.0",
+  "files": [
+    "dist"
+  ],
+  "repository": "https://github.com/navxio/prsense",
+  "homepage": "https://prsense.org",
   "bin": {
     "prsense-daemon": "dist/index.js"
   },
@@ -39,7 +44,12 @@
     "automation",
     "ai",
     "developer-tools",
-    "llm"
+    "llm",
+    "self-hosted",
+    "webhook",
+    "github-app",
+    "gitlab-webhook",
+    "code-review-bot"
   ],
   "engines": {
     "node": ">=22"
