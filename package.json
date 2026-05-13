@@ -25,6 +25,7 @@
     "daemon": "pnpm --filter @prsense/daemon dev",
     "bench": "pnpm --filter @prsense/bench start",
     "test": "jest --runInBand",
+    "publish:check": "pnpm -r build && pnpm -r pack",
     "publish": "pnpm publish -r --access public --no-git-checks"
   },
   "keywords": [
