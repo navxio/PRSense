@@ -25,7 +25,8 @@
     "daemon": "pnpm --filter @prsense/daemon dev",
     "bench": "pnpm --filter @prsense/bench start",
     "test": "jest --runInBand",
-    "publish": "pnpm publish -r --access public --no-git-checks"
+    "publish": "pnpm publish -r --access public --no-git-checks",
+    "test:integration": "pnpm jest apps/cli/src/__tests__/review-ci.integration.test.ts"
   },
   "keywords": [
     "cli",
