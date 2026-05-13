@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "prepack": "pnpm build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {

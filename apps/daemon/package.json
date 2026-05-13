@@ -15,6 +15,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prepack": "pnpm build",
     "build": "tsc -b",
     "start": "node dist/index.js",
     "lint": "eslint .",

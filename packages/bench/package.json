@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
+    "prepack": "pnpm build",
     "build": "tsc -b"
   },
   "dependencies": {

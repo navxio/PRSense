@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "prepack": "pnpm build",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "keywords": [],
