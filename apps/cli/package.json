@@ -1,6 +1,6 @@
 {
   "name": "@prsense/cli",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Command line interface to PRSense",
   "type": "module",
   "bin": {
@@ -36,7 +36,6 @@
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
     "@prsense/core": "workspace:*",
-    "@prsense/daemon": "workspace:*",
     "@prsense/logging": "workspace:*",
     "@prsense/preflight": "workspace:*",
     "@prsense/reporters": "workspace:*",
