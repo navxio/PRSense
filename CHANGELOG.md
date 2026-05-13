@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.4.0
+
+### Breaking changes
+
+- Removed the `daemon` subcommand from the CLI. The daemon is now
+  distributed as a separate package, `@prsense/daemon`, with its own
+  binary `prsense-daemon`. If you were using `prsense daemon start`,
+  install the daemon directly:
+
+      npm i -g @prsense/daemon
+      prsense-daemon
+
+### Why
+
+- The CLI and daemon serve fundamentally different audiences (engineers
+  reviewing PRs locally vs. teams running automated review as a service)
+  and bundling them in one install was creating confusion. Each surface
+  is now distributed independently, while continuing to share the review
+  engine from the same monorepo.
+
 ## v0.3.1 — Pre-push review hook
 
 ### Added
