@@ -124,8 +124,8 @@ PRSense intentionally avoids actions that reduce developer agency:
 
 PRSense is an AI-powered code review engine that can run in two modes:
 
-- **CLI mode** — local, interactive usage
-- **Daemon mode** — long-lived HTTP service for automation and webhooks
+- **CLI mode** — local, interactive usage (this package, `@prsense/cli`)
+- **Daemon mode** — long-lived HTTP service for automation and webhooks (separate package, `@prsense/daemon`)
 
 Both modes use the same core review engine and configuration model.
 
@@ -179,12 +179,13 @@ Ensures required infrastructure (database, embeddings, etc.) is available.
 
 ### Daemon Mode
 
-The daemon runs PRSense as a long-lived HTTP service, intended for automation, and webhook-based review.
+The daemon runs PRSense as a long-lived HTTP service, intended for automation and webhook-based review. It is distributed as a separate package.
 
-#### Start the daemon
+#### Install and start the daemon
 
 ```bash
-prsense daemon start
+npm i -g @prsense/daemon
+prsense-daemon
 ```
 
 By default, it listens on:
@@ -283,7 +284,7 @@ PRSense is delivery-agnostic — the core engine remains the same.
 
 #### Team Automation
 
-1. Run `prsense daemon start`
+1. Install and run the daemon: `npm i -g @prsense/daemon && prsense-daemon`
 2. Configure GitHub/GitLab webhook
 3. Reviews trigger automatically on PR/MR updates
 
@@ -570,7 +571,7 @@ prsense review .
 Start daemon:
 
 ```sh
-prsense daemon start
+prsense-daemon
 ```
 
 Daemon refuses to start if:
