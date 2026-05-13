@@ -44,9 +44,6 @@ importers:
       '@prsense/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@prsense/daemon':
-        specifier: workspace:*
-        version: link:../daemon
       '@prsense/logging':
         specifier: workspace:*
         version: link:../../packages/logging

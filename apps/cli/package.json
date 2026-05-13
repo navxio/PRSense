@@ -36,7 +36,6 @@
     "@prsense/config": "workspace:*",
     "@prsense/context": "workspace:*",
     "@prsense/core": "workspace:*",
-    "@prsense/daemon": "workspace:*",
     "@prsense/logging": "workspace:*",
     "@prsense/preflight": "workspace:*",
     "@prsense/reporters": "workspace:*",
