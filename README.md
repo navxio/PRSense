@@ -83,13 +83,13 @@ PRSense is built around a few core principles:
 - transparency over automation
 - inspectable reasoning
 - composability over monoliths
+- extensibility via hexagonal architecture - make it your own
 
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
+- One command setup
 - **Self-hosted by default** — run entirely on your own machine or infrastructure
-- **Persistent background daemon**
-  - Idempotent job creation
 - **Diff-first intelligence**, understanding:
   - local changes
   - pull request diffs from GitHub, GitLab
@@ -97,6 +97,9 @@ PRSense is built around a few core principles:
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
+- Pre merge hook
+- Built in analytics
+- Supports repositories from GitHub, GitLab, BitBucket, Codeberg
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
@@ -122,7 +125,7 @@ PRSense intentionally avoids actions that reduce developer agency:
 
 ## Usage
 
-PRSense is an AI-powered code review engine that can run in two modes:
+PRSense is CLI first run in two modes:
 
 - **CLI mode** — local, interactive usage
 - **Daemon mode** — long-lived HTTP service for automation and webhooks
@@ -821,10 +824,6 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 ## Contributing
 
 PRs are welcome
-
-## Similar Projects
-
-- [pr-agent](https://github.com/<>/<>)
 
 ## License
 
