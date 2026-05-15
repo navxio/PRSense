@@ -1,9 +1,13 @@
 // src/review/steps/runReview.ts
 import os from "node:os";
-import { CoreEvents, DiffFile, ReviewSignal, EventBus } from "@prsense/core";
+import {
+  CoreEvents,
+  DiffFile,
+  ReviewSignal,
+  EventBus,
+  UnifiedDiff,
+} from "@prsense/core";
 import type { LlmClient } from "@prsense/llm";
-
-import { runFileReview } from "../lib/runFileReview.js";
 
 import { FileReviewResult, ReviewMetadata } from "../types.js";
 import { LlmUsage } from "@prsense/llm";
@@ -11,7 +15,7 @@ import { ResolvedConfig } from "@prsense/config";
 import { runConcurrent } from "../util.js";
 
 type RunReviewParams = {
-  files: DiffFile[];
+  diff: UnifiedDiff;
   llmClient: LlmClient;
   contextText: string;
   metadata?: ReviewMetadata;
