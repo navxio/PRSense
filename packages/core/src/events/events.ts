@@ -36,10 +36,6 @@ export const CoreEvents = {
   WorkflowReviewContextChunkRetrieved:
     "workflow.review.context.chunk_retrieved",
   WorkflowReviewDiffLoaded: "workflow.review.diff.loaded",
-  WorkflowReviewConcurrencyConfigured: "workflow.review.concurrency_configured",
-  WorkflowReviewFileReviewStarted: "workflow.review.file.review.started",
-  WorkflowReviewFileReviewFinished: "workflow.review.file.review.finished",
-  WorkflowReviewFileReviewFailed: "workflow.review.file.review.failed",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",
