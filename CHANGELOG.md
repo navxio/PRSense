@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.0
+
+### Changed
+
+- CLI is now bundled with tsup for faster cold start and smaller install
+- [If daemon bundled] Daemon is now bundled with tsup
+- Internal workspace packages [are now private | remain published for daemon's dependency tree]
+
+### Why
+
+- Bundling collapses module resolution at startup into a single file load
+- Published packages are now self-contained — no transitive workspace deps
+
+### Migration
+
+- No user-visible changes
+- Same commands, same flags, same outputs
+
 ## v0.4.0
 
 ### Breaking changes

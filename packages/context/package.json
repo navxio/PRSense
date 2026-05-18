@@ -5,6 +5,7 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "private": true,
   "files": [
     "dist"
   ],
@@ -16,6 +17,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && cp src/migrations/*.sql dist/migrations/",
+    "prepack": "pnpm build",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
