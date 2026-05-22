@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.1
+
+### Changed
+
+- `maxSignals` in config defaults to 3
+- Retrieved context ignores files already in the diff
+
 ## v0.5.0
 
 ### Changed
