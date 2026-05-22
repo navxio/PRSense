@@ -52,8 +52,11 @@ export async function resolveContext({
     diff,
     ...(metadata ?? {}),
   });
+
+  const excludePaths = diff.files.map((f: { path: string }) => f.path);
   eventBus.emit(CoreEvents.WorkflowReviewContextQueryBuilt, {
     preview: retrievalQuery.slice(0, 500),
+    excludePaths,
   });
 
   const retrieved = await retrieveContext({
@@ -63,6 +66,7 @@ export async function resolveContext({
     repoName: repositoryIdentity.id,
     limit: config.context.maxChunks,
     eventBus,
+    excludePaths,
   });
 
   const MAX_CONTEXT_CHARS = 20000;

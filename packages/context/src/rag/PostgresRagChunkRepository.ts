@@ -4,7 +4,7 @@ import type { RagChunkRepository } from "./RagChunkRepository.js";
 import type { ContextChunk } from "@prsense/core";
 
 export class PostgresRagChunkRepository implements RagChunkRepository {
-  constructor(private readonly connectionString: string) { }
+  constructor(private readonly connectionString: string) {}
 
   private async withClient<T>(
     fn: (client: pg.Client) => Promise<T>,
@@ -17,7 +17,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     try {
       return await fn(client);
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 
@@ -114,7 +114,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       await client.query("ROLLBACK");
       throw err;
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 
@@ -191,6 +191,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     repoRef?: string;
     embedding: number[];
     limit: number;
+    excludePaths?: string[];
   }): Promise<
     Array<{
       id: string;
@@ -210,6 +211,25 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     await client.connect();
 
     try {
+      const vectorLiteral = `[${params.embedding.join(",")}]`;
+      const values: unknown[] = [
+        vectorLiteral,
+        params.repoProvider,
+        params.repoName,
+      ];
+
+      let refClause = "";
+      if (params.repoRef) {
+        values.push(params.repoRef);
+        refClause = `AND repo_ref = $${values.length}`;
+      }
+
+      let excludeClause = "";
+      if (params.excludePaths && params.excludePaths.length > 0) {
+        values.push(params.excludePaths);
+        excludeClause = `AND path <> ALL($${values.length}::text[])`;
+      }
+
       const query = `
       SELECT
         id,
@@ -223,16 +243,11 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       FROM rag_chunks
       WHERE repo_provider = $2
         AND repo_name = $3
-        ${params.repoRef ? "AND repo_ref = $4" : ""}
+        ${refClause}
+        ${excludeClause}
       ORDER BY embedding <-> $1
       LIMIT ${params.limit}
     `;
-
-      const vectorLiteral = `[${params.embedding.join(",")}]`;
-
-      const values = params.repoRef
-        ? [vectorLiteral, params.repoProvider, params.repoName, params.repoRef]
-        : [vectorLiteral, params.repoProvider, params.repoName];
 
       const result = await client.query(query, values);
 
@@ -247,7 +262,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
         distance: row.distance,
       }));
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 
