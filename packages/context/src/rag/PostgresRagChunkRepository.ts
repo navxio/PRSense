@@ -229,6 +229,8 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
         values.push(params.excludePaths);
         excludeClause = `AND path <> ALL($${values.length}::text[])`;
       }
+      values.push(params.limit);
+      const limitParam = `$${values.length}`;
 
       const query = `
       SELECT
@@ -246,7 +248,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
         ${refClause}
         ${excludeClause}
       ORDER BY embedding <-> $1
-      LIMIT ${params.limit}
+      LIMIT ${limitParam}
     `;
 
       const result = await client.query(query, values);
