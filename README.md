@@ -390,7 +390,7 @@ index:
 
 review:
   confidenceThreshold: 0.6
-  maxSignals: 10
+  maxSignals: 3
 
 context:
   maxChunks: 5

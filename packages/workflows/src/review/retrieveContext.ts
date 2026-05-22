@@ -16,9 +16,18 @@ export async function retrieveContext(params: {
   repoName: string;
   repoRef?: string;
   limit: number;
+  excludePaths?: string[];
   eventBus?: EventBus;
 }): Promise<RetrievedContext> {
-  const { config, query, repoProvider, repoName, repoRef, limit } = params;
+  const {
+    config,
+    query,
+    repoProvider,
+    repoName,
+    repoRef,
+    limit,
+    excludePaths,
+  } = params;
 
   // -------------------------------------------------
   // Create embedding client
@@ -56,6 +65,7 @@ export async function retrieveContext(params: {
     ...(repoRef ? { repoRef } : {}),
     embedding: queryEmbedding,
     limit,
+    ...(excludePaths && excludePaths.length > 0 ? { excludePaths } : {}),
   });
 
   params.eventBus?.emit(CoreEvents.WorkflowReviewContextRetrieved, {
