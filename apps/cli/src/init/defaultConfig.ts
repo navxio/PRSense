@@ -10,7 +10,7 @@ export const DEFAULT_CONFIG = {
   },
   review: {
     confidenceThreshold: 0.6,
-    maxSignals: 10,
+    maxSignals: 3,
   },
   index: {
     chunkSizeChars: 1000,
@@ -26,3 +26,4 @@ export const DEFAULT_CONFIG = {
     platform: "github",
   },
 };
+
