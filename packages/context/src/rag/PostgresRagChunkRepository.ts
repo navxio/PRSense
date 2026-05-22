@@ -207,10 +207,17 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     const client = new pg.Client({
       connectionString: this.connectionString,
     });
-
     await client.connect();
-
     try {
+      const limit = Math.max(1, Math.floor(params.limit));
+      const excludeCount = params.excludePaths?.length ?? 0;
+
+      // Fetch enough rows that, after exclusion, we can still return up to `limit`.
+      // Cap the fetch ceiling so a PR with very many changed files doesn't blow up
+      // the query size.
+      const FETCH_CEILING = 200;
+      const fetchLimit = Math.min(limit + excludeCount, FETCH_CEILING);
+
       const vectorLiteral = `[${params.embedding.join(",")}]`;
       const values: unknown[] = [
         vectorLiteral,
@@ -229,7 +236,8 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
         values.push(params.excludePaths);
         excludeClause = `AND path <> ALL($${values.length}::text[])`;
       }
-      values.push(params.limit);
+
+      values.push(fetchLimit);
       const limitParam = `$${values.length}`;
 
       const query = `
@@ -253,7 +261,9 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
 
       const result = await client.query(query, values);
 
-      return result.rows.map((row) => ({
+      // Trim to the original requested limit (in case fetchLimit > limit
+      // and exclusion didn't reduce the result set as much as expected).
+      return result.rows.slice(0, limit).map((row) => ({
         id: row.id,
         path: row.path,
         kind: row.kind,
