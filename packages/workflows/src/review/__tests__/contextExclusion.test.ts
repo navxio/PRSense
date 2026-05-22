@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import { runIndexWorkflow } from "../../index/indexWorkflow.js";
 import { retrieveContext } from "../retrieveContext.js";
+import { resolveRepositorySource } from "../../index/util.js";
 import {
   createTestRepo,
   writeFile,
@@ -31,8 +32,6 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
   });
 
   it("does not retrieve chunks from files in the diff", async () => {
-    // Index a repo with two files that share semantic content
-    // so they're plausibly retrievable for the same query
     await writeFile(
       repo,
       "auth.ts",
@@ -54,20 +53,21 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
       version: "test",
     });
 
-    // Simulate a diff that modifies auth.ts
-    // Retrieval should exclude auth.ts chunks even though
-    // the query semantically matches both files.
+    // Use the same identity the indexer wrote with
+    const identity = resolveRepositorySource(repo).getRepositoryIdentity();
+
     const retrieved = await retrieveContext({
       config: testConfig(),
       query: "function authenticate user",
-      repoProvider: "local",
-      repoName: require("node:path").basename(repo),
+      repoProvider: identity.provider,
+      repoName: identity.id,
       limit: 10,
       excludePaths: ["auth.ts"],
     });
 
     const retrievedPaths = retrieved.chunks.map((c) => c.metadata?.path);
 
+    expect(retrievedPaths.length).toBeGreaterThan(0);
     expect(retrievedPaths).not.toContain("auth.ts");
     expect(retrievedPaths).toContain("billing.ts");
   });
@@ -85,11 +85,13 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
       version: "test",
     });
 
+    const identity = resolveRepositorySource(repo).getRepositoryIdentity();
+
     const retrieved = await retrieveContext({
       config: testConfig(),
       query: "authenticate",
-      repoProvider: "local",
-      repoName: require("node:path").basename(repo),
+      repoProvider: identity.provider,
+      repoName: identity.id,
       limit: 10,
     });
 
