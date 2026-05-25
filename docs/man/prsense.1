@@ -391,11 +391,16 @@ review:
   confidenceThreshold: 0.6
   maxSignals: 3
 
+index:
+  auto: true
+  chunkSizeChars: 1000
+  chunkOverlapChars: 200
+
 context:
   maxChunks: 5
 
 git:
-  baseBranch: main
+  baseBranch: trunk
 
 delivery:
   platform: github
