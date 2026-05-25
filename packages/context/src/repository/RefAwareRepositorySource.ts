@@ -23,6 +23,7 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
 
   async getRevision(): Promise<RepositoryRevision> {
     const repoPath = this.inner.getLocalPath();
+    const inner = await this.inner.getRevision();
 
     const sha = execFileSync("git", ["rev-parse", this.ref], {
       cwd: repoPath,
@@ -31,7 +32,7 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
 
     return {
       commitSha: sha,
-      defaultBranch: this.ref,
+      defaultBranch: inner.defaultBranch ?? "main",
     };
   }
 
