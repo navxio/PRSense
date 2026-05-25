@@ -12,6 +12,7 @@ review:
   maxSignals: 3
 
 index:
+  auto: true
   chunkSizeChars: 1000
   chunkOverlapChars: 200
 
