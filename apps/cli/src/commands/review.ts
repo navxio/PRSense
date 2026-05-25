@@ -142,6 +142,7 @@ export const reviewCommand = new Command("review")
             dryRun: false,
             eventBus,
             version: PRSENSE_VERSION,
+            ref: effectiveConfig.git?.baseBranch ?? "main",
           });
         } catch (err) {
           // Non-fatal: proceed without fresh index context
