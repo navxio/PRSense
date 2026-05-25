@@ -57,6 +57,7 @@ PRSense is built around a few core principles:
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
 - One command setup
+- Automatically reads your intent from branch name on local invocation
 - **Self-hosted by default** — run entirely on your own machine or infrastructure
 - **Diff-first intelligence**, understanding:
   - local changes
@@ -67,6 +68,7 @@ PRSense is built around a few core principles:
   - GitHub/GitLab pull request comments
   - JSON(upcoming)
 - Built in analytics
+- Auto load `.env`
 - Supports remote repositories from GitHub, GitLab
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
