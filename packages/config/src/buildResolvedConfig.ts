@@ -55,6 +55,7 @@ export function buildResolvedConfig(
     index: runtime.index,
     review: runtime.review,
     context: runtime.context,
+    git: runtime.git,
     llm: runtime.llm,
     embeddings: runtime.embeddings,
     database,
