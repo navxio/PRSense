@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.0
+
+### Added
+
+- Automatic incremental indexing before every review (skip with `--no-auto-index`)
+- Add `auto` option to index config
+
 ## v0.5.1
 
 ### Changed
@@ -14,11 +21,6 @@
 - CLI is now bundled with tsup for faster cold start and smaller install
 - [If daemon bundled] Daemon is now bundled with tsup
 - Internal workspace packages [are now private | remain published for daemon's dependency tree]
-
-### Why
-
-- Bundling collapses module resolution at startup into a single file load
-- Published packages are now self-contained — no transitive workspace deps
 
 ### Migration
 
@@ -36,14 +38,6 @@
 
       npm i -g @prsense/daemon
       prsense-daemon
-
-### Why
-
-- The CLI and daemon serve fundamentally different audiences (engineers
-  reviewing PRs locally vs. teams running automated review as a service)
-  and bundling them in one install was creating confusion. Each surface
-  is now distributed independently, while continuing to share the review
-  engine from the same monorepo.
 
 ## v0.3.1 — Pre-push review hook
 

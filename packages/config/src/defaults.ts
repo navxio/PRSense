@@ -11,6 +11,7 @@ export const defaults = {
   },
 
   index: {
+    auto: true,
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
   },

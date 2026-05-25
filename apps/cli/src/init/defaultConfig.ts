@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG = {
   index: {
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
+    auto: true,
   },
   context: {
     maxChunks: 5,
@@ -26,4 +27,3 @@ export const DEFAULT_CONFIG = {
     platform: "github",
   },
 };
-
