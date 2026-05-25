@@ -12,10 +12,17 @@ import {
  * not supported.
  */
 export class RefAwareRepositorySource implements GitBackedRepositorySource {
+  private readonly resolvedSha: string;
   constructor(
     private readonly inner: GitBackedRepositorySource,
     private readonly ref: string,
-  ) {}
+  ) {
+    const repoPath = this.inner.getLocalPath();
+    this.resolvedSha = execFileSync("git", ["rev-parse", `${ref}^{commit}`], {
+      cwd: repoPath,
+      encoding: "utf8",
+    }).trim();
+  }
 
   getRepositoryIdentity(): RepositoryIdentity {
     return this.inner.getRepositoryIdentity();
@@ -26,16 +33,9 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
   }
 
   async getRevision(): Promise<RepositoryRevision> {
-    const repoPath = this.inner.getLocalPath();
     const inner = await this.inner.getRevision();
-
-    const sha = execFileSync("git", ["rev-parse", `${this.ref}^{commit}`], {
-      cwd: repoPath,
-      encoding: "utf8",
-    }).trim();
-
     return {
-      commitSha: sha,
+      commitSha: this.resolvedSha,
       defaultBranch: inner.defaultBranch ?? "main",
     };
   }
@@ -52,7 +52,7 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
         "-r",
         "--name-only",
         "-z",
-        this.ref,
+        this.resolvedSha,
       ],
       { cwd: repoPath },
     );
@@ -71,19 +71,23 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
     let buffer: Buffer;
 
     try {
-      buffer = execFileSync("git", ["show", `${this.ref}:${filePath}`], {
-        cwd: repoPath,
-      });
+      buffer = execFileSync(
+        "git",
+        ["show", `${this.resolvedSha}:${filePath}`],
+        {
+          cwd: repoPath,
+        },
+      );
     } catch (err: any) {
       const stderr = err?.stderr?.toString() ?? "";
       if (
         stderr.includes("does not exist") ||
         stderr.includes("not exist in")
       ) {
-        throw new Error(`File not found at ${this.ref}:${filePath}`);
+        throw new Error(`File not found at ${this.resolvedSha}:${filePath}`);
       }
       throw new Error(
-        `git show failed for ${this.ref}:${filePath}: ${stderr.trim() || err.message}`,
+        `git show failed for ${this.resolvedSha}:${filePath}: ${stderr.trim() || err.message}`,
       );
     }
 
