@@ -1,6 +1,6 @@
 // packages/context/src/repository/RefAwareRepositorySource.ts
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import {
   GitBackedRepositorySource,
   RepositoryIdentity,
@@ -24,7 +24,7 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
   async getRevision(): Promise<RepositoryRevision> {
     const repoPath = this.inner.getLocalPath();
 
-    const sha = execSync(`git rev-parse ${this.ref}`, {
+    const sha = execFileSync("git", ["rev-parse", this.ref], {
       cwd: repoPath,
       encoding: "utf8",
     }).trim();
@@ -38,8 +38,17 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
   async listFiles(): Promise<string[]> {
     const repoPath = this.inner.getLocalPath();
 
-    const output = execSync(
-      `git -c core.quotepath=false ls-tree -r --name-only -z ${this.ref}`,
+    const output = execFileSync(
+      "git",
+      [
+        "-c",
+        "core.quotepath=false",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "-z",
+        this.ref,
+      ],
       { cwd: repoPath },
     );
 
@@ -49,30 +58,28 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
   async readFile(filePath: string): Promise<string> {
     const repoPath = this.inner.getLocalPath();
 
-    // Security: reject path traversal
     if (filePath.includes("..") || filePath.startsWith("/")) {
       throw new Error("PATH_OUTSIDE_REPOSITORY");
     }
 
-    let content: string;
+    let buffer: Buffer;
 
     try {
-      content = execSync(`git show ${this.ref}:${filePath}`, {
+      buffer = execFileSync("git", ["show", `${this.ref}:${filePath}`], {
         cwd: repoPath,
-        encoding: "buffer",
-      }).toString("utf8");
+      });
     } catch {
       throw new Error(`File not found at ${this.ref}:${filePath}`);
     }
 
-    // Binary detection (same heuristic as FileSystemRepositorySource)
-    const sampleSize = Math.min(content.length, 8000);
+    // Binary detection
+    const sampleSize = Math.min(buffer.length, 8000);
     for (let i = 0; i < sampleSize; i++) {
-      if (content.charCodeAt(i) === 0) {
+      if (buffer[i] === 0) {
         throw new Error("BINARY_FILE_DETECTED");
       }
     }
 
-    return content.replace(/\u0000/g, "");
+    return buffer.toString("utf8").replace(/\u0000/g, "");
   }
 }
