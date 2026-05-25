@@ -1,6 +1,3 @@
-import path from "node:path";
-import { existsSync } from "node:fs";
-
 import type { RuntimeConfig } from "./schema.js";
 import type {
   ResolvedConfig,

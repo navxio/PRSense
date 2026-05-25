@@ -18,6 +18,10 @@ import {
 import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 import { ensureInit } from "../init/ensureInit.js";
 
+import pkg from "../../package.json" with { type: "json" };
+
+const PRSENSE_VERSION = pkg.version;
+
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("-b, --base-branch <branch>", "Base branch to diff against")
@@ -42,10 +46,10 @@ export const reviewCommand = new Command("review")
   )
   .option("-t, --llm-temperature <n>", "LLM temperature", Number)
   .option("-s, --stats", "Print Stats related to review")
-  .option("-d, --no-auto-index", "No automatic indexing")
+  .option("--no-auto-index", "Skip automatic incremental indexing")
   .action(async (target, options) => {
     await ensureInit();
-    console.log("→ Running review...\n");
+
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
       pretty: true,
@@ -125,8 +129,34 @@ export const reviewCommand = new Command("review")
       }
 
       // -------------------------------------------------
+      // Auto-index (incremental)
+      // -------------------------------------------------
+
+      if (options.autoIndex) {
+        try {
+          await runIndexWorkflow({
+            config: effectiveConfig,
+            credentials: env.credentials,
+            target,
+            force: false,
+            dryRun: false,
+            eventBus,
+            version: PRSENSE_VERSION,
+          });
+        } catch (err) {
+          // Non-fatal: proceed without fresh index context
+          eventBus.emit(CoreEvents.RunFailed, {
+            reason: "auto-index-failed",
+            error: String(err),
+          });
+        }
+      }
+
+      // -------------------------------------------------
       // Create Diff Provider
       // -------------------------------------------------
+
+      console.log("→ Running review...\n");
 
       let diffProvider;
 
@@ -195,7 +225,6 @@ export const reviewCommand = new Command("review")
             ...(usage && { usage }),
           });
         } else {
-          // failure path → no usage, no diffSummary guaranteed
           printStats({
             outcome: result.outcome,
             signals: [],
