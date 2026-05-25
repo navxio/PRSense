@@ -59,7 +59,8 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
   async readFile(filePath: string): Promise<string> {
     const repoPath = this.inner.getLocalPath();
 
-    if (filePath.includes("..") || filePath.startsWith("/")) {
+    const segments = filePath.split("/");
+    if (segments.some((s) => s === "..") || filePath.startsWith("/")) {
       throw new Error("PATH_OUTSIDE_REPOSITORY");
     }
 
