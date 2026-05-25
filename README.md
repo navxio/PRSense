@@ -7,10 +7,10 @@
 </p>
 <h1 align="center">PRSense</h1>
 <p align="center">
-  <sub>High-confidence signals for pull request review</sub>
+  <sub>High-confidence signals grounded in diff</sub>
 </p>
 
-**PRSense is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from pull request changes.**
+**PRSense(Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
 
 <p align="center">
   <img src="https://img.shields.io/github/license/navxio/prsense" />
@@ -20,47 +20,16 @@
 
 > PRSense is experimental software, expect bugs.
 
-## Example Review
+TODO: auto index is available
 
-Review of a real-world pull request:
+## Demo
 
-✔ Signals reference actual changed files  
-✔ No hallucinated files or symbols  
-✔ 0 hallucinated signals (validated against diff)  
-✔ Signals are derived directly from pull request diff
-
-**Excerpt from CLI output**
-
-![Example PRSense output](docs/example.png)
-
-PRSense does not rewrite your code or flood your PR with generic comments.
-
-It surfaces what matters:
-
-- What changed
-- Where risk exists
-- Why attention is warranted
-
-It is built for engineers who want review assistance that is:
-
-- Intentional
-- Inspectable
-- Deterministic
-- Self-hosted
-
-PRSense separates review logic from delivery. The same core engine can run:
-
-- Locally via CLI
-- As a long-lived daemon
-- Behind webhooks
-
-This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
+<demo gif>
 
 ## Table of Contents
 
 - [Philosophy](#philosophy)
 - [Features](#features)
-- [What PRSense Does Not Do](#what-prsense-does-not-do)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -69,7 +38,6 @@ This keeps the review system transparent and infrastructure-friendly while remai
 - [Architecture](#architecture)
 - [Command Reference](#command-reference)
 - [Benchmarks](#benchmarks)
-- [Project Status](#project-status)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -97,9 +65,9 @@ PRSense is built around a few core principles:
 - **Flexible outputs** for humans and machines:
   - terminal summaries
   - GitHub/GitLab pull request comments
-- Pre merge hook
+  - JSON(upcoming)
 - Built in analytics
-- Supports repositories from GitHub, GitLab, BitBucket, Codeberg
+- Supports remote repositories from GitHub, GitLab
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
@@ -113,15 +81,6 @@ PRSense is built around a few core principles:
 ## Installation
 
 `npm i -g @prsense/cli`
-
-## What PRSense Does Not Do
-
-PRSense intentionally avoids actions that reduce developer agency:
-
-- It does not write or modify code
-- It does not open or merge pull requests
-- It does not enforce opinions or style choices
-- It does not act autonomously
 
 ## Usage
 
@@ -804,12 +763,6 @@ You can run the benchmarks on your own machine by cloning the repository, instal
 2. `pnpm bench`
 
 Make sure all the environment variables related to cloud providers have been set up and ollama is running with the models being tested available
-
-## Project Status
-
-PRSense is under active development.
-
-Interfaces and core concepts are stabilizing, while integrations and performance improvements continue.
 
 ## ToDo
 
