@@ -11,13 +11,14 @@ export const defaults = {
   },
 
   index: {
+    auto: true,
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
   },
 
   review: {
     confidenceThreshold: 0.6,
-    maxSignals: 10,
+    maxSignals: 3,
   },
 
   context: {

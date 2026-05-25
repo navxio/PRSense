@@ -4,7 +4,7 @@ import type { RagChunkRepository } from "./RagChunkRepository.js";
 import type { ContextChunk } from "@prsense/core";
 
 export class PostgresRagChunkRepository implements RagChunkRepository {
-  constructor(private readonly connectionString: string) { }
+  constructor(private readonly connectionString: string) {}
 
   private async withClient<T>(
     fn: (client: pg.Client) => Promise<T>,
@@ -17,7 +17,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     try {
       return await fn(client);
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 
@@ -114,7 +114,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       await client.query("ROLLBACK");
       throw err;
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 
@@ -191,6 +191,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     repoRef?: string;
     embedding: number[];
     limit: number;
+    excludePaths?: string[];
   }): Promise<
     Array<{
       id: string;
@@ -206,10 +207,39 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
     const client = new pg.Client({
       connectionString: this.connectionString,
     });
-
     await client.connect();
-
     try {
+      const limit = Math.max(1, Math.floor(params.limit));
+      const excludeCount = params.excludePaths?.length ?? 0;
+
+      // Fetch enough rows that, after exclusion, we can still return up to `limit`.
+      // Cap the fetch ceiling so a PR with very many changed files doesn't blow up
+      // the query size.
+      const FETCH_CEILING = 200;
+      const fetchLimit = Math.min(limit + excludeCount, FETCH_CEILING);
+
+      const vectorLiteral = `[${params.embedding.join(",")}]`;
+      const values: unknown[] = [
+        vectorLiteral,
+        params.repoProvider,
+        params.repoName,
+      ];
+
+      let refClause = "";
+      if (params.repoRef) {
+        values.push(params.repoRef);
+        refClause = `AND repo_ref = $${values.length}`;
+      }
+
+      let excludeClause = "";
+      if (params.excludePaths && params.excludePaths.length > 0) {
+        values.push(params.excludePaths);
+        excludeClause = `AND path <> ALL($${values.length}::text[])`;
+      }
+
+      values.push(fetchLimit);
+      const limitParam = `$${values.length}`;
+
       const query = `
       SELECT
         id,
@@ -223,20 +253,17 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
       FROM rag_chunks
       WHERE repo_provider = $2
         AND repo_name = $3
-        ${params.repoRef ? "AND repo_ref = $4" : ""}
+        ${refClause}
+        ${excludeClause}
       ORDER BY embedding <-> $1
-      LIMIT ${params.limit}
+      LIMIT ${limitParam}
     `;
-
-      const vectorLiteral = `[${params.embedding.join(",")}]`;
-
-      const values = params.repoRef
-        ? [vectorLiteral, params.repoProvider, params.repoName, params.repoRef]
-        : [vectorLiteral, params.repoProvider, params.repoName];
 
       const result = await client.query(query, values);
 
-      return result.rows.map((row) => ({
+      // Trim to the original requested limit (in case fetchLimit > limit
+      // and exclusion didn't reduce the result set as much as expected).
+      return result.rows.slice(0, limit).map((row) => ({
         id: row.id,
         path: row.path,
         kind: row.kind,
@@ -247,7 +274,7 @@ export class PostgresRagChunkRepository implements RagChunkRepository {
         distance: row.distance,
       }));
     } finally {
-      await client.end().catch(() => { });
+      await client.end().catch(() => {});
     }
   }
 

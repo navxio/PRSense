@@ -14,9 +14,10 @@ import {
   FileSystemRepositorySource,
   GitLabRepositorySource,
   GitHubRepositorySource,
+  RefAwareRepositorySource,
 } from "@prsense/context";
 
-export function resolveRepositorySource(target: string) {
+export function resolveRepositorySource(target: string, ref?: string) {
   const isGithub = /github\.com/.test(target);
   const isGitlab = /gitlab\.com/.test(target);
 
@@ -46,7 +47,11 @@ export function resolveRepositorySource(target: string) {
     return new GitLabRepositorySource(owner, repo.replace(".git", ""));
   } else {
     const absolute = path.resolve(target);
-    return new FileSystemRepositorySource(absolute);
+    let repositorySource = new FileSystemRepositorySource(absolute);
+    if (ref) {
+      return new RefAwareRepositorySource(repositorySource, ref);
+    }
+    return repositorySource;
   }
 }
 
@@ -144,19 +149,13 @@ export function getGitFileSnapshot({
 }): Map<string, string> {
   const output = execFileSync(
     "git",
-    [
-      "ls-tree",
-      "-r",
-      "-z",
-      "--format=%(objectname)%x00%(path)",
-      commitSha,
-    ],
-    { cwd: repoPath }
+    ["ls-tree", "-r", "-z", "--format=%(objectname)%x00%(path)", commitSha],
+    { cwd: repoPath },
   );
 
   const parts = output.toString("utf8").split("\0");
 
-  if (parts[parts.length - 1] === "") parts.pop()
+  if (parts[parts.length - 1] === "") parts.pop();
 
   const snapshot = new Map<string, string>();
 
@@ -239,9 +238,7 @@ export function resolveExecutionPlan({
     return { kind: "noop" };
   }
 
-  const pathsToDelete = Array.from(
-    new Set([...changedFiles, ...deletedFiles]),
-  );
+  const pathsToDelete = Array.from(new Set([...changedFiles, ...deletedFiles]));
 
   if (changedFiles.length === 0 && deletedFiles.length > 0) {
     return {

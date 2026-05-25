@@ -1,5 +1,44 @@
 # Changelog
 
+## v0.6.0
+
+### Added
+
+- Automatic incremental indexing before every review (skip with `--no-auto-index`)
+- Add `auto` option to index config
+
+## v0.5.1
+
+### Changed
+
+- `maxSignals` in config defaults to 3
+- Retrieved context ignores files already in the diff
+
+## v0.5.0
+
+### Changed
+
+- CLI is now bundled with tsup for faster cold start and smaller install
+- [If daemon bundled] Daemon is now bundled with tsup
+- Internal workspace packages [are now private | remain published for daemon's dependency tree]
+
+### Migration
+
+- No user-visible changes
+- Same commands, same flags, same outputs
+
+## v0.4.0
+
+### Breaking changes
+
+- Removed the `daemon` subcommand from the CLI. The daemon is now
+  distributed as a separate package, `@prsense/daemon`, with its own
+  binary `prsense-daemon`. If you were using `prsense daemon start`,
+  install the daemon directly:
+
+      npm i -g @prsense/daemon
+      prsense-daemon
+
 ## v0.3.1 — Pre-push review hook
 
 ### Added

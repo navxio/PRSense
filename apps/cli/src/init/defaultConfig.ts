@@ -10,11 +10,12 @@ export const DEFAULT_CONFIG = {
   },
   review: {
     confidenceThreshold: 0.6,
-    maxSignals: 10,
+    maxSignals: 3,
   },
   index: {
     chunkSizeChars: 1000,
     chunkOverlapChars: 200,
+    auto: true,
   },
   context: {
     maxChunks: 5,

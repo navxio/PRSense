@@ -1,6 +1,6 @@
 {
   "name": "prsense-meta",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "private": true,
   "description": "An open-source, LLM-powered pull request reviewer that surfaces high-confidence issues as structured signals.",
   "main": "index.js",
@@ -25,6 +25,7 @@
     "daemon": "pnpm --filter @prsense/daemon dev",
     "bench": "pnpm --filter @prsense/bench start",
     "test": "jest --runInBand",
+    "publish:check": "pnpm -r build && pnpm -r pack",
     "publish": "pnpm publish -r --access public --no-git-checks"
   },
   "keywords": [

@@ -15,6 +15,7 @@ export const RuntimeConfigSchema = z.object({
   index: z.object({
     chunkSizeChars: z.number().int().positive(),
     chunkOverlapChars: z.number().int().positive(),
+    auto: z.boolean().default(true),
   }),
 
   review: z.object({

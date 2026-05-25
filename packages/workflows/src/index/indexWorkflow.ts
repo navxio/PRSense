@@ -15,7 +15,7 @@ import {
   resolveRepositorySource,
   planIndex,
   buildChunks,
-  resolveExecutionPlan
+  resolveExecutionPlan,
 } from "./util.js";
 
 export async function runIndexWorkflow({
@@ -26,6 +26,7 @@ export async function runIndexWorkflow({
   dryRun,
   eventBus,
   version,
+  ref,
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
@@ -34,6 +35,7 @@ export async function runIndexWorkflow({
   dryRun?: boolean;
   eventBus: EventBus;
   version: string;
+  ref?: string;
 }): Promise<IndexWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
@@ -42,7 +44,7 @@ export async function runIndexWorkflow({
     // Resolve Repository Source
     // -------------------------------------------------
 
-    let repositorySource = resolveRepositorySource(target);
+    let repositorySource = resolveRepositorySource(target, ref);
 
     // -------------------------------------------------
     // Resolve Identity + Revision
@@ -133,13 +135,12 @@ export async function runIndexWorkflow({
       chunkVersion: 2,
     };
 
-
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
       if (!stored.chunking || stored.chunking.version !== 2) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`,
         );
       }
 
@@ -148,7 +149,7 @@ export async function runIndexWorkflow({
         stored.embedding.model !== config.embeddings.model
       ) {
         incompatibilityReasons.push(
-          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`
+          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
         );
       }
     }
@@ -158,10 +159,7 @@ export async function runIndexWorkflow({
       currentFingerprint,
       force: force || false,
     });
-    if (
-      incompatibilityReasons.length > 0 &&
-      !force
-    ) {
+    if (incompatibilityReasons.length > 0 && !force) {
       eventBus.emit(CoreEvents.WorkflowIndexRebuildRequired, {
         reason: [
           "Index is incompatible with current configuration.",
@@ -200,12 +198,9 @@ export async function runIndexWorkflow({
       throw new Error("Repository must be git-backed");
     }
 
-    if (
-      plan.type === "incremental" &&
-      revision.commitSha !== plan.targetSha
-    ) {
+    if (plan.type === "incremental" && revision.commitSha !== plan.targetSha) {
       throw new Error(
-        `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`
+        `Repository not at expected revision. Expected ${plan.targetSha}, got ${revision.commitSha}`,
       );
     }
     let executionPlan = resolveExecutionPlan({
@@ -224,7 +219,6 @@ export async function runIndexWorkflow({
     eventBus.emit(CoreEvents.WorkflowIndexPlanComputed, {
       type: executionPlan.kind,
     });
-
 
     switch (executionPlan.kind) {
       case "noop": {
@@ -322,14 +316,10 @@ export async function runIndexWorkflow({
             : executionPlan.changedFiles;
 
         const deletedFiles =
-          executionPlan.kind === "full"
-            ? []
-            : executionPlan.deletedFiles;
+          executionPlan.kind === "full" ? [] : executionPlan.deletedFiles;
 
         const pathsToDelete =
-          executionPlan.kind === "full"
-            ? []
-            : executionPlan.pathsToDelete;
+          executionPlan.kind === "full" ? [] : executionPlan.pathsToDelete;
 
         eventBus.emit(CoreEvents.WorkflowIndexFilesChanged, {
           changedFiles,
@@ -503,10 +493,8 @@ export async function runIndexWorkflow({
             upToDate: false,
           },
         };
-
       }
     }
-
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 
