@@ -6,7 +6,11 @@ import {
   RepositoryIdentity,
   RepositoryRevision,
 } from "./GitBackedRepositorySource.js";
-
+/**
+ * Wraps a GitBackedRepositorySource to read from a specific commit-ish ref
+ * (branch name, tag, or SHA). Tree-ish expressions (e.g. HEAD^{tree}) are
+ * not supported.
+ */
 export class RefAwareRepositorySource implements GitBackedRepositorySource {
   constructor(
     private readonly inner: GitBackedRepositorySource,
@@ -25,7 +29,7 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
     const repoPath = this.inner.getLocalPath();
     const inner = await this.inner.getRevision();
 
-    const sha = execFileSync("git", ["rev-parse", this.ref], {
+    const sha = execFileSync("git", ["rev-parse", `${this.ref}^{commit}`], {
       cwd: repoPath,
       encoding: "utf8",
     }).trim();
@@ -70,11 +74,19 @@ export class RefAwareRepositorySource implements GitBackedRepositorySource {
       buffer = execFileSync("git", ["show", `${this.ref}:${filePath}`], {
         cwd: repoPath,
       });
-    } catch {
-      throw new Error(`File not found at ${this.ref}:${filePath}`);
+    } catch (err: any) {
+      const stderr = err?.stderr?.toString() ?? "";
+      if (
+        stderr.includes("does not exist") ||
+        stderr.includes("not exist in")
+      ) {
+        throw new Error(`File not found at ${this.ref}:${filePath}`);
+      }
+      throw new Error(
+        `git show failed for ${this.ref}:${filePath}: ${stderr.trim() || err.message}`,
+      );
     }
 
-    // Binary detection
     const sampleSize = Math.min(buffer.length, 8000);
     for (let i = 0; i < sampleSize; i++) {
       if (buffer[i] === 0) {
