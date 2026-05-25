@@ -1,6 +1,6 @@
 // apps/cli/src/commands/review.ts
 import { Command } from "commander";
-import { runReviewWorkflow } from "@prsense/workflows";
+import { runReviewWorkflow, runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
 import { resolveEnvironment, ValidationIssue } from "@prsense/config";
@@ -42,6 +42,7 @@ export const reviewCommand = new Command("review")
   )
   .option("-t, --llm-temperature <n>", "LLM temperature", Number)
   .option("-s, --stats", "Print Stats related to review")
+  .option("-d, --no-auto-index", "No automatic indexing")
   .action(async (target, options) => {
     await ensureInit();
     console.log("→ Running review...\n");
