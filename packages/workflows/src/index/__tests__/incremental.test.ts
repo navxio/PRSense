@@ -40,7 +40,7 @@ describe("Incremental indexing (real DB)", () => {
     }
   });
 
-  it.only("re-indexes only changed file", async () => {
+  it("re-indexes only changed file", async () => {
     const eventBus = new TestEventBus();
 
     // ---- initial commit ----
