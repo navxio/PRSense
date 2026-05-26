@@ -25,7 +25,7 @@ const CHUNKABLE_KINDS = new Set<SyntaxKind>([
   SyntaxKind.InterfaceDeclaration,
   SyntaxKind.TypeAliasDeclaration,
   SyntaxKind.EnumDeclaration,
-  SyntaxKind.VariableDeclaration,
+  SyntaxKind.VariableStatement,
   SyntaxKind.ExportAssignment,
   SyntaxKind.ExpressionStatement,
 ]);
@@ -214,7 +214,7 @@ function subSplitLargeDeclaration(
   for (const bodyStmt of bodyStatements) {
     const stmtText = bodyStmt.getFullText();
     if (
-      currentText.length + stmtText.length > opts.hardMaxChars &&
+      currentText.length + stmtText.length > opts.targetMaxChars &&
       currentText.length > 0
     ) {
       flush();
@@ -245,10 +245,10 @@ function findSplittableBody(stmt: Node): Node | undefined {
     for (const d of decls) {
       const init = d.getInitializer();
       if (
-        (init && Node.isArrowFunction(init)) ||
-        Node.isFunctionExpression(init)
+        init &&
+        (Node.isArrowFunction(init) || Node.isFunctionExpression(init))
       )
-        return init.getBody as Node;
+        return init.getBody() as Node;
     }
   }
   return undefined;
@@ -327,7 +327,7 @@ function mergeSmallSiblings(
     const shouldMerge =
       (buffer.content.length < opts.hardMinChars ||
         chunk.content.length < opts.hardMinChars ||
-        (buffer.content.length <= opts.targetMinChars &&
+        (buffer.content.length < opts.targetMinChars &&
           wouldMergeSize <= opts.targetMaxChars)) &&
       wouldMergeSize <= opts.hardMaxChars;
 
@@ -347,7 +347,7 @@ function mergeSmallSiblings(
     }
   }
 
-  if (buffer != null) merged.push(buffer);
+  if (buffer !== null) merged.push(buffer);
   return merged;
 }
 
@@ -361,7 +361,7 @@ function getSymbolName(stmt: Node): string | undefined {
   if (Node.isTypeAliasDeclaration(stmt)) return stmt.getName();
 
   if (Node.isEnumDeclaration(stmt)) return stmt.getName();
-  if (Node.isVariableDeclaration(stmt)) {
+  if (Node.isVariableStatement(stmt)) {
     const decls = stmt.getDeclarations();
     const first = decls[0];
     if (first) return first.getName();
