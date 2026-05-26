@@ -138,9 +138,9 @@ export async function runIndexWorkflow({
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
-      if (!stored.chunking || stored.chunking.version !== 2) {
+      if (!stored.chunking || stored.chunking.version !== 3) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`,
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
         );
       }
 
