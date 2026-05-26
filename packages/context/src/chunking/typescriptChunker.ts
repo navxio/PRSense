@@ -1,5 +1,11 @@
 // packages/context/src/chunking/typescriptChunker.ts
-import { Project, Node, SyntaxKind, type SourceFile } from "ts-morph";
+import {
+  Project,
+  Node,
+  SyntaxKind,
+  type SourceFile,
+  type Block,
+} from "ts-morph";
 import type { Chunker } from "./types.js";
 import type { ContextChunk, ContextSource } from "@prsense/core";
 import { randomUUID } from "node:crypto";
@@ -227,30 +233,30 @@ function subSplitLargeDeclaration(
   return chunks;
 }
 
-function findSplittableBody(stmt: Node): Node | undefined {
-  // find the inner block of a function, method, or class
+function findSplittableBody(stmt: Node): Block | undefined {
   if (Node.isFunctionDeclaration(stmt) || Node.isFunctionExpression(stmt)) {
-    return stmt.getBody();
+    const body = stmt.getBody();
+    return body && Node.isBlock(body) ? body : undefined;
   }
 
   if (Node.isClassDeclaration(stmt)) {
-    // for classes we treat the class body as a list of members
-    // return the first block shaped descendant or undefined to fall back to text splitting
     return undefined;
   }
 
   if (Node.isVariableStatement(stmt)) {
-    // look for arrow fn or fn expression initializer
     const decls = stmt.getDeclarations();
     for (const d of decls) {
       const init = d.getInitializer();
       if (
         init &&
         (Node.isArrowFunction(init) || Node.isFunctionExpression(init))
-      )
-        return init.getBody() as Node;
+      ) {
+        const body = init.getBody();
+        return Node.isBlock(body) ? body : undefined;
+      }
     }
   }
+
   return undefined;
 }
 
