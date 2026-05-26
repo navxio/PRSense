@@ -3,7 +3,7 @@ import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
   PostgresIndexMetadataRepository,
   PostgresRagChunkRepository,
-  createCharChunker,
+  createCompositeChunker,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -132,7 +132,7 @@ export async function runIndexWorkflow({
       embeddingModel: config.embeddings.model,
       embeddingDimension,
       chunkStrategy: "default",
-      chunkVersion: 2,
+      chunkVersion: 3,
     };
 
     const incompatibilityReasons: string[] = [];
@@ -290,7 +290,7 @@ export async function runIndexWorkflow({
           },
           chunking: {
             strategy: "default",
-            version: 2,
+            version: 3,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -354,7 +354,7 @@ export async function runIndexWorkflow({
             },
             chunking: {
               strategy: "default",
-              version: 2,
+              version: 3,
             },
             prsenseVersion: version,
             createdAt: new Date().toISOString(),
@@ -372,9 +372,11 @@ export async function runIndexWorkflow({
           };
         }
 
-        const chunker = createCharChunker({
-          maxChars: config.index.chunkSizeChars,
-          overlapChars: config.index.chunkOverlapChars,
+        const chunker = createCompositeChunker({
+          char: {
+            maxChars: config.index.chunkSizeChars,
+            overlapChars: config.index.chunkOverlapChars,
+          },
         });
 
         const chunks: ContextChunk[] = await buildChunks({
@@ -477,7 +479,7 @@ export async function runIndexWorkflow({
           },
           chunking: {
             strategy: "default",
-            version: 2,
+            version: 3,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
