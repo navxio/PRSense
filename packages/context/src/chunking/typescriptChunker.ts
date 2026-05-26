@@ -43,7 +43,7 @@ const SKIPPABLE_KINDS = new Set<SyntaxKind>([
 
 type RawChunk = {
   content: string;
-  symbolName: string | undefined;
+  symbolNames: string[];
   kindLabel: string;
   exported: boolean;
   lineStart: number;
@@ -120,7 +120,7 @@ function extractRawChunks(
     if (text.length <= opts.hardMaxChars) {
       chunks.push({
         content: text,
-        symbolName,
+        symbolNames: symbolName ? [symbolName] : [],
         kindLabel,
         exported,
         lineStart,
@@ -190,7 +190,7 @@ function subSplitLargeDeclaration(
 
   chunks.push({
     content: headerText + "\n // ...",
-    symbolName,
+    symbolNames: symbolName ? [symbolName] : [],
     kindLabel: `${kindLabel}-header`,
     exported,
     lineStart: sourceFile.getLineAndColumnAtPos(declStart).line,
@@ -207,7 +207,7 @@ function subSplitLargeDeclaration(
 
     chunks.push({
       content: `// inside ${symbolName ?? kindLabel}\n${currentText}`,
-      symbolName,
+      symbolNames: symbolName ? [symbolName] : [],
       kindLabel: `${kindLabel}-body`,
       exported,
       lineStart: sourceFile.getLineAndColumnAtPos(currentStart).line,
@@ -282,7 +282,7 @@ function splitTextAtLineBoundaries(
     ) {
       chunks.push({
         content: current,
-        symbolName,
+        symbolNames: symbolName ? [symbolName] : [],
         kindLabel: `${kindLabel}-partial`,
         exported,
         lineStart: currentStartLine,
@@ -298,7 +298,7 @@ function splitTextAtLineBoundaries(
   if (current.trim().length > 0) {
     chunks.push({
       content: current,
-      symbolName,
+      symbolNames: symbolName ? [symbolName] : [],
       kindLabel: `${kindLabel}-partial`,
       exported,
       lineStart: currentStartLine,
@@ -340,7 +340,7 @@ function mergeSmallSiblings(
     if (shouldMerge) {
       buffer = {
         content: buffer.content + "\n\n" + chunk.content,
-        symbolName: buffer.symbolName ?? chunk.symbolName,
+        symbolNames: [...buffer.symbolNames, ...chunk.symbolNames],
         kindLabel:
           buffer.kindLabel === chunk.kindLabel ? buffer.kindLabel : "mixed",
         exported: buffer.exported || chunk.exported,
@@ -418,7 +418,7 @@ function isExported(stmt: Node): boolean {
 // output mapping
 function toContextChunk(raw: RawChunk, source: ContextSource): ContextChunk {
   const metadata: ContextChunk["metadata"] = {
-    symbols: raw.symbolName ? [raw.symbolName] : [],
+    symbols: raw.symbolNames,
     language: "typescript",
     lineStart: raw.lineStart,
     lineEnd: raw.lineEnd,
