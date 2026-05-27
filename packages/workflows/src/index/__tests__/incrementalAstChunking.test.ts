@@ -233,13 +233,10 @@ export interface SessionContext {
 
   // ---------------------------------------------------------------------------
   // Test 6: Regression test for the chunkVersion mismatch bug.
-  //         If stored chunking.version doesn't match current CHUNK_VERSION,
-  //         the workflow must emit WorkflowIndexRebuildRequired and fail.
   // ---------------------------------------------------------------------------
   it("emits rebuild-required when stored chunk version does not match current", async () => {
     const setupBus = new TestEventBus();
 
-    // Index a file at the current version.
     await writeFile(
       repo,
       "auth.ts",
@@ -258,30 +255,28 @@ export interface SessionContext {
 
     expect(initial.outcome).toBe("success");
 
-    // Manually downgrade the stored chunking version to simulate an
-    // index built by an older PRSense.
     const client = new Client(DB_CONFIG);
     await client.connect();
 
-    // First, confirm metadata exists for the repo (sanity check that the
-    // initial index actually saved metadata).
-    const repoName = path.basename(repo);
-    const metaCheck = await client.query(
-      `SELECT * FROM prsense_index_metadata WHERE repository_provider = 'local' AND repository_id = $1`,
-      [repoName],
+    // Discover what identity the workflow actually stored, rather than guessing.
+    const metaRows = await client.query(
+      `SELECT repository_provider, repository_id, chunk_version
+       FROM prsense_index_metadata`,
     );
-    expect(metaCheck.rows.length).toBe(1);
+    expect(metaRows.rows.length).toBe(1);
 
-    // Downgrade chunking version.
+    const stored = metaRows.rows[0];
+
+    // Downgrade chunk version on the row we just found.
     await client.query(
       `UPDATE prsense_index_metadata
-         SET chunk_version = 1
-       WHERE repository_provider = 'local' AND repository_id = $1`,
-      [repoName],
+        SET chunk_version = 1
+      WHERE repository_provider = $1 AND repository_id = $2`,
+      [stored.repository_provider, stored.repository_id],
     );
     await client.end();
 
-    // Modify the file so there's something to incrementally index.
+    // Modify the file so the workflow has something to do.
     await writeFile(
       repo,
       "auth.ts",
@@ -289,7 +284,6 @@ export interface SessionContext {
     );
     commitAll(repo, "update");
 
-    // Run without force. Should detect incompatibility and refuse.
     const eventBus = new TestEventBus();
     const result = await runIndexWorkflow({
       target: repo,
@@ -304,8 +298,6 @@ export interface SessionContext {
     const events = eventBus.events.map((e) => e.event);
     expect(events).toContain(CoreEvents.WorkflowIndexRebuildRequired);
 
-    // The rebuild-required event should not have `forced: true` — this is
-    // the user-must-rebuild path, not the auto-rebuild-on-force path.
     const rebuildEvent = eventBus.events.find(
       (e) => e.event === CoreEvents.WorkflowIndexRebuildRequired,
     );
@@ -313,8 +305,7 @@ export interface SessionContext {
   });
 
   // ---------------------------------------------------------------------------
-  // Test 6b: Companion to Test 6 — with --force, the workflow proceeds and
-  //          rebuilds successfully despite the version mismatch.
+  // Test 6b: With --force, the workflow rebuilds despite the version mismatch.
   // ---------------------------------------------------------------------------
   it("rebuilds when chunking version mismatches and --force is set", async () => {
     const setupBus = new TestEventBus();
@@ -335,19 +326,24 @@ export interface SessionContext {
       version: "test",
     });
 
-    // Downgrade stored version.
     const client = new Client(DB_CONFIG);
     await client.connect();
-    const repoName = path.basename(repo);
+
+    const metaRows = await client.query(
+      `SELECT repository_provider, repository_id
+       FROM prsense_index_metadata`,
+    );
+    expect(metaRows.rows.length).toBe(1);
+    const stored = metaRows.rows[0];
+
     await client.query(
       `UPDATE prsense_index_metadata
-         SET chunk_version = 1
-       WHERE repository_provider = 'local' AND repository_id = $1`,
-      [repoName],
+        SET chunk_version = 1
+      WHERE repository_provider = $1 AND repository_id = $2`,
+      [stored.repository_provider, stored.repository_id],
     );
     await client.end();
 
-    // Run WITH force. Should rebuild instead of failing.
     const eventBus = new TestEventBus();
     const result = await runIndexWorkflow({
       target: repo,
@@ -360,14 +356,11 @@ export interface SessionContext {
 
     expect(result.outcome).toBe("success");
 
-    // The forced rebuild path emits WorkflowIndexRebuildRequired with
-    // forced: true.
     const rebuildEvent = eventBus.events.find(
       (e) => e.event === CoreEvents.WorkflowIndexRebuildRequired,
     );
     expect(rebuildEvent?.fields?.forced).toBe(true);
 
-    // And chunks should be present after the rebuild.
     const clientAfter = new Client(DB_CONFIG);
     await clientAfter.connect();
     const res = await clientAfter.query(
