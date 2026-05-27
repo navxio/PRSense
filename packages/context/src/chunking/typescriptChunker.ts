@@ -19,9 +19,9 @@ export type TypeScriptChunkerOptions = {
 
 const DEFAULT_OPTIONS: TypeScriptChunkerOptions = {
   targetMinChars: 200, // try to not emit chunks smaller than this
-  targetMaxChars: 2000, // try to not emit chunks larger than this
+  targetMaxChars: 1500, // try to not emit chunks larger than this
   hardMinChars: 100, // force-merge below this
-  hardMaxChars: 3000, // force-split above this
+  hardMaxChars: 2000, // force-split above this
 };
 
 // Node kinds we treat as chunkable top-level declarations
@@ -219,6 +219,27 @@ function subSplitLargeDeclaration(
 
   for (const bodyStmt of bodyStatements) {
     const stmtText = bodyStmt.getFullText();
+
+    if (stmtText.length > opts.hardMaxChars) {
+      // Flush whatever we've accumulated, then split this enormous statement
+      // at line boundaries.
+      flush();
+      const stmtStart = bodyStmt.getStart();
+      const lineStart = sourceFile.getLineAndColumnAtPos(stmtStart).line;
+      const subChunks = splitTextAtLineBoundaries(
+        stmtText,
+        opts,
+        symbolName,
+        kindLabel,
+        exported,
+        lineStart,
+      );
+      chunks.push(...subChunks);
+      currentStart = bodyStmt.getEnd();
+      currentEnd = currentStart;
+      continue;
+    }
+
     if (
       currentText.length + stmtText.length > opts.targetMaxChars &&
       currentText.length > 0
