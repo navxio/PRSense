@@ -144,9 +144,13 @@ function extractRawChunks(
   return chunks.map((c) => {
     if (c.content.length <= opts.hardMaxChars) return c;
     const sliceLength = opts.hardMaxChars - TRUNCATION_MARKER.length;
+    const truncated = c.content.slice(0, sliceLength) + TRUNCATION_MARKER;
+    // Recompute lineEnd from the truncated content.
+    const linesPreserved = truncated.split("\n").length;
     return {
       ...c,
-      content: c.content.slice(0, sliceLength) + TRUNCATION_MARKER,
+      content: truncated,
+      lineEnd: c.lineStart + linesPreserved - 1,
     };
   });
 }
@@ -304,27 +308,8 @@ function splitTextAtLineBoundaries(
   let lineCursor = startLine;
   let currentStartLine = startLine;
 
-  for (const line of lines) {
-    if (
-      current.length + line.length + 1 > opts.targetMaxChars &&
-      current.length > 0
-    ) {
-      chunks.push({
-        content: current,
-        symbolNames: symbolName ? [symbolName] : [],
-        kindLabel: `${kindLabel}-partial`,
-        exported,
-        lineStart: currentStartLine,
-        lineEnd: lineCursor - 1,
-      });
-      current = "";
-      currentStartLine = lineCursor;
-    }
-    current += (current.length > 0 ? "\n" : "") + line;
-    lineCursor++;
-  }
-
-  if (current.trim().length > 0) {
+  const flushCurrent = () => {
+    if (current.trim().length === 0) return;
     chunks.push({
       content: current,
       symbolNames: symbolName ? [symbolName] : [],
@@ -333,7 +318,47 @@ function splitTextAtLineBoundaries(
       lineStart: currentStartLine,
       lineEnd: lineCursor - 1,
     });
+    current = "";
+  };
+
+  for (const line of lines) {
+    // Handle an overlong single line: flush whatever we have, then split
+    // the line itself into segments under hardMaxChars. Each segment becomes
+    // its own chunk with the same line number (since they all originated
+    // from one source line).
+    if (line.length > opts.hardMaxChars) {
+      flushCurrent();
+      currentStartLine = lineCursor;
+
+      const segmentSize = opts.targetMaxChars;
+      for (let i = 0; i < line.length; i += segmentSize) {
+        const segment = line.slice(i, i + segmentSize);
+        chunks.push({
+          content: segment,
+          symbolNames: symbolName ? [symbolName] : [],
+          kindLabel: `${kindLabel}-partial`,
+          exported,
+          lineStart: lineCursor,
+          lineEnd: lineCursor,
+        });
+      }
+      lineCursor++;
+      currentStartLine = lineCursor;
+      continue;
+    }
+
+    if (
+      current.length + line.length + 1 > opts.targetMaxChars &&
+      current.length > 0
+    ) {
+      flushCurrent();
+      currentStartLine = lineCursor;
+    }
+    current += (current.length > 0 ? "\n" : "") + line;
+    lineCursor++;
   }
+
+  flushCurrent();
 
   return chunks;
 }
