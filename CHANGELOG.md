@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.7.0
+
+### Breaking Changes
+
+- Chunking version 3, requires index rebuild
+
+### Added
+
+- AST based chunking is now default for typescript projects using `ts-morph`
+- Cursory tests
+
+### Changed
+
+- Move existing incremental indexing tests from .ts to .txt extension
+
 ## v0.6.0
 
 ### Added
@@ -19,8 +34,8 @@
 ### Changed
 
 - CLI is now bundled with tsup for faster cold start and smaller install
-- [If daemon bundled] Daemon is now bundled with tsup
-- Internal workspace packages [are now private | remain published for daemon's dependency tree]
+- Daemon is now bundled with tsup
+- Internal workspace packages are now private / remain published for daemon's dependency tree
 
 ### Migration
 
