@@ -722,7 +722,7 @@ describe("Incremental indexing (real DB)", () => {
     await client.end();
   });
 
-  it("detects change even if file reverts to previous content", async () => {
+  it("treats reverted content across commits as noop(snapshot-based diff)", async () => {
     const eventBus = new TestEventBus();
 
     await writeFile(repo, "a.txt", "1");

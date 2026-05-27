@@ -140,11 +140,13 @@ function extractRawChunks(
   // The splitting logic above should already keep chunks within bounds, but
   // if any code path produces an oversized chunk, truncate it here rather
   // than letting the embedding step reject the entire indexing run.
+  const TRUNCATION_MARKER = "\n// [truncated]";
   return chunks.map((c) => {
     if (c.content.length <= opts.hardMaxChars) return c;
+    const sliceLength = opts.hardMaxChars - TRUNCATION_MARKER.length;
     return {
       ...c,
-      content: c.content.slice(0, opts.hardMaxChars) + "\n// [truncated]",
+      content: c.content.slice(0, sliceLength) + TRUNCATION_MARKER,
     };
   });
 }
@@ -313,10 +315,10 @@ function splitTextAtLineBoundaries(
         kindLabel: `${kindLabel}-partial`,
         exported,
         lineStart: currentStartLine,
-        lineEnd: lineCursor,
+        lineEnd: lineCursor - 1,
       });
       current = "";
-      currentStartLine = lineCursor + 1;
+      currentStartLine = lineCursor;
     }
     current += (current.length > 0 ? "\n" : "") + line;
     lineCursor++;
@@ -329,7 +331,7 @@ function splitTextAtLineBoundaries(
       kindLabel: `${kindLabel}-partial`,
       exported,
       lineStart: currentStartLine,
-      lineEnd: lineCursor,
+      lineEnd: lineCursor - 1,
     });
   }
 
@@ -439,6 +441,7 @@ function isExported(stmt: Node): boolean {
   ) {
     return stmt.isExported();
   }
+  if (Node.isExportAssignment(stmt)) return true;
   return false;
 }
 
