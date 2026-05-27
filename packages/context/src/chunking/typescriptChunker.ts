@@ -96,18 +96,14 @@ function extractRawChunks(
 
   for (const stmt of sourceFile.getStatements()) {
     const kind = stmt.getKind();
-
     if (SKIPPABLE_KINDS.has(kind)) continue;
     if (!CHUNKABLE_KINDS.has(kind)) continue;
 
     // include leading jsdoc / comments profusely
     const fullStart = stmt.getStart(/* include jsdoc comments */ true);
     const end = stmt.getEnd();
-
     const text = sourceFile.getFullText().slice(fullStart, end);
-
     const lineStart = sourceFile.getLineAndColumnAtPos(fullStart).line;
-
     const lineEnd = sourceFile.getLineAndColumnAtPos(end).line;
 
     const symbolName = getSymbolName(stmt);
@@ -140,7 +136,17 @@ function extractRawChunks(
     }
   }
 
-  return chunks;
+  // Belt-and-suspenders: enforce hardMaxChars on every emitted chunk.
+  // The splitting logic above should already keep chunks within bounds, but
+  // if any code path produces an oversized chunk, truncate it here rather
+  // than letting the embedding step reject the entire indexing run.
+  return chunks.map((c) => {
+    if (c.content.length <= opts.hardMaxChars) return c;
+    return {
+      ...c,
+      content: c.content.slice(0, opts.hardMaxChars) + "\n// [truncated]",
+    };
+  });
 }
 
 // splitting large declarations
