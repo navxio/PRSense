@@ -101,7 +101,7 @@ PRSense is built around a few core principles:
 
 ## Requirements
 
-- Node.Js >= 22.x + npm
+- Node.Js >= 22 <25
 - git >=2.31
 - (optional)Docker
 - (optional)Ollama
