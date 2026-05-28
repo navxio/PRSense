@@ -108,22 +108,26 @@ function extractRawChunks(
 
   for (const stmt of sourceFile.getStatements()) {
     const kind = stmt.getKind();
-    if (SKIPPABLE_KINDS.has(kind)) continue;
-    if (!CHUNKABLE_KINDS.has(kind)) continue;
 
-    // include leading jsdoc / comments profusely
-    const fullStart = stmt.getStart(/* include jsdoc comments */ true);
+    // Imports/exports carry no retrieval value as standalone chunks.
+    if (SKIPPABLE_KINDS.has(kind)) continue;
+
+    const fullStart = stmt.getStart(true);
     const end = stmt.getEnd();
     const text = sourceFile.getFullText().slice(fullStart, end);
+    const text_trimmed = text.trim();
+    if (text_trimmed.length === 0) continue;
+
     const lineStart = sourceFile.getLineAndColumnAtPos(fullStart).line;
     const lineEnd = sourceFile.getLineAndColumnAtPos(end).line;
 
-    const symbolName = getSymbolName(stmt);
-    const kindLabel = getKindLabel(stmt);
-    const exported = isExported(stmt);
-
-    const text_trimmed = text.trim();
-    if (text_trimmed.length === 0) continue;
+    // Known declaration kinds get rich metadata (symbol name, exported, etc.).
+    // Everything else (top-level if/for/try/switch/bare blocks/throws) is
+    // emitted as a generic code chunk so its content is preserved in the index.
+    const isChunkableDeclaration = CHUNKABLE_KINDS.has(kind);
+    const symbolName = isChunkableDeclaration ? getSymbolName(stmt) : undefined;
+    const kindLabel = isChunkableDeclaration ? getKindLabel(stmt) : "statement";
+    const exported = isChunkableDeclaration ? isExported(stmt) : false;
 
     if (text.length <= opts.hardMaxChars) {
       chunks.push({
@@ -135,7 +139,6 @@ function extractRawChunks(
         lineEnd,
       });
     } else {
-      // split large bodies at statement boundaries
       const subChunks = subSplitLargeDeclaration(
         stmt,
         sourceFile,
