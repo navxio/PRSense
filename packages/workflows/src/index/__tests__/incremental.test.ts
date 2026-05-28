@@ -3,6 +3,12 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { CoreEvents } from "@prsense/core";
 
+// These tests use .txt fixtures intentionally. Incremental indexing behavior
+// (change detection, chunk insert/delete, rename handling) is orthogonal to
+// chunker selection. .txt routes through the char chunker, isolating the
+// incremental logic under test. TypeScript-specific AST chunking through the
+// index workflow is covered separately in incrementalAstChunking.test.ts.
+
 import { runIndexWorkflow } from "../indexWorkflow.js";
 import {
   createTestRepo,
