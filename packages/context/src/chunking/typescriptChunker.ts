@@ -361,7 +361,7 @@ function splitTextAtLineBoundaries(
       flushCurrent();
       currentStartLine = lineCursor;
 
-      const segmentSize = opts.targetMaxChars;
+      const segmentSize = Math.min(opts.targetMaxChars, opts.hardMaxChars);
       for (let i = 0; i < line.length; i += segmentSize) {
         const segment = line.slice(i, i + segmentSize);
         chunks.push({
