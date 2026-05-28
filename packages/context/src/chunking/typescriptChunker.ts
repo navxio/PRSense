@@ -164,8 +164,10 @@ function subSplitLargeDeclaration(
   kindLabel: string,
   exported: boolean,
 ): RawChunk[] {
+  // class declarations split on member boundaries instead of statement boundaries - methods, properties, accessors, constructors
+  if (Node.isClassDeclaration(stmt)) {
+  }
   // find the body block and split
-  // for larger nodes fall back to splitting the raw text at line boundaries near targetMaxChars
 
   const body = findSplittableBody(stmt);
 
@@ -278,6 +280,8 @@ function findSplittableBody(stmt: Node): Block | undefined {
 
   if (Node.isVariableStatement(stmt)) {
     const decls = stmt.getDeclarations();
+    let bestBody: Block | undefined = undefined;
+    let bestSize = 0;
     for (const d of decls) {
       const init = d.getInitializer();
       if (
@@ -285,9 +289,16 @@ function findSplittableBody(stmt: Node): Block | undefined {
         (Node.isArrowFunction(init) || Node.isFunctionExpression(init))
       ) {
         const body = init.getBody();
-        return Node.isBlock(body) ? body : undefined;
+        if (Node.isBlock(body)) {
+          const size = body.getEnd() - body.getStart();
+          if (size > bestSize) {
+            bestSize = size;
+            bestBody = body;
+          }
+        }
       }
     }
+    return bestBody;
   }
 
   return undefined;
@@ -505,4 +516,128 @@ function singleChunkFallback(
       kind: "code",
     },
   };
+}
+
+function subSplitClassDeclaration(
+  cls: Node,
+  sourceFile: SourceFile,
+  opts: TypeScriptChunkerOptions,
+  symbolName: string | undefined,
+  kindLabel: string,
+  exported: boolean,
+): RawChunk[] {
+  if (!Node.isClassDeclaration(cls)) {
+    //should be unreachable given the caller's type guard
+    return [];
+  }
+
+  const members = cls.getMembers();
+  if (members.length === 0) {
+    return splitTextAtLineBoundaries(
+      sourceFile.getFullText().slice(cls.getStart(true), cls.getEnd()),
+      opts,
+      symbolName,
+      kindLabel,
+      exported,
+      sourceFile.getLineAndColumnAtPos(cls.getStart(true)).line,
+    );
+  }
+
+  const chunks: RawChunk[] = [];
+
+  // emit a header chunk = class declaration line + opening brace
+  // members follow as separate chunks
+  const declStart = cls.getStart(true);
+  const firstMemberStart = members[0]!.getStart();
+
+  const headerText = sourceFile
+    .getFullText()
+    .slice(declStart, firstMemberStart);
+
+  chunks.push({
+    content: headerText.trimEnd() + "\n // ...",
+    symbolNames: symbolName ? [symbolName] : [],
+    kindLabel: `${kindLabel}-header`,
+    exported,
+    lineStart: sourceFile.getLineAndColumnAtPos(declStart).line,
+    lineEnd: sourceFile.getLineAndColumnAtPos(firstMemberStart).line - 1,
+  });
+
+  // group members into chunks <= targetMaxChars.
+  // Each member that's itself
+  // larger than hardMaxChars falls through to text-line splitting
+  let currentText = "";
+  let currentStart = members[0]!.getStart();
+  let currentEnd = currentStart;
+  let currentMemberNames: string[] = [];
+
+  const flush = () => {
+    if (currentText.trim().length === 0) return;
+
+    chunks.push({
+      content: `// inside class ${symbolName ?? kindLabel}\n${currentText}`,
+      symbolNames: [...(symbolName ? [symbolName] : []), ...currentMemberNames],
+      kindLabel: `${kindLabel}-members`,
+      exported,
+      lineStart: sourceFile.getLineAndColumnAtPos(currentStart).line,
+      lineEnd: sourceFile.getLineAndColumnAtPos(currentEnd).line,
+    });
+    currentText = "";
+    currentMemberNames = [];
+  };
+
+  for (const member of members) {
+    const memberText = member.getFullText();
+    const memberName = getMemberName(member);
+
+    if (memberText.length > opts.hardMaxChars) {
+      flush();
+      currentStart = member.getEnd();
+      currentEnd = currentStart;
+
+      // fall through to line based splitting for this oversized member
+      const memberStart = sourceFile.getLineAndColumnAtPos(
+        member.getStart(),
+      ).line;
+      chunks.push(
+        ...splitTextAtLineBoundaries(
+          memberText,
+          opts,
+          memberName ?? symbolName,
+          `${kindLabel}-member`,
+          exported,
+          memberStart,
+        ),
+      );
+      continue;
+    }
+
+    if (
+      currentText.length + memberText.length > opts.targetMaxChars &&
+      currentText.length > 0
+    ) {
+      flush();
+      currentStart = member.getStart();
+    }
+    currentText += memberText;
+    currentEnd = member.getEnd();
+    if (memberName) currentMemberNames.push(memberName);
+  }
+
+  flush();
+  return chunks;
+}
+
+function getMemberName(member: Node): string | undefined {
+  if (
+    Node.isMethodDeclaration(member) ||
+    Node.isPropertyDeclaration(member) ||
+    Node.isGetAccessorDeclaration(member) ||
+    Node.isSetAccessorDeclaration(member)
+  )
+    return member.getName();
+
+  if (Node.isConstructorDeclaration(member)) return "constructor";
+
+  return undefined;
 }
