@@ -103,9 +103,7 @@ PRSense is built around a few core principles:
 
 - Node.Js >= 22 <25
 - git >=2.31
-- (optional)Docker
 - (optional)Ollama
-- (optional)PostgreSQL 15 + pgvector
 
 ## Installation
 
