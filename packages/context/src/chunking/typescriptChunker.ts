@@ -88,6 +88,12 @@ export function createTypescriptChunker(
       const rawChunks = extractRawChunks(sourceFile, opts);
       const merged = mergeSmallSiblings(rawChunks, opts);
 
+      // if we produced no chunks from non -empty content
+      // parsing likely failed to find any chunkable structure(malformed file, unusual syntax, etc)
+      // fall back to single chunk
+      if (merged.length === 0 && content.trim().length > 0)
+        return [singleChunkFallback(content, source)];
+
       return merged.map((raw) => toContextChunk(raw, source));
     },
   };

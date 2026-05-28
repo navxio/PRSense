@@ -151,4 +151,27 @@ function tiny2() { return 2; }
     // — not per-symbol granularity. Per-symbol export tracking is a future concern.
     expect(merged?.metadata?.exported).toBe(true);
   });
+
+  it("falls back to a single chunk when no chunkable statements are extracted", () => {
+    // Content that parses to a SourceFile but has no top-level chunkable
+    // declarations — just stray tokens.
+    const content = "}{ >>> not really valid <<< )(";
+    const chunks = chunker.chunk({
+      content,
+      source: { kind: "file", path: "garbage.ts" },
+    });
+
+    // Content must not be lost — at least one chunk should exist.
+    expect(chunks.length).toBeGreaterThan(0);
+    // The fallback chunk should contain the original content.
+    expect(chunks[0]?.content).toContain("not really valid");
+  });
+
+  it("produces no chunks for genuinely empty content", () => {
+    const chunks = chunker.chunk({
+      content: "   \n  \n  ",
+      source: { kind: "file", path: "empty.ts" },
+    });
+    expect(chunks.length).toBe(0);
+  });
 });
