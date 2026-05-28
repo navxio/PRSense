@@ -15,6 +15,13 @@
 
 - Move existing incremental indexing tests from .ts to .txt extension
 
+## v0.6.1
+
+### Changed
+
+- default model `deepseek-coder-v2`
+- default `confidenceThreshold` = 0.8
+
 ## v0.6.0
 
 ### Added
