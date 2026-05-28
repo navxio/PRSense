@@ -166,6 +166,14 @@ function subSplitLargeDeclaration(
 ): RawChunk[] {
   // class declarations split on member boundaries instead of statement boundaries - methods, properties, accessors, constructors
   if (Node.isClassDeclaration(stmt)) {
+    return subSplitClassDeclaration(
+      stmt,
+      sourceFile,
+      opts,
+      symbolName,
+      kindLabel,
+      exported,
+    );
   }
   // find the body block and split
 
