@@ -1,3 +1,4 @@
+// packages/preflight/src/capabilities/postgres.ts
 import { execSync } from "node:child_process";
 import pg from "pg";
 import type {

@@ -1,3 +1,4 @@
+// packages/context/src/index/PostgresIndexMetadataRepository.ts
 import pg from "pg";
 import { IndexMetadata, IndexedRepository } from "@prsense/core";
 import { IndexMetadataRepository } from "./IndexMetadataRepository.js";

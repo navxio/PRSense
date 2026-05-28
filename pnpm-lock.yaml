@@ -374,6 +374,9 @@ importers:
 
   packages/workflows:
     dependencies:
+      '@octokit/rest':
+        specifier: ^22.0.1
+        version: 22.0.1
       '@prsense/config':
         specifier: workspace:*
         version: link:../config
