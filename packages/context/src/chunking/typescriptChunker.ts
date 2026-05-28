@@ -55,6 +55,12 @@ export function createTypescriptChunker(
 ): Chunker {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
+  if (opts.targetMaxChars > opts.hardMaxChars)
+    throw new Error("targetMaxChars must be <= hardMaxChars");
+
+  if (opts.hardMinChars > opts.targetMinChars)
+    throw new Error("hardMinChars must be <= targetMinChars");
+
   return {
     chunk({ content, source }) {
       const filePath = source.kind === "file" ? source.path : "unknown.ts";
