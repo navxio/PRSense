@@ -1,7 +1,7 @@
 export const DEFAULT_CONFIG = {
   llm: {
     provider: "ollama",
-    model: "qwen2.5-coder",
+    model: "deepseek-coder-v2",
     temperature: 0.1,
   },
   embeddings: {
@@ -9,7 +9,7 @@ export const DEFAULT_CONFIG = {
     model: "nomic-embed-text",
   },
   review: {
-    confidenceThreshold: 0.6,
+    confidenceThreshold: 0.8,
     maxSignals: 3,
   },
   index: {

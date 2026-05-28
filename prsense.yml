@@ -20,7 +20,7 @@ context:
   maxChunks: 5
 
 git:
-  baseBranch: main
+  baseBranch: trunk
 
 delivery:
   platform: github

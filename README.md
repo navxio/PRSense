@@ -377,7 +377,7 @@ This file defines review behavior:
 ```yaml
 llm:
   provider: ollama # ollama | openai | google | anthropic
-  model: qwen2.5-coder
+  model: deepseek-coder-v2
   temperature: 0.1
 
 embeddings:
@@ -389,7 +389,7 @@ index:
   chunkOverlapChars: 200
 
 review:
-  confidenceThreshold: 0.6
+  confidenceThreshold: 0.8
   maxSignals: 3
 
 context:
