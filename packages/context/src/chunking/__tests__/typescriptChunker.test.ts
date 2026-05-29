@@ -174,4 +174,33 @@ function tiny2() { return 2; }
     });
     expect(chunks.length).toBe(0);
   });
+
+  it("splits an oversized single-line expression-bodied arrow without truncation", () => {
+    const chunker = createTypescriptChunker({
+      targetMinChars: 100,
+      targetMaxChars: 500,
+      hardMinChars: 50,
+      hardMaxChars: 800,
+    });
+    // A single-line arrow with a huge expression body, no internal newlines.
+    const hugeExpression = Array.from(
+      { length: 500 },
+      (_, i) => `value${i}`,
+    ).join(" + ");
+    const content = `export const compute = () => ${hugeExpression};`;
+
+    const chunks = chunker.chunk({
+      content,
+      source: { kind: "file", path: "compute.ts" },
+    });
+
+    const combined = chunks.map((c) => c.content).join("");
+
+    // No chunk should carry the truncation marker.
+    const truncated = chunks.some((c) => c.content.includes("[truncated]"));
+    expect(truncated).toBe(false);
+
+    // The tail of the expression must survive somewhere.
+    expect(combined).toContain("value499");
+  });
 });
