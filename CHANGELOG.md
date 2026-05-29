@@ -4,16 +4,25 @@
 
 ### Breaking Changes
 
-- Chunking version 3, requires index rebuild
+- Chunking format updated (version 3). Existing indexes are incompatible
+  and must be rebuilt with `prsense index . --force`.
 
 ### Added
 
-- AST based chunking is now default for typescript projects using `ts-morph`
-- Cursory tests
+- TypeScript files (`.ts`, `.tsx`) are now chunked along semantic boundaries
+  — functions, classes, interfaces, type aliases, top-level declarations —
+  rather than fixed character windows. Improves retrieval relevance for
+  symbol-level queries. Other file types continue to use character-based
+  chunking.
 
-### Changed
+### Fixed
 
-- Move existing incremental indexing tests from .ts to .txt extension
+- Chunker no longer drops top-level control-flow statements (`if`, `for`,
+  `try`, etc.), preventing silent content loss in entry-point files.
+- `export default function` and `export default class` declarations are
+  now correctly indexed.
+- Oversized declarations are split safely without exceeding configured
+  character limits.
 
 ## v0.6.1
 
