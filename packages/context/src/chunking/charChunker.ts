@@ -1,3 +1,4 @@
+// packages/context/src/chunking/charChunker.ts
 import type { Chunker } from "./types.js";
 import type { ContextChunk, ContextSource } from "@prsense/core";
 import { randomUUID } from "node:crypto";
