@@ -489,21 +489,8 @@ PRSENSE_OPENAI_API_KEY
 
 ## Database
 
-Used for indexing.
+Bundled sqlite with sqlite-vec. Used for indexing.
 
-If not provided:
-
-- CLI may use bundled Docker Postgres
-- Daemon requires valid configuration
-
-```
-PRSENSE_DATABASE_URL
-```
-
-Example:
-
-```
-postgresql://prsense:prsense@localhost:10000/prsense_dev
 ```
 
 ## GitHub Delivery
@@ -511,37 +498,47 @@ postgresql://prsense:prsense@localhost:10000/prsense_dev
 ### Personal Access Token
 
 ```
+
 PRSENSE_GITHUB_TOKEN
 PRSENSE_GITHUB_WEBHOOK_SECRET
+
 ```
 
 ### GitHub App (Recommended)
 
 ```
+
 PRSENSE_GITHUB_APP_ID
 PRSENSE_GITHUB_APP_PRIVATE_KEY
 PRSENSE_GITHUB_INSTALLATION_ID
 PRSENSE_GITHUB_WEBHOOK_SECRET
+
 ```
 
 ## GitLab Delivery
 
 ```
+
 PRSENSE_GITLAB_TOKEN
 PRSENSE_GITLAB_WEBHOOK_SECRET
+
 ```
 
 ## Slack Delivery
 
 ```
+
 PRSENSE_SLACK_BOT_TOKEN
+
 ```
 
 ## Logging
 
 ```
+
 PRSENSE_LOG_LEVEL=debug | info | warn | error
-```
+
+````
 
 ## CLI Mode vs Daemon Mode
 
@@ -556,7 +553,7 @@ Example:
 
 ```sh
 prsense review .
-```
+````
 
 ### Daemon Mode
 
@@ -671,7 +668,6 @@ Examples include:
 - filesystem-based context retrieval
 - git diff ingestion
 - Ollama or OpenAI LLM providers
-- PostgreSQL + pgvector storage
 - CLI reporters
 
 Adapters are inherently imperative and may fail. Those failures are handled at the boundary, not inside the core.
