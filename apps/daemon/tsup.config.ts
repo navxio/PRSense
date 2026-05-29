@@ -37,11 +37,6 @@ export default defineConfig({
     "ajv-formats",
     "fast-json-stringify",
 
-    // Postgres
-    /^pg(-|$)/,
-    /^postgres-/,
-    "pgpass",
-
     // Logging — same as CLI
     /^pino/,
     "thread-stream",
