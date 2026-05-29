@@ -255,7 +255,9 @@ function subSplitLargeDeclaration(
   };
 
   for (const bodyStmt of bodyStatements) {
-    const stmtText = bodyStmt.getFullText();
+    const stmtStart = bodyStmt.getStart(true);
+    const stmtEnd = bodyStmt.getEnd();
+    const stmtText = sourceFile.getFullText().slice(stmtStart, stmtEnd);
 
     if (stmtText.length > opts.hardMaxChars) {
       // Flush whatever we've accumulated, then split this enormous statement
@@ -610,7 +612,9 @@ function subSplitClassDeclaration(
   };
 
   for (const member of members) {
-    const memberText = member.getFullText();
+    const memberStart = member.getStart(true);
+    const memberEnd = member.getEnd();
+    const memberText = sourceFile.getFullText().slice(memberStart, memberEnd);
     const memberName = getMemberName(member);
 
     if (memberText.length > opts.hardMaxChars) {
