@@ -1,5 +1,31 @@
 # Changelog
 
+All notable changes to PRSense are documented here.
+This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.7.0] — 2026-05-29
+
+### Breaking
+
+- **Removed Postgres backend.** PRSense now uses bundled SQLite
+  (better-sqlite3 + sqlite-vec) and no longer requires Docker or a
+  Postgres container. The `database` block in `.prsense.config.*` is
+  ignored and can be removed.
+
+### Migration
+
+On first run after upgrading, PRSense will detect the old configuration
+and print migration instructions. To upgrade:
+
+1. Update PRSense: `npm i -g @prsense/cli@0.7`
+2. Re-run `prsense index` on each repository — your previous index will
+   be regenerated locally.
+3. (Optional) Reclaim space from the old Postgres container:
+   `docker rm prsense_postgres`
+   `docker volume rm postgres_data`
+
 ## v0.6.1
 
 ### Changed
