@@ -203,4 +203,36 @@ function tiny2() { return 2; }
     // The tail of the expression must survive somewhere.
     expect(combined).toContain("value499");
   });
+
+  it("indexes export default function declarations", () => {
+    const content = `
+export default function compute(x: number): number {
+  return x * 2;
+}
+`;
+    const chunks = chunker.chunk({
+      content,
+      source: { kind: "file", path: "default.ts" },
+    });
+
+    const combined = chunks.map((c) => c.content).join("\n");
+    expect(combined).toContain("function compute");
+    expect(combined).toContain("return x * 2");
+  });
+
+  it("indexes export default class declarations", () => {
+    const content = `
+export default class Service {
+  run() { return "ok"; }
+}
+`;
+    const chunks = chunker.chunk({
+      content,
+      source: { kind: "file", path: "default.ts" },
+    });
+
+    const combined = chunks.map((c) => c.content).join("\n");
+    expect(combined).toContain("class Service");
+    expect(combined).toContain('return "ok"');
+  });
 });
