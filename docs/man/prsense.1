@@ -43,7 +43,7 @@ review      Review a code change and emit structured review signals
 index       Index a repository for contextual retrieval (RAG)
 hook        Manage git hooks that invoke PRSense (e.g. pre-push review)
 doctor      Diagnose PRSense installation and runtime environment
-setup       Perform setup readiness checks
+init        Setup after install
 help        Show help for a command
 
 ⸻
@@ -345,27 +345,6 @@ Each check emits structured, actionable results.
 EXAMPLES
 
 prsense doctor
-
-⸻
-
-COMMAND: setup
-
-NAME
-prsense setup — perform setup readiness checks
-
-SYNOPSIS
-prsense setup
-
-DESCRIPTION
-
-Validates first-time setup requirements and readiness.
-
-Focuses on environment and infrastructure availability.
-Does not automatically provision services unless explicitly configured.
-
-EXAMPLES
-
-prsense setup
 
 ⸻
 
