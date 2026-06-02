@@ -5,7 +5,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## [Unreleased]
 
-## [0.7.0] — 2026-05-29
+## [0.8.0] — 2026-05-29
 
 ### Breaking
 
