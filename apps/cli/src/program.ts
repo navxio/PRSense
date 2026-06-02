@@ -2,7 +2,6 @@ import { Command } from "commander";
 import { reviewCommand } from "./commands/review.js";
 import { indexCommand } from "./commands/index.js";
 import { doctorCommand } from "./commands/doctor.js";
-import { setupCommand } from "./commands/setup.js";
 import { initCommand } from "./commands/init/init.js";
 import { hookCommand } from "./commands/hook.js";
 import pkg from "../package.json" with { type: "json" };
@@ -17,6 +16,5 @@ export const program = new Command()
 program.addCommand(reviewCommand);
 program.addCommand(indexCommand);
 program.addCommand(doctorCommand);
-program.addCommand(setupCommand);
 program.addCommand(initCommand);
 program.addCommand(hookCommand);
