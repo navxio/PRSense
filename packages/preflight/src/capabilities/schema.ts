@@ -1,7 +1,5 @@
 // packages/preflight/src/capabilities/schema.ts
 
-import pg from "pg";
-import { ensureDatabaseSchema } from "@prsense/context";
 import type {
   Capability,
   CapabilityContext,
