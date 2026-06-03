@@ -65,8 +65,9 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     name: string,
     rows: ChunkRow[],
   ): Promise<void> {
-    if (rows.length > 0) {
-      ensureVecTable(this.db, rows[0].embedding.length);
+    const first = rows[0];
+    if (first) {
+      ensureVecTable(this.db, first.embedding.length);
     }
 
     const tx = this.db.transaction((rows: ChunkRow[]) => {
@@ -96,7 +97,10 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
 
   async insertChunks(rows: ChunkRow[]): Promise<void> {
     if (rows.length === 0) return;
-    ensureVecTable(this.db, rows[0].embedding.length);
+    const first = rows[0];
+    if (first) {
+      ensureVecTable(this.db, first.embedding.length);
+    }
 
     const tx = this.db.transaction((rows: ChunkRow[]) => {
       for (const row of rows) this.insertRow(row);
