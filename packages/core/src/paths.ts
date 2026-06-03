@@ -1,3 +1,4 @@
+// apps/cli/src/commands/init/firstRun.ts
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -17,4 +18,3 @@ export const DB_PATH = path.join(PRSENSE_DATA_DIR, "prsense.db");
 export function configExists(): boolean {
   return fs.existsSync(CONFIG_PATH);
 }
-

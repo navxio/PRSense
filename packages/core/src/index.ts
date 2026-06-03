@@ -17,3 +17,4 @@ export * from "./repository/identity.js";
 export * from "./doctor.js";
 
 export * from "./IndexedRepository.js";
+export * from "./paths.js";
