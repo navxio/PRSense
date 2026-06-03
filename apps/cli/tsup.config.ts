@@ -45,5 +45,6 @@ export default defineConfig({
     "@google/generative-ai",
     "got",
     "dotenv",
+    "ts-morph",
   ],
 });

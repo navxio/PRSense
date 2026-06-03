@@ -1,3 +1,4 @@
+// packages/context/src/index/detectKind.ts
 export type FileKind = "code" | "test" | "doc" | "config";
 
 export function detectKind(filePath: string): FileKind {

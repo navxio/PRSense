@@ -57,6 +57,7 @@ export default defineConfig({
     "@anthropic-ai/sdk",
     "@google/generative-ai",
     "yaml",
+    "ts-morph",
   ],
 
   banner: { js: "#!/usr/bin/env node" },

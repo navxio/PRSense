@@ -22,9 +22,35 @@ and print migration instructions. To upgrade:
 1. Update PRSense: `npm i -g @prsense/cli@0.7`
 2. Re-run `prsense index` on each repository — your previous index will
    be regenerated locally.
+
 3. (Optional) Reclaim space from the old Postgres container:
    `docker rm prsense_postgres`
    `docker volume rm postgres_data`
+
+## v0.7.0
+
+### Breaking Changes
+
+- Chunking format updated (version 3). Existing indexes are incompatible
+  and must be rebuilt with `prsense index . --force`.
+
+### Added
+
+- TypeScript files (`.ts`, `.tsx`) are now chunked along semantic boundaries
+  — functions, classes, interfaces, type aliases, top-level declarations —
+  rather than fixed character windows. Improves retrieval relevance for
+  symbol-level queries. Other file types continue to use character-based
+  chunking.
+
+### Fixed
+
+- Chunker no longer drops top-level control-flow statements (`if`, `for`,
+  `try`, etc.), preventing silent content loss in entry-point files.
+- `export default function` and `export default class` declarations are
+  now correctly indexed.
+- Oversized declarations are split safely without exceeding configured
+  character limits.
+  > > > > > > > trunk
 
 ## v0.6.1
 
@@ -52,8 +78,8 @@ and print migration instructions. To upgrade:
 ### Changed
 
 - CLI is now bundled with tsup for faster cold start and smaller install
-- [If daemon bundled] Daemon is now bundled with tsup
-- Internal workspace packages [are now private | remain published for daemon's dependency tree]
+- Daemon is now bundled with tsup
+- Internal workspace packages are now private / remain published for daemon's dependency tree
 
 ### Migration
 

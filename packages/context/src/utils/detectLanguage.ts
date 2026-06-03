@@ -1,3 +1,4 @@
+// packages/context/src/utils/detectLanguage.ts
 import path from "node:path";
 
 const extensionMap: Record<string, string> = {

@@ -1,3 +1,4 @@
+// packages/workflows/src/index/__tests__/db.ts
 import { Client } from "pg";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -16,11 +17,8 @@ export async function initTestDb() {
 
   // Load your migration SQL
   const sql = await fs.readFile(
-    path.resolve(
-      __dirname,
-      "../../../../context/src/migrations/0001_init.sql"
-    ),
-    "utf8"
+    path.resolve(__dirname, "../../../../context/src/migrations/0001_init.sql"),
+    "utf8",
   );
 
   await client.query(sql);
@@ -37,3 +35,4 @@ export async function resetTestDb() {
 
   await client.end();
 }
+

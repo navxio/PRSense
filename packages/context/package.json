@@ -25,12 +25,12 @@
     "@octokit/rest": "^22.0.1",
     "@prsense/core": "workspace:*",
     "better-sqlite3": "^12.10.0",
-    "sqlite-vec": "^0.1.9"
+    "sqlite-vec": "^0.1.9",
+    "ts-morph": "^28.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.0.3",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

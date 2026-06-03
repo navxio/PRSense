@@ -1,6 +1,6 @@
 {
   "name": "@prsense/cli",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Command line interface to PRSense",
   "type": "module",
   "files": [
@@ -50,7 +50,8 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@google/generative-ai": "^0.24.1",
     "got": "^11.8.6",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "ts-morph": "^28.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
