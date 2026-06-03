@@ -13,4 +13,5 @@ export * from "./diff/LocalGitDiffProvider.js";
 export * from "./diff/GitHubPrDiffProvider.js";
 export * from "./diff/GitLabMrDiffProvider.js";
 
-export { ensureDatabaseSchema } from "./migrations/ensureDatabaseSchema.js";
+export * from "./rag/SqliteRagChunkRepository.js";
+export * from "./index/SqliteIndexMetadataRepository.js";
