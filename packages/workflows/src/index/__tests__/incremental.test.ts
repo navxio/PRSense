@@ -1,4 +1,3 @@
-import { Client } from "pg";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { CoreEvents } from "@prsense/core";
@@ -20,14 +19,6 @@ import {
 import { createTestDb, type TestDb } from "./db.js";
 import { testConfig, testCredentials } from "./config.js";
 
-const DB_CONFIG = {
-  host: "localhost",
-  port: 10001,
-  user: "prsense",
-  password: "prsense",
-  database: "prsense_test",
-};
-
 describe("Incremental indexing (real DB)", () => {
   let repo: string;
   let testDb: TestDb;
@@ -42,7 +33,7 @@ describe("Incremental indexing (real DB)", () => {
     if (repo) await fs.rm(repo, { recursive: true, force: true });
   });
 
-  // Small helper to avoid repeating the 4 injected args in every test
+  // Small helper to avoid repeating the injected args in every test
   const runWorkflow = (
     overrides: Partial<Parameters<typeof runIndexWorkflow>[0]> = {},
   ) =>
@@ -60,32 +51,21 @@ describe("Incremental indexing (real DB)", () => {
   it("re-indexes only changed file", async () => {
     const eventBus = new TestEventBus();
 
-    // ---- initial commit ----
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
-    // ---- update file ----
     await writeFile(repo, "a.txt", "const a = 2;");
     commitAll(repo, "update");
-
     await runWorkflow({ eventBus });
 
-    // ---- verify DB ----
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .chunksAt("a.txt")
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("2");
     expect(combined).not.toContain("1");
-
-    await client.end();
   });
 
   it("removes chunks for deleted file", async () => {
@@ -93,69 +73,42 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
-
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    expect(res.rows.length).toBe(0);
-
-    await client.end();
+    expect(testDb.chunksAt("a.txt").length).toBe(0);
   });
 
   it("indexes newly added file", async () => {
     const eventBus = new TestEventBus();
 
-    // ---- initial commit ----
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
-    // ---- add new file ----
     await writeFile(repo, "b.txt", "const b = 42;");
     commitAll(repo, "add b");
-
     await runWorkflow({ eventBus });
-    // ---- verify DB ----
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'b.txt'`,
-    );
+    const rows = testDb.chunksAt("b.txt");
+    const combined = rows.map((r) => r.content).join("\n");
 
-    const combined = res.rows.map((r) => r.content).join("\n");
-
-    expect(res.rows.length).toBeGreaterThan(0);
+    expect(rows.length).toBeGreaterThan(0);
     expect(combined).toContain("42");
-
-    await client.end();
   });
 
   it("does nothing when there are no changes (noop)", async () => {
     const eventBus = new TestEventBus();
 
-    // ---- initial commit ----
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
-    // ---- run again without changes ----
     const result = await runWorkflow({ eventBus });
 
-    // ---- assert noop behavior ----
     expect(result.outcome).toBe("success");
     expect(result.payload.upToDate).toBe(true);
     expect(result.payload.chunksIndexed).toBe(0);
@@ -166,29 +119,14 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
-    // rename a.txt → b.txt
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     commitAll(repo, "rename");
-
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const oldRes = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-    const newRes = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'b.txt'`,
-    );
-
-    expect(oldRes.rows.length).toBe(0);
-    expect(newRes.rows.length).toBeGreaterThan(0);
-
-    await client.end();
+    expect(testDb.chunksAt("a.txt").length).toBe(0);
+    expect(testDb.chunksAt("b.txt").length).toBeGreaterThan(0);
   });
 
   it("handles modify and delete in same commit", async () => {
@@ -197,33 +135,22 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     await writeFile(repo, "b.txt", "const b = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
-    // modify a.txt and delete b.txt
     await writeFile(repo, "a.txt", "const a = 2;");
     await fs.unlink(path.join(repo, "b.txt"));
     commitAll(repo, "mixed");
-
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const aRes = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-    const bRes = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'b.txt'`,
-    );
-
-    const combined = aRes.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .chunksAt("a.txt")
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("2");
-    expect(bRes.rows.length).toBe(0);
-
-    await client.end();
+    expect(testDb.chunksAt("b.txt").length).toBe(0);
   });
+
   it("handles multiple commits before indexing", async () => {
     const eventBus = new TestEventBus();
 
@@ -238,44 +165,33 @@ describe("Incremental indexing (real DB)", () => {
 
     await runWorkflow({ force: true, eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .chunksAt("a.txt")
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("3");
-
-    await client.end();
   });
+
   it("re-indexes multiple modified files", async () => {
     const eventBus = new TestEventBus();
 
     await writeFile(repo, "a.txt", "1");
     await writeFile(repo, "b.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
     await writeFile(repo, "a.txt", "2");
     await writeFile(repo, "b.txt", "2");
     commitAll(repo, "update both");
-
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(`SELECT path, content FROM rag_chunks`);
-
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .allChunks()
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("2");
-
-    await client.end();
   });
 
   it("handles empty commit gracefully", async () => {
@@ -283,7 +199,6 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
     commitAll(repo, "empty commit", { allowEmpty: true });
@@ -295,7 +210,6 @@ describe("Incremental indexing (real DB)", () => {
     );
 
     expect(planEvents.at(-1)?.fields?.type).toBe("noop");
-
     expect(result.payload.upToDate).toBe(true);
   });
 
@@ -304,7 +218,6 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
 
     await fs.unlink(path.join(repo, "a.txt"));
@@ -315,17 +228,12 @@ describe("Incremental indexing (real DB)", () => {
 
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .chunksAt("a.txt")
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("2");
-
-    await client.end();
   });
 
   it("force rebuild ignores incremental diff", async () => {
@@ -333,21 +241,18 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await writeFile(repo, "a.txt", "2");
     commitAll(repo, "update");
-
     await runWorkflow({ force: true, eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(`SELECT content FROM rag_chunks`);
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .allChunks()
+      .map((r) => r.content)
+      .join("\n");
 
     expect(combined).toContain("2");
-
-    await client.end();
   });
 
   it("does not duplicate chunks for unchanged files", async () => {
@@ -355,20 +260,10 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
     await runWorkflow({ eventBus });
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const res = await client.query(
-      `SELECT COUNT(*) FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    expect(Number(res.rows[0].count)).toBeGreaterThan(0);
-
-    await client.end();
+    expect(testDb.countChunksAt("a.txt")).toBeGreaterThan(0);
   });
 
   it("handles multiple file deletions", async () => {
@@ -377,44 +272,34 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     await writeFile(repo, "b.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await fs.unlink(path.join(repo, "a.txt"));
     await fs.unlink(path.join(repo, "b.txt"));
     commitAll(repo, "delete both");
-
     await runWorkflow({ eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(`SELECT * FROM rag_chunks`);
-
-    expect(res.rows.length).toBe(0);
-
-    await client.end();
+    expect(testDb.allChunks().length).toBe(0);
   });
+
   it("handles rename + modify", async () => {
     const eventBus = new TestEventBus();
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     await writeFile(repo, "b.txt", "2");
     commitAll(repo, "rename+modify");
-
     await runWorkflow({ eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'b.txt'`,
-    );
+    const combined = testDb
+      .chunksAt("b.txt")
+      .map((r) => r.content)
+      .join("\n");
 
-    expect(res.rows.map((r) => r.content).join("\n")).toContain("2");
-
-    await client.end();
+    expect(combined).toContain("2");
   });
 
   it("handles large file chunking", async () => {
@@ -423,18 +308,9 @@ describe("Incremental indexing (real DB)", () => {
     const large = "x".repeat(2000);
     await writeFile(repo, "a.txt", large);
     commitAll(repo, "large");
-
     await runWorkflow({ force: true, eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(
-      `SELECT COUNT(*) FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    expect(Number(res.rows[0].count)).toBeGreaterThan(1);
-
-    await client.end();
+    expect(testDb.countChunksAt("a.txt")).toBeGreaterThan(1);
   });
 
   it("handles diff across multiple commits", async () => {
@@ -450,16 +326,13 @@ describe("Incremental indexing (real DB)", () => {
     commitAll(repo, "c3");
 
     await runWorkflow({ force: true, eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'a.txt'`,
-    );
+    const combined = testDb
+      .chunksAt("a.txt")
+      .map((r) => r.content)
+      .join("\n");
 
-    expect(res.rows.map((r) => r.content).join("\n")).toContain("3");
-
-    await client.end();
+    expect(combined).toContain("3");
   });
 
   it("treats rename as delete + add (snapshot semantics)", async () => {
@@ -467,12 +340,12 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     commitAll(repo, "rename");
-
     await runWorkflow({ eventBus });
+
     const deleteEvents = eventBus.events
       .filter((e) => e.event === CoreEvents.WorkflowIndexFilesDeleted)
       .at(-1);
@@ -490,39 +363,32 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "same");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await writeFile(repo, "b.txt", "same");
     commitAll(repo, "copy");
-
     await runWorkflow({ eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    const res = await client.query(`SELECT path FROM rag_chunks`);
-
-    const paths = res.rows.map((r) => r.path);
+    const paths = testDb.allPaths();
 
     expect(paths).toContain("a.txt");
     expect(paths).toContain("b.txt");
-
-    await client.end();
   });
 
-  it("treats reverted content across commits as noop(snapshot-based diff)", async () => {
+  it("treats reverted content across commits as noop (snapshot-based diff)", async () => {
     const eventBus = new TestEventBus();
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "c1");
-
     await runWorkflow({ force: true, eventBus });
+
     await writeFile(repo, "a.txt", "2");
     commitAll(repo, "c2");
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "c3");
-
     await runWorkflow({ eventBus });
+
     const planEvents = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowIndexPlanComputed,
     );
@@ -535,15 +401,14 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     const before = eventBus.events.length;
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
-
     await runWorkflow({ eventBus });
-    const afterEvents = eventBus.events.slice(before);
 
+    const afterEvents = eventBus.events.slice(before);
     const chunkEvents = afterEvents.filter(
       (e) => e.event === CoreEvents.ContextChunksBuilt,
     );
@@ -556,8 +421,8 @@ describe("Incremental indexing (real DB)", () => {
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     const result = await runWorkflow({ eventBus });
     expect(result.payload.upToDate).toBe(true);
   });
@@ -569,46 +434,32 @@ describe("Incremental indexing (real DB)", () => {
       await writeFile(repo, `f${i}.txt`, `${i}`);
     }
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
+
     await writeFile(repo, "f10.txt", "changed");
     commitAll(repo, "modify one");
-
     await runWorkflow({ eventBus });
+
     const changeEvents = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowIndexFilesChanged,
     );
 
-    const last = changeEvents.at(-1);
-
-    expect(last?.fields?.changedFiles).toEqual(["f10.txt"]);
+    expect(changeEvents.at(-1)?.fields?.changedFiles).toEqual(["f10.txt"]);
   });
+
   it("handles delete-only commit (removes chunks and updates metadata)", async () => {
     const eventBus = new TestEventBus();
 
-    // initial commit
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
-    // delete file
+
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
-
     await runWorkflow({ eventBus });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
 
-    // chunks should be gone
-    const res = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'a.txt'`,
-    );
+    expect(testDb.chunksAt("a.txt").length).toBe(0);
 
-    expect(res.rows.length).toBe(0);
-
-    await client.end();
-
-    // verify delete-only plan emitted
     const planEvent = eventBus.events
       .filter((e) => e.event === CoreEvents.WorkflowIndexPlanComputed)
       .at(-1);
@@ -619,39 +470,23 @@ describe("Incremental indexing (real DB)", () => {
   it("delete-only dry-run does not mutate chunks or metadata", async () => {
     const eventBus = new TestEventBus();
 
-    // initial commit
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
-
     await runWorkflow({ force: true, eventBus });
-    // capture metadata BEFORE
 
-    const metadataRepo = testDb.metadataRepo;
-    const before = await metadataRepo.load("local", path.basename(repo));
+    const before = await testDb.metadataRepo.load("local", path.basename(repo));
 
-    // delete file
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
+    await runWorkflow({ dryRun: true, eventBus });
 
-    await runWorkflow({ dryRun: true });
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    // chunks should STILL exist
-    const res = await client.query(
-      `SELECT * FROM rag_chunks WHERE path = 'a.txt'`,
-    );
-
-    expect(res.rows.length).toBeGreaterThan(0);
-
-    await client.end();
+    // chunks should STILL exist (dry-run = no mutation)
+    expect(testDb.chunksAt("a.txt").length).toBeGreaterThan(0);
 
     // metadata should NOT change
-    const after = await metadataRepo.load("local", path.basename(repo));
-
+    const after = await testDb.metadataRepo.load("local", path.basename(repo));
     expect(after?.revision.commitSha).toBe(before?.revision.commitSha);
 
-    // ensure plan is delete-only
     const planEvent = eventBus.events
       .filter((e) => e.event === CoreEvents.WorkflowIndexPlanComputed)
       .at(-1);
