@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.2
+
+### Changed
+
+- manpage is now automatically installed on `npm i -g @prsense/cli`
+
 ## 0.8.1
 
 ### Fixed
