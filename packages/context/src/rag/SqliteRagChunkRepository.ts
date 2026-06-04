@@ -1,20 +1,6 @@
 // packages/context/src/rag/SqliteRagChunkRepository.ts
-import type { RagChunkRepository } from "./RagChunkRepository.js";
-import type { ContextChunk } from "@prsense/core";
-import {
-  ensureVecTable,
-  getVecDimension,
-  type Db,
-} from "../db/SqliteDatabase.js";
-
-type ChunkRow = {
-  chunk: ContextChunk;
-  repoProvider: string;
-  repoOwner?: string;
-  repoName: string;
-  repoRef: string;
-  embedding: number[];
-};
+import type { RagChunkRepository, ChunkRow } from "./RagChunkRepository.js";
+import { ensureVecTable, type Db } from "../db/SqliteDatabase.js";
 
 function toF32(embedding: number[]): Uint8Array {
   // sqlite-vec accepts a float[] as the raw bytes of a Float32Array.
@@ -24,12 +10,10 @@ function toF32(embedding: number[]): Uint8Array {
 export class SqliteRagChunkRepository implements RagChunkRepository {
   constructor(private readonly db: Db) {}
 
-  async getEmbeddingColumnDimension(): Promise<number | null> {
-    return getVecDimension(this.db);
-  }
-
   private insertRow(row: ChunkRow): void {
     const { chunk } = row;
+    const sourcePath = chunk.source.kind === "file" ? chunk.source.path : null;
+    const contentKind = chunk.metadata?.kind ?? "code";
 
     const meta = this.db
       .prepare(
@@ -45,10 +29,8 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
         row.repoOwner ?? null,
         row.repoName,
         row.repoRef,
-        chunk.source.kind === "file"
-          ? chunk.source.path
-          : (chunk.metadata?.path ?? null),
-        chunk.source.kind ?? chunk.metadata?.kind ?? "code",
+        sourcePath,
+        contentKind,
         chunk.metadata?.language ?? null,
         chunk.content,
         chunk.metadata?.lineStart ?? null,
@@ -178,6 +160,7 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     }>
   > {
     const limit = Math.max(1, Math.floor(params.limit));
+
     const excludeCount = params.excludePaths?.length ?? 0;
 
     // sqlite-vec KNN applies `k` BEFORE our metadata filters in the join,
