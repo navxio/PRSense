@@ -17,9 +17,8 @@ import {
   TestEventBus,
 } from "./helper.js";
 
-import { initTestDb, resetTestDb } from "./db.js";
+import { createTestDb, type TestDb } from "./db.js";
 import { testConfig, testCredentials } from "./config.js";
-import { PostgresIndexMetadataRepository } from "@prsense/context";
 
 const DB_CONFIG = {
   host: "localhost",
@@ -31,20 +30,32 @@ const DB_CONFIG = {
 
 describe("Incremental indexing (real DB)", () => {
   let repo: string;
-  beforeAll(async () => {
-    await initTestDb();
-  });
+  let testDb: TestDb;
 
   beforeEach(async () => {
-    await resetTestDb();
+    testDb = createTestDb();
     repo = await createTestRepo();
   });
 
   afterEach(async () => {
-    if (repo) {
-      await fs.rm(repo, { recursive: true, force: true });
-    }
+    testDb.close();
+    if (repo) await fs.rm(repo, { recursive: true, force: true });
   });
+
+  // Small helper to avoid repeating the 4 injected args in every test
+  const runWorkflow = (
+    overrides: Partial<Parameters<typeof runIndexWorkflow>[0]> = {},
+  ) =>
+    runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      eventBus: overrides.eventBus ?? new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      ...overrides,
+    });
 
   it("re-indexes only changed file", async () => {
     const eventBus = new TestEventBus();
@@ -53,26 +64,13 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // ---- update file ----
     await writeFile(repo, "a.txt", "const a = 2;");
     commitAll(repo, "update");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     // ---- verify DB ----
     const client = new Client(DB_CONFIG);
@@ -96,25 +94,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -135,27 +120,13 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // ---- add new file ----
     await writeFile(repo, "b.txt", "const b = 42;");
     commitAll(repo, "add b");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     // ---- verify DB ----
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -179,23 +150,10 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // ---- run again without changes ----
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    const result = await runWorkflow({ eventBus });
 
     // ---- assert noop behavior ----
     expect(result.outcome).toBe("success");
@@ -209,26 +167,13 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // rename a.txt → b.txt
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     commitAll(repo, "rename");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -253,27 +198,14 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "b.txt", "const b = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // modify a.txt and delete b.txt
     await writeFile(repo, "a.txt", "const a = 2;");
     await fs.unlink(path.join(repo, "b.txt"));
     commitAll(repo, "mixed");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -304,14 +236,7 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "3");
     commitAll(repo, "c3");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -333,26 +258,13 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "b.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     await writeFile(repo, "a.txt", "2");
     await writeFile(repo, "b.txt", "2");
     commitAll(repo, "update both");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -372,24 +284,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     commitAll(repo, "empty commit", { allowEmpty: true });
 
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    const result = await runWorkflow({ eventBus });
+
     const planEvents = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowIndexPlanComputed,
     );
@@ -405,14 +305,7 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
@@ -420,13 +313,7 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "2");
     commitAll(repo, "re-add");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -447,27 +334,11 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await writeFile(repo, "a.txt", "2");
     commitAll(repo, "update");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -485,22 +356,8 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
+    await runWorkflow({ eventBus });
 
     const client = new Client(DB_CONFIG);
     await client.connect();
@@ -521,27 +378,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "b.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await fs.unlink(path.join(repo, "a.txt"));
     await fs.unlink(path.join(repo, "b.txt"));
     commitAll(repo, "delete both");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -557,27 +399,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     await writeFile(repo, "b.txt", "2");
     commitAll(repo, "rename+modify");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -597,15 +424,7 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", large);
     commitAll(repo, "large");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -630,15 +449,7 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "3");
     commitAll(repo, "c3");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -657,26 +468,11 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await fs.rename(path.join(repo, "a.txt"), path.join(repo, "b.txt"));
     commitAll(repo, "rename");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const deleteEvents = eventBus.events
       .filter((e) => e.event === CoreEvents.WorkflowIndexFilesDeleted)
       .at(-1);
@@ -695,26 +491,11 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "same");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await writeFile(repo, "b.txt", "same");
     commitAll(repo, "copy");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -734,29 +515,14 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "c1");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await writeFile(repo, "a.txt", "2");
     commitAll(repo, "c2");
 
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "c3");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const planEvents = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowIndexPlanComputed,
     );
@@ -770,25 +536,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
     const before = eventBus.events.length;
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ eventBus });
     const afterEvents = eventBus.events.slice(before);
 
     const chunkEvents = afterEvents.filter(
@@ -804,23 +557,8 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "1");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
+    const result = await runWorkflow({ eventBus });
     expect(result.payload.upToDate).toBe(true);
   });
 
@@ -832,26 +570,11 @@ describe("Incremental indexing (real DB)", () => {
     }
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     await writeFile(repo, "f10.txt", "changed");
     commitAll(repo, "modify one");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const changeEvents = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowIndexFilesChanged,
     );
@@ -867,27 +590,12 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     // delete file
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ eventBus });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
@@ -915,36 +623,17 @@ describe("Incremental indexing (real DB)", () => {
     await writeFile(repo, "a.txt", "const a = 1;");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ force: true, eventBus });
     // capture metadata BEFORE
-    const metadataRepo = new PostgresIndexMetadataRepository(
-      DB_CONFIG.connectionString ??
-        "postgres://prsense:prsense@localhost:10001/prsense_test",
-    );
 
+    const metadataRepo = testDb.metadataRepo;
     const before = await metadataRepo.load("local", path.basename(repo));
 
     // delete file
     await fs.unlink(path.join(repo, "a.txt"));
     commitAll(repo, "delete");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      dryRun: true,
-      eventBus,
-      version: "test",
-    });
-
+    await runWorkflow({ dryRun: true });
     const client = new Client(DB_CONFIG);
     await client.connect();
 
