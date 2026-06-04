@@ -1,9 +1,9 @@
 // packages/workflows/src/index/indexWorkflow.ts
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
-  PostgresIndexMetadataRepository,
-  PostgresRagChunkRepository,
   createCompositeChunker,
+  IndexMetadataRepository,
+  RagChunkRepository,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -27,6 +27,8 @@ export async function runIndexWorkflow({
   eventBus,
   version,
   ref,
+  chunkRepository,
+  metadataRepository,
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
@@ -36,6 +38,8 @@ export async function runIndexWorkflow({
   eventBus: EventBus;
   version: string;
   ref?: string;
+  chunkRepository: RagChunkRepository;
+  metadataRepository: IndexMetadataRepository;
 }): Promise<IndexWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
@@ -71,12 +75,6 @@ export async function runIndexWorkflow({
     // Metadata Repository
     // -------------------------------------------------
 
-    const metadataRepository = new PostgresIndexMetadataRepository(
-      config.database.url,
-    );
-
-    const chunkRepository = new PostgresRagChunkRepository(config.database.url);
-
     const stored = await metadataRepository.load(
       identity.provider,
       identity.id,
@@ -109,19 +107,6 @@ export async function runIndexWorkflow({
       dimension: embeddingDimension,
     });
 
-    const dbDimension = await chunkRepository.getEmbeddingColumnDimension();
-
-    if (dbDimension !== null && dbDimension !== embeddingDimension) {
-      eventBus.emit(CoreEvents.WorkflowIndexDimensionMismatch, {
-        dbDimension,
-        embeddingDimension,
-      });
-
-      throw new Error(
-        `Embedding dimension mismatch: database=${dbDimension}, model=${embeddingDimension}. Recreate table or change model.`,
-      );
-    }
-
     // -------------------------------------------------
     // Compute Current Fingerprint
     // -------------------------------------------------
@@ -141,6 +126,20 @@ export async function runIndexWorkflow({
       if (!stored.chunking || stored.chunking.version !== 3) {
         incompatibilityReasons.push(
           `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
+        );
+      }
+      if (stored.embedding.dimension !== embeddingDimension) {
+        incompatibilityReasons.push(
+          `embedding dimension changed (${stored.embedding.dimension} → ${embeddingDimension})`,
+        );
+      }
+
+      if (
+        stored.embedding.provider !== config.embeddings.provider ||
+        stored.embedding.model !== config.embeddings.model
+      ) {
+        incompatibilityReasons.push(
+          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
         );
       }
 
