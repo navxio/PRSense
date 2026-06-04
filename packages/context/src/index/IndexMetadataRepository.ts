@@ -1,4 +1,4 @@
-import { IndexMetadata } from "@prsense/core";
+import { IndexedRepository, IndexMetadata } from "@prsense/core";
 
 export interface IndexMetadataRepository {
   load(
@@ -9,4 +9,5 @@ export interface IndexMetadataRepository {
   save(metadata: IndexMetadata): Promise<void>;
 
   delete(repositoryProvider: string, repositoryId: string): Promise<void>;
+  list(): Promise<IndexedRepository[]>;
 }
