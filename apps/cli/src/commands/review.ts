@@ -16,7 +16,7 @@ import {
   GitLabMrDiffProvider,
 } from "@prsense/context";
 import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
-import { ensureInit } from "../init/ensureInit.js";
+import { ensureInit } from "./init/ensureInit.js";
 
 import pkg from "../../package.json" with { type: "json" };
 import { buildServices } from "../composition.js";
