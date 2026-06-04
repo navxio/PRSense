@@ -5,6 +5,7 @@ import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
 import { resolveEnvironment } from "@prsense/config";
+import { buildServices } from "../composition.js";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -37,6 +38,7 @@ export const indexCommand = new Command("index")
   )
   .action(async (target, options) => {
     const renderer = createSpinnerRenderer(process.stdout);
+    const services = buildServices();
     try {
       /* ------------------------------------------------- */
       /* Load Config                                       */
@@ -118,7 +120,7 @@ export const indexCommand = new Command("index")
         process.exit(1);
       }
       if (options.list) {
-        const repos = await listIndexedRepositories(effectiveConfig);
+        const repos = await listIndexedRepositories(services.metadataRepo);
 
         await stdoutIndexedReposReporter.report(repos);
         eventBus.emit(CoreEvents.RunFinished);
@@ -131,6 +133,8 @@ export const indexCommand = new Command("index")
       /* ------------------------------------------------- */
 
       const result = await runIndexWorkflow({
+        chunkRepository: services.chunkRepo,
+        metadataRepository: services.metadataRepo,
         config: effectiveConfig,
         credentials: env.credentials,
         target,
@@ -191,5 +195,7 @@ export const indexCommand = new Command("index")
       console.error(err instanceof Error ? err.message : String(err));
 
       process.exit(1);
+    } finally {
+      services.close();
     }
   });
