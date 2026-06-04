@@ -3,9 +3,7 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-## [0.8.0] — 2026-05-29
+## [0.8.0] — 2026-06-04
 
 ### Breaking
 
@@ -19,7 +17,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 On first run after upgrading, PRSense will detect the old configuration
 and print migration instructions. To upgrade:
 
-1. Update PRSense: `npm i -g @prsense/cli@0.7`
+1. Update PRSense: `npm i -g @prsense/cli@0.8`
 2. Re-run `prsense index` on each repository — your previous index will
    be regenerated locally.
 
@@ -50,7 +48,6 @@ and print migration instructions. To upgrade:
   now correctly indexed.
 - Oversized declarations are split safely without exceeding configured
   character limits.
-  > > > > > > > trunk
 
 ## v0.6.1
 
