@@ -1,3 +1,4 @@
+// packages/core/src/signal/ReviewSignal.ts
 export type ReviewSignalType =
   | "bug"
   | "security"
