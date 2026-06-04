@@ -17,3 +17,4 @@ export * from "./chunking/compositeChunker.js";
 
 export * from "./rag/SqliteRagChunkRepository.js";
 export * from "./index/SqliteIndexMetadataRepository.js";
+export * from "./db/SqliteDatabase.js";
