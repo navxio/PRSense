@@ -19,6 +19,7 @@ import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 import { ensureInit } from "../init/ensureInit.js";
 
 import pkg from "../../package.json" with { type: "json" };
+import { buildServices } from "../composition.js";
 
 const PRSENSE_VERSION = pkg.version;
 
@@ -49,6 +50,7 @@ export const reviewCommand = new Command("review")
   .option("--no-auto-index", "Skip automatic incremental indexing")
   .action(async (target, options) => {
     await ensureInit();
+    const services = buildServices();
 
     const logger = createPinoLogger({
       level: (process.env.PRSENSE_LOG_LEVEL ?? "warn") as LogLevel,
@@ -143,6 +145,8 @@ export const reviewCommand = new Command("review")
             eventBus,
             version: PRSENSE_VERSION,
             ref: effectiveConfig.git?.baseBranch,
+            chunkRepository: services.chunkRepo,
+            metadataRepository: services.metadataRepo,
           });
         } catch (err) {
           // Non-fatal: proceed without fresh index context
@@ -191,6 +195,8 @@ export const reviewCommand = new Command("review")
       const start = Date.now();
 
       const result = await runReviewWorkflow({
+        repository: services.chunkRepo,
+        metadataRepository: services.metadataRepo,
         config: effectiveConfig,
         credentials: env.credentials,
         diffProvider,
@@ -295,5 +301,7 @@ export const reviewCommand = new Command("review")
       });
 
       process.exit(1);
+    } finally {
+      services.close();
     }
   });

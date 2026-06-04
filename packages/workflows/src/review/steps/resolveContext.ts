@@ -1,12 +1,13 @@
-// steps/resolveContext.ts
+// packages/workflows/src/review/steps/resolveContext.ts
 
-import { PostgresIndexMetadataRepository } from "@prsense/context";
 import { CoreEvents } from "@prsense/core";
-import { buildDiffEmbeddingQuery } from "../buildDiffEmbeddingQuery.js";
+import { buildDiffEmbeddingQuery } from "../lib/buildDiffEmbeddingQuery.js";
 
-import { retrieveContext } from "../retrieveContext.js";
+import { retrieveContext } from "../lib/reviewContext.js";
 
 export async function resolveContext({
+  repository,
+  metadataRepository,
   config,
   repositoryIdentity,
   revision,
@@ -14,10 +15,6 @@ export async function resolveContext({
   diff,
   eventBus,
 }: any) {
-  const metadataRepository = new PostgresIndexMetadataRepository(
-    config.database.url,
-  );
-
   const storedMetadata = await metadataRepository.load(
     repositoryIdentity.provider,
     repositoryIdentity.id,
@@ -60,6 +57,7 @@ export async function resolveContext({
   });
 
   const retrieved = await retrieveContext({
+    repository,
     config,
     query: retrievalQuery,
     repoProvider: repositoryIdentity.provider,
