@@ -5,7 +5,8 @@
   "type": "module",
   "man": "./man/prsense.1",
   "files": [
-    "dist"
+    "dist",
+    "man"
   ],
   "bin": {
     "prsense": "./dist/index.js"
