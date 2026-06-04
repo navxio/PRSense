@@ -10,7 +10,7 @@ const PRSENSE_VERSION = pkg.version;
 
 export const program = new Command()
   .name("prsense")
-  .description("PRsense – signal-based pull request reviews")
+  .description("Code Reviews grounded in diff")
   .version(PRSENSE_VERSION);
 
 program.addCommand(reviewCommand);

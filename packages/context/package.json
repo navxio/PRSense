@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp src/migrations/*.sql dist/migrations/",
+    "build": "tsc -p tsconfig.json",
     "prepack": "pnpm build",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
