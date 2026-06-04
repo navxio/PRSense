@@ -1,8 +1,8 @@
 import prompts from "prompts";
 import fs from "fs";
 import yaml from "yaml";
-import { PRSENSE_DIR, CONFIG_PATH } from "./firstRun.js";
-import { DEFAULT_CONFIG } from "./defaultConfig.js";
+import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
+import { defaults as DEFAULT_CONFIG } from "@prsense/config";
 
 type Provider = "ollama" | "openai" | "anthropic" | "google";
 const DEFAULT_MODELS: Record<Provider, string> = {
@@ -52,8 +52,8 @@ export async function runFirstTimeSetup() {
   }
 
   // ensure dir exists
-  if (!fs.existsSync(PRSENSE_DIR)) {
-    fs.mkdirSync(PRSENSE_DIR, { recursive: true });
+  if (!fs.existsSync(PRSENSE_CONFIG_DIR)) {
+    fs.mkdirSync(PRSENSE_CONFIG_DIR, { recursive: true });
   }
 
   // clone default config
