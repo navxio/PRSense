@@ -6,7 +6,7 @@ import { DEFAULT_CONFIG } from "./defaultConfig.js";
 
 type Provider = "ollama" | "openai" | "anthropic" | "google";
 const DEFAULT_MODELS: Record<Provider, string> = {
-  ollama: "qwen2.5-coder",
+  ollama: "deepseek-coder-v2",
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-1.5-pro",
@@ -21,7 +21,7 @@ export async function runFirstTimeSetup() {
     process.exit(1);
   };
 
-  const { provider } = await prompts(
+  const { provider } = (await prompts(
     {
       type: "select",
       name: "provider",
@@ -33,8 +33,8 @@ export async function runFirstTimeSetup() {
         { title: "Google", value: "google" },
       ],
     },
-    { onCancel }
-  ) as { provider: Provider };
+    { onCancel },
+  )) as { provider: Provider };
 
   let apiKey: string | null = null;
 
@@ -45,7 +45,7 @@ export async function runFirstTimeSetup() {
         name: "apiKey",
         message: "Enter API key:",
       },
-      { onCancel }
+      { onCancel },
     );
 
     apiKey = res.apiKey;
@@ -89,7 +89,6 @@ export async function runFirstTimeSetup() {
     console.log("ℹ Using local Ollama (no API key required)\n");
   }
 
-
   fs.writeFileSync(CONFIG_PATH, yaml.stringify(config));
 
   console.log("\n✔ Config saved:", CONFIG_PATH);
@@ -111,7 +110,7 @@ function getEnvVarName(provider: Provider): string {
 
 async function validateApiKey(
   provider: Provider,
-  apiKey: string
+  apiKey: string,
 ): Promise<void> {
   if (provider === "ollama") return;
 
@@ -142,7 +141,7 @@ async function validateApiKey(
 
       case "google": {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
         );
 
         if (!res.ok) throw new Error(await extractError(res));
