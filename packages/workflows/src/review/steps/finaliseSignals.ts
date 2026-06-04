@@ -3,9 +3,9 @@
 import type { ReviewSignal, EventBus } from "@prsense/core";
 import { CoreEvents } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/config";
-import { dedupeSignals } from "../dedupeSignals.js";
+import { dedupeSignals } from "../lib/dedupeSignals.js";
 
-import { normalizeSignal } from "../normalizeSignal.js";
+import { normalizeSignal } from "../lib/normalizeSignal.js";
 export function finalizeSignals(
   allSignals: ReviewSignal[],
   config: ResolvedConfig,

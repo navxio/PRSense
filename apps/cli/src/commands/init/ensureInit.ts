@@ -1,4 +1,4 @@
-import { configExists } from "./firstRun.js";
+import { configExists } from "@prsense/core";
 import { runFirstTimeSetup } from "./runFirstTimeSetup.js";
 
 export async function ensureInit() {

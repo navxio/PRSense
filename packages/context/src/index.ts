@@ -15,4 +15,6 @@ export * from "./diff/GitHubPrDiffProvider.js";
 export * from "./diff/GitLabMrDiffProvider.js";
 export * from "./chunking/compositeChunker.js";
 
-export { ensureDatabaseSchema } from "./migrations/ensureDatabaseSchema.js";
+export * from "./rag/SqliteRagChunkRepository.js";
+export * from "./index/SqliteIndexMetadataRepository.js";
+export * from "./db/SqliteDatabase.js";

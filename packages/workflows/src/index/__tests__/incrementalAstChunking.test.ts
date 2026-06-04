@@ -1,6 +1,5 @@
 // packages/workflows/src/index/__tests__/incrementalAstChunking.test.ts
 
-import { Client } from "pg";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { CoreEvents } from "@prsense/core";
@@ -13,34 +12,38 @@ import {
   TestEventBus,
 } from "./helper.js";
 
-import { initTestDb, resetTestDb } from "./db.js";
+import { createTestDb, type TestDb } from "./db.js";
 import { testConfig, testCredentials } from "./config.js";
-
-const DB_CONFIG = {
-  host: "localhost",
-  port: 10001,
-  user: "prsense",
-  password: "prsense",
-  database: "prsense_test",
-};
 
 describe("AST chunking through index workflow (real DB)", () => {
   let repo: string;
-
-  beforeAll(async () => {
-    await initTestDb();
-  });
+  let testDb: TestDb;
 
   beforeEach(async () => {
-    await resetTestDb();
+    testDb = createTestDb();
     repo = await createTestRepo();
   });
 
   afterEach(async () => {
+    testDb.close();
     if (repo) {
       await fs.rm(repo, { recursive: true, force: true });
     }
   });
+
+  const runWorkflow = (
+    overrides: Partial<Parameters<typeof runIndexWorkflow>[0]> = {},
+  ) =>
+    runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      eventBus: overrides.eventBus ?? new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      ...overrides,
+    });
 
   // ---------------------------------------------------------------------------
   // Test 1: Adding a top-level function produces a chunk with symbol metadata
@@ -59,30 +62,16 @@ describe("AST chunking through index workflow (real DB)", () => {
     );
     commitAll(repo, "init");
 
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    const result = await runWorkflow({ force: true, eventBus });
 
     expect(result.outcome).toBe("success");
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-    const res = await client.query(
-      `SELECT path, content FROM rag_chunks WHERE path = 'auth.ts'`,
-    );
-    await client.end();
-
-    // At least one chunk should exist for auth.ts.
-    expect(res.rows.length).toBeGreaterThan(0);
+    const rows = testDb.chunksAt("auth.ts");
+    expect(rows.length).toBeGreaterThan(0);
 
     // The chunk content should contain the function body — i.e. the AST chunker
     // emitted the function as a coherent unit, not a fragmented split.
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = rows.map((r) => r.content).join("\n");
     expect(combined).toContain("function login");
     expect(combined).toContain("trimmed.length > 0");
   });
@@ -103,15 +92,7 @@ describe("AST chunking through index workflow (real DB)", () => {
 }`,
     );
     commitAll(repo, "init");
-
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // Update: login now always returns false.
     await writeFile(
@@ -124,24 +105,13 @@ describe("AST chunking through index workflow (real DB)", () => {
     );
     commitAll(repo, "update login");
 
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    const result = await runWorkflow({ eventBus });
     expect(result.outcome).toBe("success");
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-    const res = await client.query(
-      `SELECT content FROM rag_chunks WHERE path = 'auth.ts'`,
-    );
-    await client.end();
-
-    const combined = res.rows.map((r) => r.content).join("\n");
+    const combined = testDb
+      .chunksAt("auth.ts")
+      .map((r) => r.content)
+      .join("\n");
 
     // The new body should be present.
     expect(combined).toContain("return false");
@@ -187,48 +157,20 @@ export interface SessionContext {
 }`,
     );
     commitAll(repo, "init");
-
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    await runWorkflow({ force: true, eventBus });
 
     // Confirm the file was indexed with multiple chunks before deletion.
-    const clientBefore = new Client(DB_CONFIG);
-    await clientBefore.connect();
-    const before = await clientBefore.query(
-      `SELECT COUNT(*) FROM rag_chunks WHERE path = 'session.ts'`,
-    );
-    await clientBefore.end();
-    expect(Number(before.rows[0].count)).toBeGreaterThan(0);
+    expect(testDb.countChunksAt("session.ts")).toBeGreaterThan(0);
 
     // Delete the file.
     await fs.unlink(path.join(repo, "session.ts"));
     commitAll(repo, "delete session");
 
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
-
+    const result = await runWorkflow({ eventBus });
     expect(result.outcome).toBe("success");
 
     // All chunks for session.ts should be gone.
-    const clientAfter = new Client(DB_CONFIG);
-    await clientAfter.connect();
-    const after = await clientAfter.query(
-      `SELECT * FROM rag_chunks WHERE path = 'session.ts'`,
-    );
-    await clientAfter.end();
-
-    expect(after.rows.length).toBe(0);
+    expect(testDb.chunksAt("session.ts").length).toBe(0);
   });
 
   // ---------------------------------------------------------------------------
@@ -244,37 +186,34 @@ export interface SessionContext {
     );
     commitAll(repo, "init");
 
-    const initial = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
+    const initial = await runWorkflow({
       force: true,
       eventBus: setupBus,
-      version: "test",
     });
-
     expect(initial.outcome).toBe("success");
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
     // Discover what identity the workflow actually stored, rather than guessing.
-    const metaRows = await client.query(
-      `SELECT repository_provider, repository_id, chunk_version
-       FROM prsense_index_metadata`,
-    );
-    expect(metaRows.rows.length).toBe(1);
-
-    const stored = metaRows.rows[0];
+    const metaRows = testDb.db
+      .prepare(
+        `SELECT repository_provider, repository_id, chunk_version
+         FROM prsense_index_metadata`,
+      )
+      .all() as Array<{
+      repository_provider: string;
+      repository_id: string;
+      chunk_version: number;
+    }>;
+    expect(metaRows.length).toBe(1);
+    const stored = metaRows[0]!;
 
     // Downgrade chunk version on the row we just found.
-    await client.query(
-      `UPDATE prsense_index_metadata
-        SET chunk_version = 1
-      WHERE repository_provider = $1 AND repository_id = $2`,
-      [stored.repository_provider, stored.repository_id],
-    );
-    await client.end();
+    testDb.db
+      .prepare(
+        `UPDATE prsense_index_metadata
+            SET chunk_version = 1
+          WHERE repository_provider = ? AND repository_id = ?`,
+      )
+      .run(stored.repository_provider, stored.repository_id);
 
     // Modify the file so the workflow has something to do.
     await writeFile(
@@ -285,13 +224,7 @@ export interface SessionContext {
     commitAll(repo, "update");
 
     const eventBus = new TestEventBus();
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      eventBus,
-      version: "test",
-    });
+    const result = await runWorkflow({ eventBus });
 
     expect(result.outcome).toBe("failure");
 
@@ -316,43 +249,27 @@ export interface SessionContext {
       `export function login(): boolean { return true; }`,
     );
     commitAll(repo, "init");
+    await runWorkflow({ force: true, eventBus: setupBus });
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus: setupBus,
-      version: "test",
-    });
+    const metaRows = testDb.db
+      .prepare(
+        `SELECT repository_provider, repository_id
+         FROM prsense_index_metadata`,
+      )
+      .all() as Array<{ repository_provider: string; repository_id: string }>;
+    expect(metaRows.length).toBe(1);
+    const stored = metaRows[0]!;
 
-    const client = new Client(DB_CONFIG);
-    await client.connect();
-
-    const metaRows = await client.query(
-      `SELECT repository_provider, repository_id
-       FROM prsense_index_metadata`,
-    );
-    expect(metaRows.rows.length).toBe(1);
-    const stored = metaRows.rows[0];
-
-    await client.query(
-      `UPDATE prsense_index_metadata
-        SET chunk_version = 1
-      WHERE repository_provider = $1 AND repository_id = $2`,
-      [stored.repository_provider, stored.repository_id],
-    );
-    await client.end();
+    testDb.db
+      .prepare(
+        `UPDATE prsense_index_metadata
+            SET chunk_version = 1
+          WHERE repository_provider = ? AND repository_id = ?`,
+      )
+      .run(stored.repository_provider, stored.repository_id);
 
     const eventBus = new TestEventBus();
-    const result = await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus,
-      version: "test",
-    });
+    const result = await runWorkflow({ force: true, eventBus });
 
     expect(result.outcome).toBe("success");
 
@@ -361,13 +278,6 @@ export interface SessionContext {
     );
     expect(rebuildEvent?.fields?.forced).toBe(true);
 
-    const clientAfter = new Client(DB_CONFIG);
-    await clientAfter.connect();
-    const res = await clientAfter.query(
-      `SELECT * FROM rag_chunks WHERE path = 'auth.ts'`,
-    );
-    await clientAfter.end();
-
-    expect(res.rows.length).toBeGreaterThan(0);
+    expect(testDb.chunksAt("auth.ts").length).toBeGreaterThan(0);
   });
 });

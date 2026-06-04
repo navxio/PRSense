@@ -37,11 +37,6 @@ export default defineConfig({
     "atomic-sleep",
     "quick-format-unescaped",
 
-    // Postgres
-    /^pg(-|$)/,
-    /^postgres-/,
-    "pgpass",
-
     // Large SDKs — externalize for size
     /^@octokit\//,
     /^@gitbeaker\//,
@@ -51,5 +46,7 @@ export default defineConfig({
     "got",
     "dotenv",
     "ts-morph",
+    "better-sqlite3",
+    "sqlite-vec",
   ],
 });

@@ -37,11 +37,6 @@ export default defineConfig({
     "ajv-formats",
     "fast-json-stringify",
 
-    // Postgres
-    /^pg(-|$)/,
-    /^postgres-/,
-    "pgpass",
-
     // Logging — same as CLI
     /^pino/,
     "thread-stream",
@@ -63,6 +58,8 @@ export default defineConfig({
     "@google/generative-ai",
     "yaml",
     "ts-morph",
+    "better-sqlite3",
+    "sqlite-vec",
   ],
 
   banner: { js: "#!/usr/bin/env node" },

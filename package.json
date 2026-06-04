@@ -42,11 +42,8 @@
   "author": "Navdeep Saini",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.27.0",
-  "volta": {
-    "node": "24.12.0"
-  },
   "engines": {
-    "node": ">=22"
+    "node": ">=22 <25"
   },
   "bugs": "https://github.com/navxio/prsense/issues",
   "devDependencies": {
