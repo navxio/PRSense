@@ -20,9 +20,8 @@ export function createOllamaEmbeddingClient(opts: {
     });
 
     if (!res.ok) {
-      throw new Error(
-        `Ollama embedding dimension detection failed: ${res.status}`,
-      );
+      const body = await res.text().catch(() => "");
+      throw new Error(`Ollama embedding failed (${res.status}): ${body}`);
     }
 
     const json = (await res.json()) as { embedding: number[] };
