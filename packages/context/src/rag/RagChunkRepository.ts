@@ -49,4 +49,6 @@ export interface RagChunkRepository {
 
   /** KNN search over embeddings, filtered by repository identity. */
   searchNearest(params: SearchNearestParams): Promise<NearestChunk[]>;
+
+  ensureSchema(embeddingDimension: number): Promise<void>;
 }

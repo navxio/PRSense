@@ -107,6 +107,8 @@ export async function runIndexWorkflow({
       dimension: embeddingDimension,
     });
 
+    await chunkRepository.ensureSchema(embeddingDimension);
+
     // -------------------------------------------------
     // Compute Current Fingerprint
     // -------------------------------------------------
