@@ -15,15 +15,14 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     const sourcePath = chunk.source.kind === "file" ? chunk.source.path : null;
     const contentKind = chunk.metadata?.kind ?? "code";
 
-    const meta = this.db
+    this.db
       .prepare(
         `INSERT INTO rag_chunks (
-           id, repo_provider, repo_owner, repo_name, repo_ref,
-           path, kind, language, content, line_start, line_end
-         ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
-         RETURNING rowid`,
+         id, repo_provider, repo_owner, repo_name, repo_ref,
+         path, kind, language, content, line_start, line_end
+       ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       )
-      .get(
+      .run(
         chunk.id,
         row.repoProvider,
         row.repoOwner ?? null,
@@ -35,11 +34,14 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
         chunk.content,
         chunk.metadata?.lineStart ?? null,
         chunk.metadata?.lineEnd ?? null,
-      ) as { rowid: number };
+      );
 
     this.db
-      .prepare(`INSERT INTO vec_rag_chunks (rowid, embedding) VALUES (?, ?)`)
-      .run(meta.rowid, toF32(row.embedding));
+      .prepare(
+        `INSERT INTO vec_rag_chunks (rowid, embedding)
+       VALUES (last_insert_rowid(), ?)`,
+      )
+      .run(toF32(row.embedding));
   }
 
   async rebuildRepository(
