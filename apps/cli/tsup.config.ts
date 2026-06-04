@@ -46,5 +46,7 @@ export default defineConfig({
     "got",
     "dotenv",
     "ts-morph",
+    "better-sqlite3",
+    "sqlite-vec",
   ],
 });
