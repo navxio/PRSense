@@ -58,6 +58,8 @@ export default defineConfig({
     "@google/generative-ai",
     "yaml",
     "ts-morph",
+    "better-sqlite3",
+    "sqlite-vec",
   ],
 
   banner: { js: "#!/usr/bin/env node" },
