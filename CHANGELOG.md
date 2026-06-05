@@ -3,7 +3,19 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.9.0
+## [0.10.0] — 2026-06-05
+
+### Changed
+
+- Embedding throughput improved on multi-file indexing runs.
+  - Per-provider batch sizes (OpenAI 512, Google 100, Ollama 32).
+  - Concurrent in-flight embedding requests for cloud providers
+    (OpenAI 6, Google 4; Ollama remains serial).
+  - Prepared statement reuse in the SQLite chunk repository.
+
+No configuration changes required.
+
+## 0.9.0 - 2026-06-05
 
 ### Changed
 
