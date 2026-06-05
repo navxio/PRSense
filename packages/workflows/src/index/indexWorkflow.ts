@@ -18,6 +18,7 @@ import {
   buildChunks,
   resolveExecutionPlan,
 } from "./util.js";
+import { defaultBatchSize } from "@prsense/llm";
 
 export async function runIndexWorkflow({
   config,
@@ -440,8 +441,7 @@ export async function runIndexWorkflow({
         // Embed + Persist Chunks
         // -------------------------------------------------
 
-        //PERF: different batch size for openai based embedding
-        const BATCH_SIZE = 32;
+        const BATCH_SIZE = defaultBatchSize(config.embeddings.provider) || 32;
 
         for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
           const batch = chunks.slice(i, i + BATCH_SIZE);
