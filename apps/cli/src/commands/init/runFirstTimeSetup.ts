@@ -9,14 +9,14 @@ type Provider = "ollama" | "openai" | "google";
 
 const DEFAULT_LLM_MODELS: Record<Provider, string> = {
   ollama: "deepseek-coder-v2",
-  openai: "gpt-4o-mini",
-  google: "gemini-1.5-pro",
+  openai: "gpt-5.4-mini",
+  google: "gemini-2.5-flash",
 };
 
 const DEFAULT_EMBEDDING_MODELS: Record<Provider, string> = {
   ollama: "nomic-embed-text",
   openai: "text-embedding-3-small",
-  google: "text-embedding-004",
+  google: "gemini-embedding-001",
 };
 
 export async function runFirstTimeSetup() {
