@@ -68,7 +68,7 @@ PRSense is built around a few core principles:
   - GitHub/GitLab pull request comments
   - JSON(upcoming)
 - Built in analytics
-- Auto load `.env`
+- Automatically reads from and writes to local `.env`
 - Supports remote repositories from GitHub, GitLab
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
