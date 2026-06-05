@@ -5,4 +5,4 @@ export * from "./providers/anthropic.js";
 export * from "./providers/google.js";
 export * from "./providers/ollamaEmbeddings.js";
 export * from "./providers/openaiEmbeddings.js";
-//TODO add gemini embeddings client if available
+export * from "./providers/googleEmbeddings.js";
