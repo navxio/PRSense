@@ -7,6 +7,6 @@ export function defaultBatchSize(provider: EmbeddingProvider): number {
     case "google":
       return 100;
     case "ollama":
-      return 16;
+      return 32;
   }
 }
