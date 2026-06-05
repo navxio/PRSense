@@ -3,6 +3,29 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.9.0
+
+### Changed
+
+- `prsense init` now configures a single provider for both review and embeddings.
+  Choices: Ollama, OpenAI, Google.
+- API keys are now written to `.env` in the current directory instead of printed
+  as shell `export` instructions.
+- Updated default models to current recommendations:
+  - OpenAI: `gpt-5.4-mini` (review), `text-embedding-3-small` (embeddings)
+  - Google: `gemini-2.5-flash` (review), `gemini-embedding-001` (embeddings)
+  - Ollama: unchanged
+
+### Removed
+
+- Anthropic dropped from `prsense init` choices. Anthropic has no embeddings API,
+  so single-key setup isn't possible. Users who want Claude for review can still
+  configure it manually in `prsense.yml` alongside a separate embeddings provider.
+
+### Added
+
+- Google embeddings provider (`gemini-embedding-001` via `@google/generative-ai`).
+
 ## 0.8.2
 
 ### Changed
