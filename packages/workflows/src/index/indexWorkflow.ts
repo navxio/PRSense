@@ -17,8 +17,9 @@ import {
   planIndex,
   buildChunks,
   resolveExecutionPlan,
+  mapWithConcurrency,
 } from "./util.js";
-import { defaultBatchSize } from "@prsense/llm";
+import { defaultBatchSize, defaultConcurrency } from "@prsense/llm";
 
 export async function runIndexWorkflow({
   config,
@@ -442,25 +443,21 @@ export async function runIndexWorkflow({
         // -------------------------------------------------
 
         const BATCH_SIZE = defaultBatchSize(config.embeddings.provider) || 32;
+        const CONCURRENCY = defaultConcurrency(config.embeddings.provider) || 1;
 
+        const batches: ContextChunk[][] = [];
         for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-          const batch = chunks.slice(i, i + BATCH_SIZE);
+          batches.push(chunks.slice(i, i + BATCH_SIZE));
+        }
 
-          eventBus.emit(CoreEvents.WorkflowIndexProgress, {
-            processed: Math.min(i + BATCH_SIZE, chunks.length),
-            total: chunks.length,
-          });
-
+        let processed = 0;
+        await mapWithConcurrency(batches, CONCURRENCY, async (batch) => {
           const embeddings = await embeddingClient.embed(
             batch.map((c) => c.content),
           );
-
           const rows = batch.map((chunk, idx) => {
             const embedding = embeddings[idx];
-
-            if (!embedding) {
-              throw new Error("Embedding generation mismatch");
-            }
+            if (!embedding) throw new Error("Embedding generation mismatch");
             return {
               chunk,
               repoProvider: identity.provider,
@@ -470,7 +467,12 @@ export async function runIndexWorkflow({
             };
           });
           await chunkRepository.insertChunks(rows);
-        }
+          processed += batch.length;
+          eventBus.emit(CoreEvents.WorkflowIndexProgress, {
+            processed,
+            total: chunks.length,
+          });
+        });
 
         await metadataRepository.save({
           repository: {
