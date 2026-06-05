@@ -17,7 +17,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@gitbeaker/node": "^35.8.1",
+    "@gitbeaker/rest": "^43.8.0",
     "@octokit/rest": "^22.0.1",
     "@prsense/config": "workspace:*",
     "@prsense/core": "workspace:*",
