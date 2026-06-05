@@ -29,6 +29,7 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     ));
   }
 
+  // INVARIANT: no other inserts may occur between insertChunkStmt and insertVecStmt on this connection. The vec row depends on SQLite's last_insert_rowid() referring to the chunk row we just inserted.
   private insertRow(row: ChunkRow): void {
     const { chunk } = row;
     const sourcePath = chunk.source.kind === "file" ? chunk.source.path : null;
