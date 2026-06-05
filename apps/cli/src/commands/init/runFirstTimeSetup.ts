@@ -1,15 +1,22 @@
+// apps/cli/src/commands/init/runFirstTimeSetup.ts
 import prompts from "prompts";
 import fs from "fs";
 import yaml from "yaml";
 import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
 import { defaults as DEFAULT_CONFIG } from "@prsense/config";
 
-type Provider = "ollama" | "openai" | "anthropic" | "google";
-const DEFAULT_MODELS: Record<Provider, string> = {
+type Provider = "ollama" | "openai" | "google";
+
+const DEFAULT_LLM_MODELS: Record<Provider, string> = {
   ollama: "deepseek-coder-v2",
   openai: "gpt-4o-mini",
-  anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-1.5-pro",
+};
+
+const DEFAULT_EMBEDDING_MODELS: Record<Provider, string> = {
+  ollama: "nomic-embed-text",
+  openai: "text-embedding-3-small",
+  google: "text-embedding-004",
 };
 
 export async function runFirstTimeSetup() {
@@ -25,16 +32,24 @@ export async function runFirstTimeSetup() {
     {
       type: "select",
       name: "provider",
-      message: "Choose LLM provider:",
+      message: "Choose provider (used for both review and embeddings):",
       choices: [
         { title: "Ollama (local)", value: "ollama" },
         { title: "OpenAI", value: "openai" },
-        { title: "Anthropic", value: "anthropic" },
         { title: "Google", value: "google" },
       ],
     },
     { onCancel },
   )) as { provider: Provider };
+
+  console.log(
+    "\nℹ Anthropic isn't offered here because it has no embeddings API.",
+  );
+  console.log(
+    "  To use Claude for review, finish setup with another provider and",
+    "edit your config to mix providers (e.g. Claude for review + Voyage",
+    "for embeddings).\n",
+  );
 
   let apiKey: string | null = null;
 
@@ -60,8 +75,12 @@ export async function runFirstTimeSetup() {
   const config = structuredClone(DEFAULT_CONFIG);
 
   config.llm.provider = provider;
-  config.llm.model = DEFAULT_MODELS[provider];
-  console.log(`✔ Using model: ${config.llm.model}\n`);
+  config.llm.model = DEFAULT_LLM_MODELS[provider];
+  config.embeddings.provider = provider;
+  config.embeddings.model = DEFAULT_EMBEDDING_MODELS[provider];
+
+  console.log(`✔ LLM model:        ${config.llm.model}`);
+  console.log(`✔ Embeddings model: ${config.embeddings.model}\n`);
 
   // ✅ print config (dev trust boost)
   console.log("\n---");
@@ -99,8 +118,6 @@ function getEnvVarName(provider: Provider): string {
   switch (provider) {
     case "openai":
       return "PRSENSE_OPENAI_API_KEY";
-    case "anthropic":
-      return "PRSENSE_ANTHROPIC_API_KEY";
     case "google":
       return "PRSENSE_GOOGLE_API_KEY";
     default:
@@ -120,18 +137,6 @@ async function validateApiKey(
         const res = await fetch("https://api.openai.com/v1/models", {
           headers: {
             Authorization: `Bearer ${apiKey}`,
-          },
-        });
-
-        if (!res.ok) throw new Error(await extractError(res));
-        return;
-      }
-
-      case "anthropic": {
-        const res = await fetch("https://api.anthropic.com/v1/models", {
-          headers: {
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
           },
         });
 
