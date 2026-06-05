@@ -6,10 +6,8 @@ import type { DoctorWorkflowResult, DiagnosticCheck } from "@prsense/core";
 import type { Capability, CapabilityContext } from "@prsense/preflight";
 import {
   gitRepositoryCapability,
-  dockerCapability,
   ollamaCapability,
-  pgVectorCapability,
-  postgresCapability,
+  dataDirCapability,
 } from "@prsense/preflight";
 
 export async function runDoctorWorkflow({
@@ -29,9 +27,7 @@ export async function runDoctorWorkflow({
 
   const capabilities: Capability[] = [
     gitRepositoryCapability,
-    dockerCapability,
-    postgresCapability,
-    pgVectorCapability,
+    dataDirCapability,
     ollamaCapability,
   ];
 

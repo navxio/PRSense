@@ -3,6 +3,7 @@ import { runFirstTimeSetup } from "../init/runFirstTimeSetup.js";
 
 export const initCommand = new Command("init")
   .description("Initialize PRSense configuration")
-  .action(async (opts) => {
+  .action(async () => {
     await runFirstTimeSetup();
   });
+

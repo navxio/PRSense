@@ -1,12 +1,12 @@
 import prompts from "prompts";
 import fs from "fs";
 import yaml from "yaml";
-import { PRSENSE_DIR, CONFIG_PATH } from "./firstRun.js";
-import { DEFAULT_CONFIG } from "./defaultConfig.js";
+import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
+import { defaults as DEFAULT_CONFIG } from "@prsense/config";
 
 type Provider = "ollama" | "openai" | "anthropic" | "google";
 const DEFAULT_MODELS: Record<Provider, string> = {
-  ollama: "qwen2.5-coder",
+  ollama: "deepseek-coder-v2",
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-1.5-pro",
@@ -21,7 +21,7 @@ export async function runFirstTimeSetup() {
     process.exit(1);
   };
 
-  const { provider } = await prompts(
+  const { provider } = (await prompts(
     {
       type: "select",
       name: "provider",
@@ -33,8 +33,8 @@ export async function runFirstTimeSetup() {
         { title: "Google", value: "google" },
       ],
     },
-    { onCancel }
-  ) as { provider: Provider };
+    { onCancel },
+  )) as { provider: Provider };
 
   let apiKey: string | null = null;
 
@@ -45,15 +45,15 @@ export async function runFirstTimeSetup() {
         name: "apiKey",
         message: "Enter API key:",
       },
-      { onCancel }
+      { onCancel },
     );
 
     apiKey = res.apiKey;
   }
 
   // ensure dir exists
-  if (!fs.existsSync(PRSENSE_DIR)) {
-    fs.mkdirSync(PRSENSE_DIR, { recursive: true });
+  if (!fs.existsSync(PRSENSE_CONFIG_DIR)) {
+    fs.mkdirSync(PRSENSE_CONFIG_DIR, { recursive: true });
   }
 
   // clone default config
@@ -89,7 +89,6 @@ export async function runFirstTimeSetup() {
     console.log("ℹ Using local Ollama (no API key required)\n");
   }
 
-
   fs.writeFileSync(CONFIG_PATH, yaml.stringify(config));
 
   console.log("\n✔ Config saved:", CONFIG_PATH);
@@ -111,7 +110,7 @@ function getEnvVarName(provider: Provider): string {
 
 async function validateApiKey(
   provider: Provider,
-  apiKey: string
+  apiKey: string,
 ): Promise<void> {
   if (provider === "ollama") return;
 
@@ -142,7 +141,7 @@ async function validateApiKey(
 
       case "google": {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
         );
 
         if (!res.ok) throw new Error(await extractError(res));

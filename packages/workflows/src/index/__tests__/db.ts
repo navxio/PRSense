@@ -1,39 +1,64 @@
-import { Client } from "pg";
-import fs from "node:fs/promises";
-import path from "node:path";
+// packages/workflows/src/index/__tests__/db.ts
+import {
+  openDatabase,
+  SqliteRagChunkRepository,
+  SqliteIndexMetadataRepository,
+  type Db,
+} from "@prsense/context";
 
-const TEST_DB_CONFIG = {
-  host: "localhost",
-  port: 10001,
-  user: "prsense",
-  password: "prsense",
-  database: "prsense_test",
-};
+export interface TestDb {
+  db: Db;
+  chunkRepo: SqliteRagChunkRepository;
+  metadataRepo: SqliteIndexMetadataRepository;
 
-export async function initTestDb() {
-  const client = new Client(TEST_DB_CONFIG);
-  await client.connect();
-
-  // Load your migration SQL
-  const sql = await fs.readFile(
-    path.resolve(
-      __dirname,
-      "../../../../context/src/migrations/0001_init.sql"
-    ),
-    "utf8"
-  );
-
-  await client.query(sql);
-
-  await client.end();
+  // Test-facing query helpers — keep the test bodies clean
+  chunksAt(path: string): Array<{ content: string; path: string }>;
+  countChunksAt(path: string): number;
+  allChunks(): Array<{ content: string; path: string }>;
+  allPaths(): string[];
+  close(): void;
 }
 
-export async function resetTestDb() {
-  const client = new Client(TEST_DB_CONFIG);
-  await client.connect();
+export function createTestDb(): TestDb {
+  const db = openDatabase(":memory:");
+  const chunkRepo = new SqliteRagChunkRepository(db);
+  const metadataRepo = new SqliteIndexMetadataRepository(db);
 
-  await client.query("DELETE FROM rag_chunks");
-  await client.query("DELETE FROM prsense_index_metadata");
+  return {
+    db,
+    chunkRepo,
+    metadataRepo,
 
-  await client.end();
+    chunksAt(path: string) {
+      return db
+        .prepare(`SELECT content, path FROM rag_chunks WHERE path = ?`)
+        .all(path) as Array<{ content: string; path: string }>;
+    },
+
+    countChunksAt(path: string) {
+      const row = db
+        .prepare(`SELECT COUNT(*) as n FROM rag_chunks WHERE path = ?`)
+        .get(path) as { n: number };
+      return row.n;
+    },
+
+    allChunks() {
+      return db.prepare(`SELECT content, path FROM rag_chunks`).all() as Array<{
+        content: string;
+        path: string;
+      }>;
+    },
+
+    allPaths() {
+      return (
+        db.prepare(`SELECT path FROM rag_chunks`).all() as Array<{
+          path: string;
+        }>
+      ).map((r) => r.path);
+    },
+
+    close() {
+      db.close();
+    },
+  };
 }

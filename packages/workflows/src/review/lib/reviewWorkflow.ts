@@ -3,19 +3,24 @@
 import { CoreEvents, EventBus } from "@prsense/core";
 import type { DiffProvider } from "@prsense/core";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
-import type { ReviewWorkflowResult } from "./types.js";
-import { loadDiff } from "./steps/loadDiff.js";
-import { resolveContext } from "./steps/resolveContext.js";
-import { createLlmClientSafe } from "./steps/createLlmClient.js";
-import { runReview } from "./steps/runReview.js";
-import { finalizeSignals } from "./steps/finaliseSignals.js";
+import type { ReviewWorkflowResult } from "../types.js";
+import { loadDiff } from "../steps/loadDiff.js";
+import { resolveContext } from "../steps/resolveContext.js";
+import { createLlmClientSafe } from "../steps/createLlmClient.js";
+import { runReview } from "../steps/runReview.js";
+import { finalizeSignals } from "../steps/finaliseSignals.js";
+import { IndexMetadataRepository, RagChunkRepository } from "@prsense/context";
 
 export async function runReviewWorkflow({
+  repository,
+  metadataRepository,
   config,
   credentials,
   diffProvider,
   eventBus,
 }: {
+  repository: RagChunkRepository;
+  metadataRepository: IndexMetadataRepository;
   config: ResolvedConfig;
   credentials: CredentialContext;
   diffProvider: DiffProvider;
@@ -49,6 +54,8 @@ export async function runReviewWorkflow({
     }
 
     const { contextText } = await resolveContext({
+      repository,
+      metadataRepository,
       config,
       repositoryIdentity,
       revision,

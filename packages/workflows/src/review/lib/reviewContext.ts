@@ -1,13 +1,12 @@
-// packages/workflows/src/review/retrieveContext.ts
-
+// packages/workflows/src/review/lib/reviewContext.ts
 import type { RetrievedContext, EventBus, ContextChunk } from "@prsense/core";
 import { CoreEvents } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/config";
-import { PostgresRagChunkRepository } from "@prsense/context";
 import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
+import { RagChunkRepository } from "@prsense/context";
 
 export async function retrieveContext(params: {
   config: ResolvedConfig;
@@ -18,6 +17,7 @@ export async function retrieveContext(params: {
   limit: number;
   excludePaths?: string[];
   eventBus?: EventBus;
+  repository: RagChunkRepository;
 }): Promise<RetrievedContext> {
   const {
     config,
@@ -27,6 +27,7 @@ export async function retrieveContext(params: {
     repoRef,
     limit,
     excludePaths,
+    repository,
   } = params;
 
   // -------------------------------------------------
@@ -56,8 +57,6 @@ export async function retrieveContext(params: {
   // -------------------------------------------------
   // Query RAG store
   // -------------------------------------------------
-
-  const repository = new PostgresRagChunkRepository(config.database.url);
 
   const rows = await repository.searchNearest({
     repoProvider,

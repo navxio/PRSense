@@ -1,7 +1,7 @@
 export const defaults = {
   llm: {
     provider: "ollama",
-    model: "qwen2.5-coder",
+    model: "deepseek-coder-v2",
     temperature: 0.1,
   },
 
@@ -17,8 +17,12 @@ export const defaults = {
   },
 
   review: {
-    confidenceThreshold: 0.6,
+    confidenceThreshold: 0.8,
     maxSignals: 3,
+  },
+
+  git: {
+    baseBranch: "main",
   },
 
   context: {

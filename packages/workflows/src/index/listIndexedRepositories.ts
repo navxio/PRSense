@@ -1,11 +1,9 @@
-import type { ResolvedConfig } from "@prsense/config";
-import { PostgresIndexMetadataRepository } from "@prsense/context";
+// packages/workflows/src/index/listIndexedRepositories.ts
+import { IndexMetadataRepository } from "@prsense/context";
 import type { IndexedRepository } from "@prsense/core";
 
 export async function listIndexedRepositories(
-  config: ResolvedConfig,
+  repo: IndexMetadataRepository,
 ): Promise<IndexedRepository[]> {
-  const repo = new PostgresIndexMetadataRepository(config.database.url);
-
   return repo.list();
 }

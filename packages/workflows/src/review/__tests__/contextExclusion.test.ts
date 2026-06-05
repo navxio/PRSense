@@ -1,8 +1,7 @@
 // packages/workflows/src/review/__tests__/contextExclusion.test.ts
-
 import fs from "node:fs/promises";
 import { runIndexWorkflow } from "../../index/indexWorkflow.js";
-import { retrieveContext } from "../retrieveContext.js";
+import { retrieveContext } from "../lib/reviewContext.js";
 import { resolveRepositorySource } from "../../index/util.js";
 import {
   createTestRepo,
@@ -10,26 +9,36 @@ import {
   commitAll,
   TestEventBus,
 } from "../../index/__tests__/helper.js";
-import { initTestDb, resetTestDb } from "../../index/__tests__/db.js";
+import { createTestDb, type TestDb } from "../../index/__tests__/db.js";
 import { testConfig, testCredentials } from "../../index/__tests__/config.js";
 
 describe("RAG retrieval excludes diff-modified files (option A)", () => {
   let repo: string;
-
-  beforeAll(async () => {
-    await initTestDb();
-  });
+  let testDb: TestDb;
 
   beforeEach(async () => {
-    await resetTestDb();
+    testDb = createTestDb();
     repo = await createTestRepo();
   });
 
   afterEach(async () => {
+    testDb.close();
     if (repo) {
       await fs.rm(repo, { recursive: true, force: true });
     }
   });
+
+  const indexRepo = () =>
+    runIndexWorkflow({
+      target: repo,
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+    });
 
   it("does not retrieve chunks from files in the diff", async () => {
     await writeFile(
@@ -44,14 +53,7 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
     );
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus: new TestEventBus(),
-      version: "test",
-    });
+    await indexRepo();
 
     // Use the same identity the indexer wrote with
     const identity = resolveRepositorySource(repo).getRepositoryIdentity();
@@ -63,6 +65,7 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
       repoName: identity.id,
       limit: 10,
       excludePaths: ["auth.ts"],
+      repository: testDb.chunkRepo,
     });
 
     const retrievedPaths = retrieved.chunks.map((c) => c.metadata?.path);
@@ -76,14 +79,7 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
     await writeFile(repo, "auth.ts", "export function authenticate() {}");
     commitAll(repo, "init");
 
-    await runIndexWorkflow({
-      target: repo,
-      config: testConfig(),
-      credentials: testCredentials(),
-      force: true,
-      eventBus: new TestEventBus(),
-      version: "test",
-    });
+    await indexRepo();
 
     const identity = resolveRepositorySource(repo).getRepositoryIdentity();
 
@@ -93,6 +89,7 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
       repoProvider: identity.provider,
       repoName: identity.id,
       limit: 10,
+      repository: testDb.chunkRepo,
     });
 
     const retrievedPaths = retrieved.chunks.map((c) => c.metadata?.path);

@@ -1,9 +1,9 @@
 // packages/workflows/src/index/indexWorkflow.ts
 import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
 import {
-  PostgresIndexMetadataRepository,
-  PostgresRagChunkRepository,
-  createCharChunker,
+  createCompositeChunker,
+  IndexMetadataRepository,
+  RagChunkRepository,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -27,6 +27,8 @@ export async function runIndexWorkflow({
   eventBus,
   version,
   ref,
+  chunkRepository,
+  metadataRepository,
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
@@ -36,6 +38,8 @@ export async function runIndexWorkflow({
   eventBus: EventBus;
   version: string;
   ref?: string;
+  chunkRepository: RagChunkRepository;
+  metadataRepository: IndexMetadataRepository;
 }): Promise<IndexWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
@@ -71,12 +75,6 @@ export async function runIndexWorkflow({
     // Metadata Repository
     // -------------------------------------------------
 
-    const metadataRepository = new PostgresIndexMetadataRepository(
-      config.database.url,
-    );
-
-    const chunkRepository = new PostgresRagChunkRepository(config.database.url);
-
     const stored = await metadataRepository.load(
       identity.provider,
       identity.id,
@@ -109,18 +107,7 @@ export async function runIndexWorkflow({
       dimension: embeddingDimension,
     });
 
-    const dbDimension = await chunkRepository.getEmbeddingColumnDimension();
-
-    if (dbDimension !== null && dbDimension !== embeddingDimension) {
-      eventBus.emit(CoreEvents.WorkflowIndexDimensionMismatch, {
-        dbDimension,
-        embeddingDimension,
-      });
-
-      throw new Error(
-        `Embedding dimension mismatch: database=${dbDimension}, model=${embeddingDimension}. Recreate table or change model.`,
-      );
-    }
+    await chunkRepository.ensureSchema(embeddingDimension);
 
     // -------------------------------------------------
     // Compute Current Fingerprint
@@ -132,15 +119,29 @@ export async function runIndexWorkflow({
       embeddingModel: config.embeddings.model,
       embeddingDimension,
       chunkStrategy: "default",
-      chunkVersion: 2,
+      chunkVersion: 3,
     };
 
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
-      if (!stored.chunking || stored.chunking.version !== 2) {
+      if (!stored.chunking || stored.chunking.version !== 3) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 2)`,
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
+        );
+      }
+      if (stored.embedding.dimension !== embeddingDimension) {
+        incompatibilityReasons.push(
+          `embedding dimension changed (${stored.embedding.dimension} → ${embeddingDimension})`,
+        );
+      }
+
+      if (
+        stored.embedding.provider !== config.embeddings.provider ||
+        stored.embedding.model !== config.embeddings.model
+      ) {
+        incompatibilityReasons.push(
+          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
         );
       }
 
@@ -290,7 +291,7 @@ export async function runIndexWorkflow({
           },
           chunking: {
             strategy: "default",
-            version: 2,
+            version: 3,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -354,7 +355,7 @@ export async function runIndexWorkflow({
             },
             chunking: {
               strategy: "default",
-              version: 2,
+              version: 3,
             },
             prsenseVersion: version,
             createdAt: new Date().toISOString(),
@@ -372,9 +373,11 @@ export async function runIndexWorkflow({
           };
         }
 
-        const chunker = createCharChunker({
-          maxChars: config.index.chunkSizeChars,
-          overlapChars: config.index.chunkOverlapChars,
+        const chunker = createCompositeChunker({
+          char: {
+            maxChars: config.index.chunkSizeChars,
+            overlapChars: config.index.chunkOverlapChars,
+          },
         });
 
         const chunks: ContextChunk[] = await buildChunks({
@@ -477,7 +480,7 @@ export async function runIndexWorkflow({
           },
           chunking: {
             strategy: "default",
-            version: 2,
+            version: 3,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
