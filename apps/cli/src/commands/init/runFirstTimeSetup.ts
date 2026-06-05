@@ -1,15 +1,52 @@
+// apps/cli/src/commands/init/runFirstTimeSetup.ts
 import prompts from "prompts";
 import fs from "fs";
+import path from "path";
 import yaml from "yaml";
 import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
 import { defaults as DEFAULT_CONFIG } from "@prsense/config";
 
-type Provider = "ollama" | "openai" | "anthropic" | "google";
-const DEFAULT_MODELS: Record<Provider, string> = {
+const ENV_FILE = path.join(process.cwd(), ".env");
+
+/**
+ * Upsert a single KEY=value pair in .env at process.cwd().
+ * Preserves other lines; replaces in-place if key already exists.
+ * Returns true if a new line was appended, false if an existing line was replaced.
+ */
+function upsertEnvVar(key: string, value: string): boolean {
+  const line = `${key}=${value}`;
+  const existing = fs.existsSync(ENV_FILE)
+    ? fs.readFileSync(ENV_FILE, "utf8")
+    : "";
+
+  const lines = existing.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith(`${key}=`));
+
+  let appended = false;
+  if (idx >= 0) {
+    lines[idx] = line;
+  } else {
+    if (existing.length && !existing.endsWith("\n")) lines.push("");
+    lines.push(line);
+    appended = true;
+  }
+
+  fs.writeFileSync(ENV_FILE, lines.join("\n").replace(/\n+$/, "\n"));
+  return appended;
+}
+
+type Provider = "ollama" | "openai" | "google";
+
+const DEFAULT_LLM_MODELS: Record<Provider, string> = {
   ollama: "deepseek-coder-v2",
-  openai: "gpt-4o-mini",
-  anthropic: "claude-3-5-sonnet-latest",
-  google: "gemini-1.5-pro",
+  openai: "gpt-5.4-mini",
+  google: "gemini-2.5-flash",
+};
+
+const DEFAULT_EMBEDDING_MODELS: Record<Provider, string> = {
+  ollama: "nomic-embed-text",
+  openai: "text-embedding-3-small",
+  google: "gemini-embedding-001",
 };
 
 export async function runFirstTimeSetup() {
@@ -25,16 +62,24 @@ export async function runFirstTimeSetup() {
     {
       type: "select",
       name: "provider",
-      message: "Choose LLM provider:",
+      message: "Choose provider (used for both review and embeddings):",
       choices: [
         { title: "Ollama (local)", value: "ollama" },
         { title: "OpenAI", value: "openai" },
-        { title: "Anthropic", value: "anthropic" },
         { title: "Google", value: "google" },
       ],
     },
     { onCancel },
   )) as { provider: Provider };
+
+  console.log(
+    "\nℹ Anthropic isn't offered here because it has no embeddings API.",
+  );
+  console.log(
+    "  To use Claude for review, finish setup with another provider and",
+    "edit your config to mix providers (e.g. Claude for review + Voyage",
+    "for embeddings).\n",
+  );
 
   let apiKey: string | null = null;
 
@@ -60,8 +105,12 @@ export async function runFirstTimeSetup() {
   const config = structuredClone(DEFAULT_CONFIG);
 
   config.llm.provider = provider;
-  config.llm.model = DEFAULT_MODELS[provider];
-  console.log(`✔ Using model: ${config.llm.model}\n`);
+  config.llm.model = DEFAULT_LLM_MODELS[provider];
+  config.embeddings.provider = provider;
+  config.embeddings.model = DEFAULT_EMBEDDING_MODELS[provider];
+
+  console.log(`✔ LLM model:        ${config.llm.model}`);
+  console.log(`✔ Embeddings model: ${config.embeddings.model}\n`);
 
   // ✅ print config (dev trust boost)
   console.log("\n---");
@@ -79,8 +128,10 @@ export async function runFirstTimeSetup() {
       const envVar = getEnvVarName(provider);
       process.env[envVar] = apiKey;
 
-      console.log("👉 Add this to your shell:\n");
-      console.log(`export ${envVar}=${apiKey}\n`);
+      const appended = upsertEnvVar(envVar, apiKey);
+      console.log(
+        `✔ ${appended ? "Wrote" : "Updated"} ${envVar} in ${ENV_FILE}\n`,
+      );
     } catch (err: any) {
       console.log(`✖ ${err.message}\n`);
       process.exit(1);
@@ -99,8 +150,6 @@ function getEnvVarName(provider: Provider): string {
   switch (provider) {
     case "openai":
       return "PRSENSE_OPENAI_API_KEY";
-    case "anthropic":
-      return "PRSENSE_ANTHROPIC_API_KEY";
     case "google":
       return "PRSENSE_GOOGLE_API_KEY";
     default:
@@ -120,18 +169,6 @@ async function validateApiKey(
         const res = await fetch("https://api.openai.com/v1/models", {
           headers: {
             Authorization: `Bearer ${apiKey}`,
-          },
-        });
-
-        if (!res.ok) throw new Error(await extractError(res));
-        return;
-      }
-
-      case "anthropic": {
-        const res = await fetch("https://api.anthropic.com/v1/models", {
-          headers: {
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
           },
         });
 

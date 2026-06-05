@@ -10,6 +10,7 @@ import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
+  createGoogleEmbeddingClient,
 } from "@prsense/llm";
 import {
   resolveRepositorySource,
@@ -96,8 +97,17 @@ export async function runIndexWorkflow({
         apiKey,
         model: config.embeddings.model,
       });
-    } else {
+    } else if (config.embeddings.provider === "ollama") {
       embeddingClient = createOllamaEmbeddingClient({
+        model: config.embeddings.model,
+      });
+    } else {
+      const apiKey = credentials.google?.apiKey;
+      if (!apiKey) {
+        throw new Error("Google embedding credentials missing");
+      }
+      embeddingClient = createGoogleEmbeddingClient({
+        apiKey,
         model: config.embeddings.model,
       });
     }
