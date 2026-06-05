@@ -8,14 +8,10 @@ jest.mock("@prsense/llm", () => ({
     dimension: async () => 768,
     embed: async (texts: string[]) => texts.map(() => Array(768).fill(0.1)),
   }),
-
   createGoogleEmbeddingClient: () => ({
     dimension: async () => 768,
     embed: async (texts: string[]) => texts.map(() => Array(768).fill(0.1)),
   }),
+  defaultBatchSize: () => 32,
+  defaultConcurrency: () => 1,
 }));
-
-jest.mock("@octokit/rest", () => ({
-  Octokit: function () {},
-}));
-

@@ -6,3 +6,5 @@ export * from "./providers/google.js";
 export * from "./providers/ollamaEmbeddings.js";
 export * from "./providers/openaiEmbeddings.js";
 export * from "./providers/googleEmbeddings.js";
+export * from "./embeddings/batchSize.js";
+export * from "./embeddings/concurrency.js";
