@@ -9,20 +9,24 @@ function toF32(embedding: number[]): Uint8Array {
 }
 
 export class SqliteRagChunkRepository implements RagChunkRepository {
-  private readonly insertChunkStmt: Statement;
-  private readonly insertVecStmt: Statement;
+  constructor(private readonly db: Db) {}
+  private _insertChunkStmt?: Statement;
+  private _insertVecStmt?: Statement;
 
-  constructor(private readonly db: Db) {
-    this.insertChunkStmt = this.db.prepare(
+  private get insertChunkStmt(): Statement {
+    return (this._insertChunkStmt ??= this.db.prepare(
       `INSERT INTO rag_chunks (
-         id, repo_provider, repo_owner, repo_name, repo_ref,
-         path, kind, language, content, line_start, line_end
-       ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-    );
-    this.insertVecStmt = this.db.prepare(
+       id, repo_provider, repo_owner, repo_name, repo_ref,
+       path, kind, language, content, line_start, line_end
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    ));
+  }
+
+  private get insertVecStmt(): Statement {
+    return (this._insertVecStmt ??= this.db.prepare(
       `INSERT INTO vec_rag_chunks (rowid, embedding)
-       VALUES (last_insert_rowid(), ?)`,
-    );
+     VALUES (last_insert_rowid(), ?)`,
+    ));
   }
 
   private insertRow(row: ChunkRow): void {
