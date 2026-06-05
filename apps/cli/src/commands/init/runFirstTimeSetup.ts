@@ -1,9 +1,39 @@
 // apps/cli/src/commands/init/runFirstTimeSetup.ts
 import prompts from "prompts";
 import fs from "fs";
+import path from "path";
 import yaml from "yaml";
 import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
 import { defaults as DEFAULT_CONFIG } from "@prsense/config";
+
+const ENV_FILE = path.join(process.cwd(), ".env");
+
+/**
+ * Upsert a single KEY=value pair in .env at process.cwd().
+ * Preserves other lines; replaces in-place if key already exists.
+ * Returns true if a new line was appended, false if an existing line was replaced.
+ */
+function upsertEnvVar(key: string, value: string): boolean {
+  const line = `${key}=${value}`;
+  const existing = fs.existsSync(ENV_FILE)
+    ? fs.readFileSync(ENV_FILE, "utf8")
+    : "";
+
+  const lines = existing.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith(`${key}=`));
+
+  let appended = false;
+  if (idx >= 0) {
+    lines[idx] = line;
+  } else {
+    if (existing.length && !existing.endsWith("\n")) lines.push("");
+    lines.push(line);
+    appended = true;
+  }
+
+  fs.writeFileSync(ENV_FILE, lines.join("\n").replace(/\n+$/, "\n"));
+  return appended;
+}
 
 type Provider = "ollama" | "openai" | "google";
 
@@ -98,8 +128,10 @@ export async function runFirstTimeSetup() {
       const envVar = getEnvVarName(provider);
       process.env[envVar] = apiKey;
 
-      console.log("👉 Add this to your shell:\n");
-      console.log(`export ${envVar}=${apiKey}\n`);
+      const appended = upsertEnvVar(envVar, apiKey);
+      console.log(
+        `✔ ${appended ? "Wrote" : "Updated"} ${envVar} in ${ENV_FILE}\n`,
+      );
     } catch (err: any) {
       console.log(`✖ ${err.message}\n`);
       process.exit(1);
