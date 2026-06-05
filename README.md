@@ -131,14 +131,6 @@ prsense index . --dry-run
 prsense index . --stats
 ```
 
-#### Run setup checks
-
-```bash
-prsense setup
-```
-
-Ensures required infrastructure (database, embeddings, etc.) is available.
-
 ### Daemon Mode
 
 The daemon runs PRSense as a long-lived HTTP service, intended for automation and webhook-based review. It is distributed as a separate package.
