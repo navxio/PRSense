@@ -3,6 +3,36 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] — 2026-06-06
+
+### Changed
+
+- **Review prompt recalibrated.** Reframed from "senior software
+  engineer" to a precision-oriented review assistant whose value is
+  measured by signal actionability, not signal count. Severity now
+  carries an explicit triage rubric:
+  - `high` — will fire on inputs the code actually produces today
+  - `medium` — latent fragility a plausible near-term change could trip
+  - `low` — theoretical concern requiring inputs the code path cannot produce
+
+  Expect a noticeable shift in severity distribution on the same
+  diffs: fewer `high` signals, more `medium`, fewer signals overall.
+  This is intentional.
+
+### Removed
+
+- Source-of-truth disambiguation block from the review prompt. It
+  compensated for a RAG staleness problem resolved architecturally in
+  earlier releases and was priming the model to expect conflicts that
+  no longer occur.
+
+### Notes
+
+- No config, flag, or schema changes. Existing `prsense.yml` files
+  continue to work unchanged.
+- If you've tuned thresholds or downstream automation around the
+  previous severity distribution, re-check after upgrading.
+
 ## [0.10.0] — 2026-06-05
 
 ### Changed
