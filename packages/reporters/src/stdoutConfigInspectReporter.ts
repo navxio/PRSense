@@ -13,7 +13,6 @@ export interface ConfigInspectInput {
   provenance: Record<string, Source>;
   credentials: CredentialContext;
   issues?: ValidationIssue[];
-  format?: "table" | "json";
 }
 
 const SOURCE_COLOR: Record<Source, (s: string) => string> = {
@@ -52,6 +51,35 @@ function formatValue(v: unknown): string {
   if (typeof v === "string") return v;
   if (Array.isArray(v)) return `[${v.join(", ")}]`;
   return String(v);
+}
+
+function renderCredentials(creds: CredentialContext): string[] {
+  const status = (avail: boolean, detail?: string) =>
+    avail
+      ? kleur.green("available") + (detail ? kleur.dim(` (${detail})`) : "")
+      : kleur.dim("not configured");
+
+  const openai = creds.openai ?? { available: false as const };
+  const google = creds.google ?? { available: false as const };
+  const anthropic = creds.anthropic ?? { available: false as const };
+  const github = creds.github ?? { available: false as const };
+  const gitlab = creds.gitlab ?? { available: false as const };
+  const slack = creds.slack ?? { available: false as const };
+
+  const githubDetail =
+    github.available && "mode" in github ? github.mode : undefined;
+
+  const entries: Array<[string, string]> = [
+    ["openai", status(openai.available)],
+    ["google", status(google.available)],
+    ["anthropic", status(anthropic.available)],
+    ["github", status(github.available, githubDetail)],
+    ["gitlab", status(gitlab.available)],
+    ["slack", status(slack.available)],
+  ];
+
+  const w = Math.max(...entries.map(([k]) => k.length));
+  return entries.map(([k, v]) => `  ${k.padEnd(w)}  ${v}`);
 }
 
 function renderTable(input: ConfigInspectInput): string {
@@ -100,59 +128,8 @@ function renderTable(input: ConfigInspectInput): string {
   return lines.join("\n");
 }
 
-function renderCredentials(creds: CredentialContext): string[] {
-  const entries: Array<[string, string]> = [];
-
-  const status = (avail: boolean, detail?: string) =>
-    avail
-      ? kleur.green("available") + (detail ? kleur.dim(` (${detail})`) : "")
-      : kleur.dim("not configured");
-
-  entries.push(["openai", status(creds.openai.available)]);
-  entries.push(["google", status(creds.google.available)]);
-  entries.push(["anthropic", status(creds.anthropic.available)]);
-  entries.push([
-    "github",
-    creds.github.available ? status(true, creds.github.mode) : status(false),
-  ]);
-  entries.push(["gitlab", status(creds.gitlab.available)]);
-  entries.push(["slack", status(creds.slack.available)]);
-
-  const w = Math.max(...entries.map(([k]) => k.length));
-  return entries.map(([k, v]) => `  ${k.padEnd(w)}  ${v}`);
-}
-
-function renderJson(input: ConfigInspectInput): string {
-  const credentialsRedacted = {
-    openai: { available: input.credentials.openai.available },
-    google: { available: input.credentials.google.available },
-    anthropic: { available: input.credentials.anthropic.available },
-    github: {
-      available: input.credentials.github.available,
-      ...(input.credentials.github.available
-        ? { mode: input.credentials.github.mode }
-        : {}),
-    },
-    gitlab: { available: input.credentials.gitlab.available },
-    slack: { available: input.credentials.slack.available },
-  };
-
-  return JSON.stringify(
-    {
-      config: input.config,
-      provenance: input.provenance,
-      credentials: credentialsRedacted,
-      warnings: (input.issues ?? []).filter((i) => i.level === "warning"),
-    },
-    null,
-    2,
-  );
-}
-
 export const stdoutConfigInspectReporter = {
   async report(input: ConfigInspectInput): Promise<void> {
-    const output =
-      input.format === "json" ? renderJson(input) : renderTable(input);
-    process.stdout.write(output + "\n");
+    process.stdout.write(renderTable(input) + "\n");
   },
 };

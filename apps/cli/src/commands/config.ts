@@ -13,7 +13,6 @@ export const configCommand = new Command("config").description(
 configCommand
   .command("inspect")
   .description("Show resolved configuration with provenance")
-  .option("--json", "Emit JSON instead of a table")
   .action(async (options) => {
     const env = resolveEnvironment("cli", {
       root: ".",
