@@ -1,5 +1,6 @@
 // packages/reporters/src/stats/printStats.ts
 
+//TODO: move to proper stats reporter
 import kleur from "kleur";
 import { computeStats } from "./computeStats.js";
 import type { ReportStatsInput } from "./types.js";

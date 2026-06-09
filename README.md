@@ -289,8 +289,6 @@ global config
    ↓
 repo config
    ↓
-environment variables
-   ↓
 derive runtime fields
    ↓
 validate
@@ -798,7 +796,7 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 
 - [x] incremental indexing
 - [ ] hybrid retrieval strategy
-- [ ] ast based chunking
+- [x] ast based chunking
 - [ ] codeberg support
 - [ ] multiple embedding dimensions
 - [ ] automated tests
@@ -808,10 +806,6 @@ Interfaces and core concepts are stabilizing, while integrations and performance
 ## Contributing
 
 PRs are welcome
-
-## Similar Projects
-
-- [pr-agent](https://github.com/<>/<>)
 
 ## License
 

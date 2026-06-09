@@ -1,3 +1,4 @@
+// apps/cli/src/commands/init/init.ts
 import { Command } from "commander";
 import { runFirstTimeSetup } from "../init/runFirstTimeSetup.js";
 
@@ -6,4 +7,3 @@ export const initCommand = new Command("init")
   .action(async () => {
     await runFirstTimeSetup();
   });
-

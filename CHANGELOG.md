@@ -3,6 +3,50 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.2] — 2026-06-09
+
+### Changed
+
+- Consolidated all structural config validation into the Zod schema.
+  `validateResolvedConfig` and the workflow-scoped validators in
+  `apps/cli/.../validation` are gone; the schema is now the single source
+  of truth for shape, ranges, cross-field rules (e.g. `chunkOverlapChars
+< chunkSizeChars`), and the daemon→delivery requirement.
+- Defaults now live on the schema via `.prefault({})`. The standalone
+  `defaults` export is removed; `RuntimeConfigSchema.parse({})` yields a
+  fully-populated baseline. `prsense init` derives its boilerplate the
+  same way.
+
+### Fixed
+
+- `resolveConfig` cache is now keyed by `(mode, repository.root)`. The
+  previous module-level cache ignored its arguments and returned the
+  first resolved config for every subsequent call.
+- `resolveConfig` reads `prsense.yml` from the supplied repository root
+  rather than `process.cwd()`, fixing wrong-config resolution when the
+  CLI is invoked from a subdirectory.
+- `buildResolvedConfig` no longer carries a stale Postgres connection
+  string and no longer relies on a non-null assertion for `delivery`.
+- `prsense config inspect` now actually prints the resolved configuration
+  table. The previous output rendered the header and separator but
+  dropped every row. The misleading "Sources" legend (left over from
+  the removed provenance tracking) is gone.
+- `prsense.yml` is now resolved from the repository root rather than the
+  current working directory. Running CLI commands from subdirectories
+  previously failed to pick up the repository's config.
+
+### Internal
+
+- Added a comprehensive Jest suite for `@prsense/config` covering
+  schema refinements, layered merging, credential resolution, cache
+  behavior, and the resolved-environment integration.
+
+## 0.11.1
+
+### Changed
+
+Review output now lists displayed vs generated signal numbers
+
 ## [0.11.0] — 2026-06-06
 
 ### Changed
