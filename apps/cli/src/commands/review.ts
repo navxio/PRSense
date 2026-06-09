@@ -3,8 +3,12 @@ import { Command } from "commander";
 import { runReviewWorkflow, runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveEnvironment, ValidationIssue } from "@prsense/config";
-import { validateReviewEffectiveConfig } from "./validation/review.js";
+import {
+  issuesFor,
+  resolveEnvironment,
+  REVIEW_PREFIXES,
+  ValidationIssue,
+} from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
@@ -116,17 +120,20 @@ export const reviewCommand = new Command("review")
       const overrides = buildOverrides(options);
       const effectiveConfig = applyOverrides(env.config, overrides);
 
-      const cliIssues = validateReviewEffectiveConfig(
-        effectiveConfig,
-        env.credentials,
-      );
+      const reviewConfigurationIssues = issuesFor(env.issues, REVIEW_PREFIXES);
 
-      if (cliIssues.some((i: ValidationIssue) => i.level === "error")) {
+      if (
+        reviewConfigurationIssues.some(
+          (i: ValidationIssue) => i.level === "error",
+        )
+      ) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-cli-config",
         });
 
-        await stdoutConfigReporter.report({ issues: cliIssues });
+        await stdoutConfigReporter.report({
+          issues: reviewConfigurationIssues,
+        });
         process.exit(1);
       }
 
