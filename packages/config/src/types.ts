@@ -1,23 +1,23 @@
+export type {
+  RuntimeConfig,
+  ResolvedConfig,
+  CliResolvedConfig,
+  DaemonResolvedConfig,
+} from "./schema.js";
+import type { ResolvedConfig } from "./schema.js";
+
+export type RuntimeMode = "cli" | "daemon";
+
+export type ValidationIssue = {
+  level: "error" | "warning";
+  message: string;
+  path?: string;
+};
+
 export type CredentialContext = {
-  /* ---------------- LLM ---------------- */
-
-  openai?: {
-    available: boolean;
-    apiKey?: string;
-  };
-
-  google?: {
-    available: boolean;
-    apiKey?: string;
-  };
-
-  anthropic?: {
-    available: boolean;
-    apiKey?: string;
-  };
-
-  /* ---------------- GitHub ---------------- */
-
+  openai?: { available: boolean; apiKey?: string };
+  google?: { available: boolean; apiKey?: string };
+  anthropic?: { available: boolean; apiKey?: string };
   github?: {
     available: boolean;
     mode?: "token" | "app";
@@ -27,85 +27,8 @@ export type CredentialContext = {
     installationId?: string;
     webhookSecret?: string;
   };
-
-  /* ---------------- GitLab ---------------- */
-
-  gitlab?: {
-    available: boolean;
-    token?: string;
-    webhookSecret?: string;
-  };
-
-  /* ---------------- Slack ---------------- */
-
-  slack?: {
-    available: boolean;
-    botToken?: string;
-  };
-};
-
-const OTHER_CHANNELS = ["jira", "slack"] as const;
-export type OtherChannel = (typeof OTHER_CHANNELS)[number];
-export type PlatformDeliveryChannel = "github" | "gitlab";
-
-export type Delivery = {
-  platform: PlatformDeliveryChannel;
-  other: readonly OtherChannel[];
-};
-
-type BaseResolvedConfig = {
-  repository: {
-    root: string;
-    provider: "github" | "gitlab" | "filesystem";
-  };
-
-  index: {
-    chunkSizeChars: number;
-    chunkOverlapChars: number;
-  };
-
-  review: {
-    confidenceThreshold: number;
-    maxSignals: number;
-  };
-
-  context: {
-    maxChunks: number;
-  };
-
-  llm: {
-    provider: "ollama" | "openai" | "google" | "anthropic";
-    model: string;
-    temperature: number;
-  };
-
-  embeddings: {
-    provider: "ollama" | "openai";
-    model: string;
-  };
-
-  database: {
-    url: string;
-    mode: "bundled" | "external";
-  };
-};
-
-export type CliResolvedConfig = BaseResolvedConfig & {
-  mode: "cli";
-};
-
-export type DaemonResolvedConfig = BaseResolvedConfig & {
-  mode: "daemon";
-
-  delivery: Delivery;
-};
-
-export type ResolvedConfig = CliResolvedConfig | DaemonResolvedConfig;
-
-export type ValidationIssue = {
-  level: "error" | "warning";
-  message: string;
-  path?: string;
+  gitlab?: { available: boolean; token?: string; webhookSecret?: string };
+  slack?: { available: boolean; botToken?: string };
 };
 
 export type RuntimeEnvironment = {
@@ -113,5 +36,3 @@ export type RuntimeEnvironment = {
   credentials: CredentialContext;
   issues: ValidationIssue[];
 };
-
-export type RuntimeMode = "cli" | "daemon";
