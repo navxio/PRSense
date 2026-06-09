@@ -752,17 +752,6 @@ You can run the benchmarks on your own machine by cloning the repository, instal
 
 Make sure all the environment variables related to cloud providers have been set up and ollama is running with the models being tested available
 
-## ToDo
-
-- [x] incremental indexing
-- [ ] hybrid retrieval strategy
-- [ ] ast based chunking
-- [ ] codeberg support
-- [ ] multiple embedding dimensions
-- [ ] automated tests
-- [ ] optional multi pass review
-- [ ] gh action
-
 ## Contributing
 
 PRs are welcome
