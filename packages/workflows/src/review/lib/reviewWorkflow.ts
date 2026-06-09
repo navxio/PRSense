@@ -75,6 +75,8 @@ export async function runReviewWorkflow({
       eventBus,
     });
 
+    const count = allSignals.length;
+
     const signals = finalizeSignals(allSignals, config, eventBus);
 
     eventBus.emit(CoreEvents.WorkflowReviewFinished);
@@ -85,6 +87,7 @@ export async function runReviewWorkflow({
         signals,
         diffSummary,
         ...(totalUsage ? { usage: totalUsage } : {}),
+        totalSignalCount: count,
       },
     };
   } catch (err) {
