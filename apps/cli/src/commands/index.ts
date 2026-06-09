@@ -4,7 +4,12 @@ import path from "node:path";
 import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveEnvironment, issuesFor, INDEX_PREFIXES } from "@prsense/config";
+import {
+  resolveEnvironment,
+  issuesFor,
+  INDEX_PREFIXES,
+  validateEnvironment,
+} from "@prsense/config";
 import { buildServices } from "../composition.js";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
@@ -105,7 +110,15 @@ export const indexCommand = new Command("index")
       const overrides = buildOverrides(options);
       const effectiveConfig = applyOverrides(env.config, overrides);
 
-      const indexConfigurationIssues = issuesFor(env.issues, INDEX_PREFIXES);
+      const effectiveIssues = validateEnvironment(
+        effectiveConfig,
+        env.credentials,
+      );
+
+      const indexConfigurationIssues = issuesFor(
+        effectiveIssues,
+        INDEX_PREFIXES,
+      );
 
       if (indexConfigurationIssues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {

@@ -7,6 +7,7 @@ import {
   issuesFor,
   resolveEnvironment,
   REVIEW_PREFIXES,
+  validateEnvironment,
   ValidationIssue,
 } from "@prsense/config";
 
@@ -120,7 +121,14 @@ export const reviewCommand = new Command("review")
       const overrides = buildOverrides(options);
       const effectiveConfig = applyOverrides(env.config, overrides);
 
-      const reviewConfigurationIssues = issuesFor(env.issues, REVIEW_PREFIXES);
+      const effectiveIssues = validateEnvironment(
+        effectiveConfig,
+        env.credentials,
+      );
+      const reviewConfigurationIssues = issuesFor(
+        effectiveIssues,
+        REVIEW_PREFIXES,
+      );
 
       if (
         reviewConfigurationIssues.some(
