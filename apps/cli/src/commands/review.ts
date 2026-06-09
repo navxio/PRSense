@@ -283,7 +283,7 @@ export const reviewCommand = new Command("review")
       }
 
       console.log(
-        `\n${result.payload.signals.length} of ${result.payload.totalSignalCount} signals shown`,
+        `\n${result.payload.signals.length} of ${result.payload.totalSignalCount} signal(s) shown`,
       );
 
       process.exit(0);

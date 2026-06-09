@@ -10,7 +10,7 @@ export type ReviewPayload = {
   diffSummary?: {
     files: string[];
   };
-  totalSignalCount?: Number;
+  totalSignalCount?: number;
 };
 
 export type ReviewWorkflowResult = WorkflowResult<ReviewPayload>;
