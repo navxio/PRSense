@@ -12,7 +12,7 @@ export const configCommand = new Command("config").description(
 
 configCommand
   .command("inspect")
-  .description("Show resolved configuration with provenance")
+  .description("Show resolved configuration")
   .action(async (options) => {
     const env = resolveEnvironment("cli", {
       root: ".",
@@ -26,10 +26,8 @@ configCommand
 
     await stdoutConfigInspectReporter.report({
       config: env.config,
-      provenance: env.provenance,
       credentials: env.credentials,
       issues: env.issues, // include warnings if any
-      format: options.json ? "json" : "table",
     });
 
     process.exit(0);

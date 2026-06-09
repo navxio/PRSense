@@ -10,7 +10,6 @@ type Source = "default" | "global" | "repo" | "env" | "cli";
 
 export interface ConfigInspectInput {
   config: ResolvedConfig;
-  provenance: Record<string, Source>;
   credentials: CredentialContext;
   issues?: ValidationIssue[];
 }
@@ -88,7 +87,6 @@ function renderTable(input: ConfigInspectInput): string {
     .map(([path, value]) => ({
       path,
       value: formatValue(value),
-      source: input.provenance[path] ?? "default",
     }));
 
   const pathW = Math.max(...rows.map((r) => r.path.length), 4);
@@ -98,12 +96,6 @@ function renderTable(input: ConfigInspectInput): string {
 
   lines.push(kleur.bold("Configuration"));
   lines.push(kleur.dim("─".repeat(pathW + valueW + 16)));
-  for (const r of rows) {
-    const color = SOURCE_COLOR[r.source];
-    lines.push(
-      `  ${r.path.padEnd(pathW)}  ${r.value.padEnd(valueW)}  ${color(r.source)}`,
-    );
-  }
   lines.push("");
 
   lines.push(kleur.bold("Credentials"));
