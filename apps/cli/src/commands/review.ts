@@ -268,20 +268,8 @@ export const reviewCommand = new Command("review")
         process.exit(0);
       }
 
-      const severityOrder: Record<string, number> = {
-        high: 3,
-        medium: 2,
-        low: 1,
-        info: 0,
-      };
-
-      const sortedSignals = [...result.payload.signals].sort((a, b) => {
-        return (
-          (severityOrder[b.severity] ?? -1) - (severityOrder[a.severity] ?? -1)
-        );
-      });
-
-      for (const signal of sortedSignals) {
+      const signals = result.payload.signals;
+      for (const signal of signals) {
         console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
         console.log(signal.message);
 
@@ -293,6 +281,10 @@ export const reviewCommand = new Command("review")
           console.log(`  💡 ${signal.suggestedFix}`);
         }
       }
+
+      console.log(
+        `\n${result.payload.signals.length} of ${result.payload.totalSignalCount} signals shown`,
+      );
 
       process.exit(0);
     } catch (err) {
