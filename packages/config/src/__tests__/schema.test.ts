@@ -50,9 +50,9 @@ describe("RuntimeConfigSchema", () => {
   });
 
   it("applies index.auto default when omitted", () => {
-    const cfg = validRuntime();
-    delete cfg.index.auto;
-    const parsed = RuntimeConfigSchema.parse(cfg);
+    const parsed = RuntimeConfigSchema.parse({
+      index: { chunkSizeChars: 500, chunkOverlapChars: 100 },
+    });
     expect(parsed.index.auto).toBe(true);
   });
 });
