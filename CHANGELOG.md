@@ -31,6 +31,9 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
   table. The previous output rendered the header and separator but
   dropped every row. The misleading "Sources" legend (left over from
   the removed provenance tracking) is gone.
+- `prsense.yml` is now resolved from the repository root rather than the
+  current working directory. Running CLI commands from subdirectories
+  previously failed to pick up the repository's config.
 
 ### Internal
 
