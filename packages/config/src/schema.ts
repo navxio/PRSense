@@ -1,38 +1,51 @@
 // packages/config/src/schema.ts
 import { z } from "zod";
 
-const LlmConfigSchema = z.object({
-  provider: z.enum(["ollama", "openai", "anthropic", "google"]),
-  model: z.string().min(1),
-  temperature: z.number().min(0).max(2),
-});
+const LlmConfigSchema = z
+  .object({
+    provider: z
+      .enum(["ollama", "openai", "anthropic", "google"])
+      .default("ollama"),
+    model: z.string().min(1).default("deepseek-coder-v2"),
+    temperature: z.number().min(0).max(2).default(0.1),
+  })
+  .prefault({});
 
-const EmbeddingConfigSchema = z.object({
-  provider: z.enum(["ollama", "openai"]),
-  model: z.string().min(1),
-});
+const EmbeddingConfigSchema = z
+  .object({
+    provider: z.enum(["ollama", "openai"]).default("ollama"),
+    model: z.string().min(1).default("nomic-embed-text"),
+  })
+  .prefault({});
 
 const IndexConfigSchema = z
   .object({
-    chunkSizeChars: z.number().int().positive(),
-    chunkOverlapChars: z.number().int().nonnegative(),
-    auto: z.boolean().default(true),
+    chunkSizeChars: z.number().int().positive().default(1000),
+    chunkOverlapChars: z.number().int().nonnegative().default(200),
+    auto: z.boolean().default(true).default(true),
   })
   .refine((v) => v.chunkOverlapChars < v.chunkSizeChars, {
     message: "chunkOverlapChars must be smaller than chunkSizeChars",
     path: ["chunkOverlapChars"],
-  });
+  })
+  .prefault({});
 
-const ReviewConfigSchema = z.object({
-  confidenceThreshold: z.number().min(0).max(1),
-  maxSignals: z.number().int().positive(),
-});
+const ReviewConfigSchema = z
+  .object({
+    confidenceThreshold: z.number().min(0).max(1).default(0.8),
+    maxSignals: z.number().int().positive().default(3),
+  })
+  .prefault({});
 
-const ContextConfigSchema = z.object({
-  maxChunks: z.number().int().positive(),
-});
+const ContextConfigSchema = z
+  .object({
+    maxChunks: z.number().int().positive().default(5),
+  })
+  .prefault({});
 
-const GitConfigSchema = z.object({ baseBranch: z.string().min(1) });
+const GitConfigSchema = z
+  .object({ baseBranch: z.string().min(1).default("main") })
+  .prefault({});
 
 const DeliveryConfigSchema = z.object({
   platform: z.enum(["github", "gitlab"]),
