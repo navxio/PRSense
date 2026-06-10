@@ -367,7 +367,6 @@ PRSENSE_LOG_LEVEL=debug | info | warn | error
 
 ````
 
-## CLI Mode vs Daemon Mode
 
 ### CLI Mode
 
@@ -381,26 +380,6 @@ Example:
 ```sh
 prsense review .
 ````
-
-### Daemon Mode
-
-- Loads global config at startup
-- Validates credentials at boot
-- Requires delivery configuration
-- Requires webhook secrets
-- Loads repo config dynamically per review job
-
-Start daemon:
-
-```sh
-prsense-daemon
-```
-
-Daemon refuses to start if:
-
-- Delivery enabled but credentials missing
-- Webhook secret missing
-- Required LLM credentials missing
 
 ### Inspecting Effective Configuration
 
@@ -582,30 +561,13 @@ Domain
 
 ```
 
-### Monorepo Layout
-
-```
-apps/
-  cli/ # CLI entrypoint
-  daemon/ # http + scheduler
-
-packages/
-  core/ # core domain types and engine
-  context/ # diff parsing and contextual retrieval
-  llm/ # LLM provider abstractions
-  config/ # prsense.yml and env validation
-  reporters/ # CLI and other output formats
-  workflows/ # all workflows
-  preflight/ #executable infa truths and enforcement
-  logging/ # structured logging
-  bench/ # benchmarking primitives
-```
-
 ## Command Reference
 
 A complete command reference is available in:
 
 [docs/man/prsense.1](docs/man/prsense.1)
+
+or just issue `man prsense`
 
 ## Benchmarks
 

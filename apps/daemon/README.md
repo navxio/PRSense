@@ -137,3 +137,23 @@ Rules:
 
 - Only one VCS channel allowed (`github` or `gitlab`)
 - Additional channels optional (`slack`, `jira`)
+
+### Daemon Mode
+
+- Loads global config at startup
+- Validates credentials at boot
+- Requires delivery configuration
+- Requires webhook secrets
+- Loads repo config dynamically per review job
+
+Start daemon:
+
+```sh
+prsense-daemon
+```
+
+Daemon refuses to start if:
+
+- Delivery enabled but credentials missing
+- Webhook secret missing
+- Required LLM credentials missing
