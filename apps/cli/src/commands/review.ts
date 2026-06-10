@@ -31,7 +31,7 @@ const PRSENSE_VERSION = pkg.version;
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("-b, --base-branch <branch>", "Base branch to diff against")
-  .option("-n, --top-signals <n>", "Maximum number of signals requested")
+  .option("-n, --top-signals <n>", "Number of highest risk signals to display")
   .option(
     "-c, --max-chunks <n>",
     "Maximum number of indexed chunks to retrieve for context",
