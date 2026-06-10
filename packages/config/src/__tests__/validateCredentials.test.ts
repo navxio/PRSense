@@ -9,7 +9,7 @@ const cliCfg = (overrides: Partial<any> = {}): ResolvedConfig =>
     llm: { provider: "ollama", model: "x", temperature: 0.1 },
     embeddings: { provider: "ollama", model: "x" },
     index: { chunkSizeChars: 1000, chunkOverlapChars: 200, auto: true },
-    review: { confidenceThreshold: 0.8, maxSignals: 3 },
+    review: { confidenceThreshold: 0.8, topSignals: 3 },
     context: { maxChunks: 5 },
     git: { baseBranch: "main" },
     logLevel: "warn",

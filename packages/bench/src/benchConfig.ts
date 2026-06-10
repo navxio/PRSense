@@ -21,7 +21,7 @@ export const benchConfig: ResolvedConfig = {
 
   review: {
     confidenceThreshold: 0.6,
-    maxSignals: 10,
+    topSignals: 10,
   },
 
   index: {

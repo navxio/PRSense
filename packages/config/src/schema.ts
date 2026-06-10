@@ -33,7 +33,7 @@ const IndexConfigSchema = z
 const ReviewConfigSchema = z
   .object({
     confidenceThreshold: z.number().min(0).max(1).default(0.8),
-    maxSignals: z.number().int().positive().default(3),
+    topSignals: z.number().int().positive().default(3),
   })
   .prefault({});
 
