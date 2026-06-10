@@ -93,7 +93,7 @@ describe("ResolvedConfigSchema", () => {
   it("parses {} into the full default config", () => {
     const parsed = RuntimeConfigSchema.parse({});
     expect(parsed.review.confidenceThreshold).toBe(0.8);
-    expect(parsed.review.maxSignals).toBe(3);
+    expect(parsed.review.topSignals).toBe(3);
     expect(parsed.context.maxChunks).toBe(5);
     expect(parsed.git.baseBranch).toBe("main");
     expect(parsed.llm.provider).toBe("ollama");
