@@ -378,7 +378,7 @@ index:
 
 review:
   confidenceThreshold: 0.8
-  maxSignals: 3
+  topSignals: 3
 
 context:
   maxChunks: 5
@@ -429,7 +429,7 @@ Controls repository chunking.
 Controls signal filtering.
 
 - `confidenceThreshold` — minimum confidence.
-- `maxSignals` — maximum number of emitted signals.
+- `topSignals` — number of highest risk emitted signals.
 
 ## `context`
 
