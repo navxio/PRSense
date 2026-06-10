@@ -87,7 +87,6 @@ PRSense is built around a few core principles:
 PRSense is CLI first run in two modes:
 
 - **CLI mode** — local, interactive usage (this package, `@prsense/cli`)
-- **Daemon mode** — long-lived HTTP service for automation and webhooks (separate package, `@prsense/daemon`)
 
 Both modes use the same core review engine and configuration model.
 
@@ -131,116 +130,12 @@ prsense index . --dry-run
 prsense index . --stats
 ```
 
-### Daemon Mode
-
-The daemon runs PRSense as a long-lived HTTP service, intended for automation and webhook-based review. It is distributed as a separate package.
-
-#### Install and start the daemon
-
-```bash
-npm i -g @prsense/daemon
-prsense-daemon
-```
-
-By default, it listens on:
-
-```
-http://localhost:11000
-```
-
-#### Health & Readiness
-
-```
-GET /health
-GET /ready
-```
-
-Example:
-
-```bash
-curl http://localhost:11000/health
-```
-
-#### Trigger Review via API
-
-```
-POST /jobs/review
-```
-
-Example:
-
-```bash
-curl -X POST http://localhost:11000/jobs/review \
-  -H "Content-Type: application/json" \
-  -d '{"target":"https://github.com/owner/repo/pull/123"}'
-```
-
-Response:
-
-```json
-{
-  "jobId": "..."
-}
-```
-
-#### Trigger Indexing via API
-
-```
-POST /jobs/index
-```
-
-Example:
-
-```bash
-curl -X POST http://localhost:11000/jobs/index \
-  -H "Content-Type: application/json" \
-  -d '{"target":"https://github.com/owner/repo"}'
-```
-
-### Webhook Endpoints
-
-The daemon supports webhook-triggered reviews.
-
-#### GitHub
-
-```
-POST /webhooks/github
-```
-
-Requires: `PRSENSE_GITHUB_WEBHOOK_SECRET`
-
-Supports `pull_request` events: `opened`, `synchronize`.
-
-#### GitLab
-
-```
-POST /webhooks/gitlab
-```
-
-Requires: `PRSENSE_GITLAB_WEBHOOK_SECRET`
-
-Supports `merge_request` events.
-
-### How It All Fits Together
-
-- **CLI mode** is interactive and developer-focused.
-- **Daemon mode** is automation-focused.
-- Both share the same configuration, indexing system, review workflow, and validation pipeline.
-
-PRSense is delivery-agnostic — the core engine remains the same.
-
 ### Typical Workflows
 
 #### Local Development
 
 1. `prsense index .`
 2. `prsense review .`
-
-#### Team Automation
-
-1. Install and run the daemon: `npm i -g @prsense/daemon && prsense-daemon`
-2. Configure GitHub/GitLab webhook
-3. Reviews trigger automatically on PR/MR updates
 
 ## Configuration
 
@@ -324,7 +219,6 @@ This file defines review behavior:
 - Chunking strategy
 - Review thresholds
 - Retrieval limits
-- Delivery channels (daemon mode)
 
 ## Example
 
@@ -351,10 +245,6 @@ context:
 
 git:
   baseBranch: main
-
-# Daemon mode only
-delivery:
-  platform: github # github | gitlab
 ```
 
 ## Configuration Sections Explained
@@ -402,25 +292,6 @@ Controls signal filtering.
 Controls retrieval (RAG).
 
 - `maxChunks` — number of chunks retrieved per review.
-
-## `delivery` (Daemon Mode Only)
-
-Defines where review results are posted.
-
-Example:
-
-```yaml
-delivery:
-  - github
-  - slack
-```
-
-Rules:
-
-- Only one VCS channel allowed (`github` or `gitlab`)
-- Additional channels optional (`slack`, `jira`)
-
-Ignored in CLI mode.
 
 ## Environment Variables
 
@@ -699,7 +570,7 @@ PRSense follows a hexagonal architecture:
 ```
 
 
-CLI / Daemon / GitHub App
+CLI  / GitHub App
 ─────────────── execution environments
 Workflows
 ─────────────── orchestration
@@ -724,7 +595,7 @@ packages/
   llm/ # LLM provider abstractions
   config/ # prsense.yml and env validation
   reporters/ # CLI and other output formats
-  workflows/ # all workflows (cli+daemon)
+  workflows/ # all workflows
   preflight/ #executable infa truths and enforcement
   logging/ # structured logging
   bench/ # benchmarking primitives
