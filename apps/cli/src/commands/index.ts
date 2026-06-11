@@ -1,3 +1,4 @@
+// apps/cli/src/commands/index.ts
 import { Command } from "commander";
 import path from "node:path";
 
@@ -128,6 +129,9 @@ export const indexCommand = new Command("index")
         await stdoutConfigReporter.report({ issues: indexConfigurationIssues });
         process.exit(1);
       }
+      eventBus.emit(CoreEvents.RunConfigDetermined, {
+        config: effectiveConfig,
+      });
       if (options.list) {
         const repos = await listIndexedRepositories(services.metadataRepo);
 
