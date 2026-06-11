@@ -39,7 +39,7 @@ const DENY_BASENAME_STEMS: readonly string[] = [
   "contributors",
   "maintainers",
   "contributing",
-  "code_of_conduct",
+  "code-of-conduct",
   "security",
   "governance",
   "funding",
@@ -85,9 +85,11 @@ export function isIndexable(relPath: string): boolean {
   ).toLowerCase();
   const ext = (dotIdx === -1 ? "" : basename.slice(dotIdx + 1)).toLowerCase();
 
+  const normStem = stem.replace(/_/g, "-");
+
   if (DOC_EXTS.has(ext)) {
     for (const entry of DENY_BASENAME_STEMS) {
-      if (stem === entry || stem.startsWith(entry + "-")) return false;
+      if (normStem === entry || normStem.startsWith(entry + "-")) return false;
     }
   }
 

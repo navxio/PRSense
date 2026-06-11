@@ -103,4 +103,13 @@ describe("isIndexable", () => {
       expect(isIndexable("packages/foo/README.md")).toBe(true);
     });
   });
+
+  test.each([
+    "CODE_OF_CONDUCT.md",
+    "code_of_conduct.md",
+    "CHANGELOG_2024.md",
+    "CHANGELOG_v2.md",
+  ])("normalizes underscore separator: %s", (p) =>
+    expect(isIndexable(p)).toBe(false),
+  );
 });
