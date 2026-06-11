@@ -69,6 +69,7 @@ PRSense is built around a few core principles:
 - Supports remote repositories from GitHub, GitLab
 - AST based chunking for TypeScript(more langs on the roadmap)
 - Deterministic pipeline for identifying cross file issues
+- Bundled `pre-push` git hook
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
