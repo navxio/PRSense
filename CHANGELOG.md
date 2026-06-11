@@ -3,6 +3,7 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [0.12.0] — 2026-06-12
 
 ### Breaking
@@ -44,6 +45,13 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Under `context.maxChunks`, every chunk slot is contested. Meta files
   and tooling configs are tracked-on-purpose but contribute no semantic
   signal to code review and crowd out useful retrieval.
+
+## [0.11.6] — 2026-06-11
+
+### Fixed
+
+- Wired in ollama service check
+
 
 ## [0.11.5] — 2026-06-11
 

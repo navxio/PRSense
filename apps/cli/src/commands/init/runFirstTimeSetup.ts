@@ -5,6 +5,7 @@ import path from "node:path";
 import yaml from "yaml";
 import { CONFIG_PATH, PRSENSE_CONFIG_DIR } from "@prsense/core";
 import { RuntimeConfigSchema } from "@prsense/config";
+import { checkOllama } from "./ollamaHelper.js";
 
 // init only offers a subset of LLM providers (Anthropic has no embeddings API)
 type InitProvider = "ollama" | "openai" | "google";
@@ -65,7 +66,15 @@ export async function runFirstTimeSetup() {
   if (provider !== "ollama") {
     await collectAndPersistApiKey(provider, onCancel);
   } else {
-    console.log("ℹ Using local Ollama (no API key required)\n");
+    try {
+      await checkOllama(config.llm.model, config.embeddings.model);
+
+      console.log("ℹ Using local Ollama (no API key required)\n");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.log(`✖ ${msg}\n`);
+      process.exit(1);
+    }
   }
 
   if (!fs.existsSync(PRSENSE_CONFIG_DIR)) {
