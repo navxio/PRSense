@@ -27,13 +27,9 @@ const ENV_VAR_BY_PROVIDER: Record<ApiKeyProvider, string> = {
   google: "PRSENSE_GOOGLE_API_KEY",
 };
 
+//TODO: add Anthropic as provider instructions to readme
 export async function runFirstTimeSetup() {
   console.log("\n⚡ PRSense first-time setup\n");
-
-  console.log(
-    "  To use Claude for review, finish setup with another provider and",
-    "edit your config to mix providers.\n",
-  );
 
   const onCancel = () => {
     console.log("\n✖ Setup cancelled\n");
