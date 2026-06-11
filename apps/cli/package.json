@@ -1,6 +1,6 @@
 {
   "name": "@prsense/cli",
-  "version": "0.11.6",
+  "version": "0.12.0",
   "description": "Command line interface to PRSense",
   "type": "module",
   "man": "./man/prsense.1",
