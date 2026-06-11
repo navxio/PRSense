@@ -20,8 +20,6 @@
 
 > PRSense is experimental software, expect bugs.
 
-TODO: auto index is available
-
 ## Demo
 
 <demo gif>
@@ -56,20 +54,21 @@ PRSense is built around a few core principles:
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
-- One command setup
-- Automatically reads your intent from branch name on local invocation
 - **Self-hosted by default** — run entirely on your own machine or infrastructure
+- One command setup
+- Automatically reads your intent from branch name on locally or PR description
+- Pluggable models or run everything locally via ollama
+- Auto indexing by default for context enriched review
+- Human in the loop decision making
 - **Diff-first intelligence**, understanding:
   - local changes
   - pull request diffs from GitHub, GitLab
 - **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
-- **Flexible outputs** for humans and machines:
-  - terminal summaries
-  - GitHub/GitLab pull request comments
-  - JSON(upcoming)
 - Built in analytics
 - Automatically reads from and writes to local `.env`
 - Supports remote repositories from GitHub, GitLab
+- AST based chunking for TypeScript(more langs on the roadmap)
+- Deterministic pipeline for identifying cross file issues
 - Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
