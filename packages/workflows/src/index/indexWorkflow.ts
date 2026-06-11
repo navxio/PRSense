@@ -149,16 +149,6 @@ export async function runIndexWorkflow({
           `embedding dimension changed (${stored.embedding.dimension} → ${embeddingDimension})`,
         );
       }
-
-      if (
-        stored.embedding.provider !== config.embeddings.provider ||
-        stored.embedding.model !== config.embeddings.model
-      ) {
-        incompatibilityReasons.push(
-          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
-        );
-      }
-
       if (
         stored.embedding.provider !== config.embeddings.provider ||
         stored.embedding.model !== config.embeddings.model
