@@ -30,6 +30,11 @@ const ENV_VAR_BY_PROVIDER: Record<ApiKeyProvider, string> = {
 export async function runFirstTimeSetup() {
   console.log("\n⚡ PRSense first-time setup\n");
 
+  console.log(
+    "  To use Claude for review, finish setup with another provider and",
+    "edit your config to mix providers.\n",
+  );
+
   const onCancel = () => {
     console.log("\n✖ Setup cancelled\n");
     process.exit(1);
@@ -48,14 +53,6 @@ export async function runFirstTimeSetup() {
     },
     { onCancel },
   )) as { provider: InitProvider };
-
-  console.log(
-    "\nℹ Anthropic isn't offered here because it has no embeddings API.",
-  );
-  console.log(
-    "  To use Claude for review, finish setup with another provider and",
-    "edit your config to mix providers.\n",
-  );
 
   // Build config through the schema — defaults fill in everything else.
   const config = RuntimeConfigSchema.parse({
@@ -108,7 +105,6 @@ async function collectAndPersistApiKey(
   console.log("✔ API key valid\n");
 
   const envVar = ENV_VAR_BY_PROVIDER[provider];
-  process.env[envVar] = apiKey;
   const envFile = path.join(process.cwd(), ".env");
   const appended = upsertEnvVar(envFile, envVar, apiKey);
   console.log(`✔ ${appended ? "Wrote" : "Updated"} ${envVar} in ${envFile}\n`);
