@@ -64,7 +64,7 @@ PRSense is built around a few core principles:
   - local changes
   - pull request diffs from GitHub, GitLab
 - **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
-- Built in analytics
+- Built in profiling
 - Automatically reads from and writes to local `.env`
 - Supports remote repositories from GitHub, GitLab
 - AST based chunking for TypeScript(more langs on the roadmap)
