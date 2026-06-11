@@ -3,6 +3,35 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] — 2026-06-12
+
+### Breaking
+
+- `chunkingVersion` bumped. Existing indexes must be rebuilt with
+  `prsense index . --force`.
+
+### Changed
+
+- Indexing now filters non-code files out of retrieval:
+  - Tree-anywhere noise directories: `node_modules`, `dist`, `build`,
+    `out`, `coverage`, `target`, `vendor`, `.github`, `.gitlab`,
+    `.husky`, `.vscode`, `.idea`, `.next`, `.turbo`, `.cache`
+  - Dotfiles at any depth (`.prettierrc`, `.editorconfig`,
+    `.gitattributes`, `.nvmrc`, ...)
+  - Tracked meta documents (`LICENSE*`, `CONTRIBUTING*`, `CHANGELOG*`,
+    `CODE_OF_CONDUCT*`, `SECURITY*`, ...) when their extension is
+    doc-ish (`.md`, `.rst`, `.txt`, `.adoc`, or none)
+  - `README*` is intentionally retained — architectural intent lives there
+- `git ls-files` no longer includes `--others`. Only tracked files are
+  considered for indexing; anything uncommitted is treated as noise.
+
+### Notes
+
+- Filter is hardcoded; project-specific noise belongs in `.gitignore`.
+- Under `context.maxChunks`, every chunk slot is contested. Meta files
+  and tooling configs are tracked-on-purpose but contribute no semantic
+  signal to code review and crowd out useful retrieval.
+
 ## [0.11.5] — 2026-06-11
 
 ### Changed
