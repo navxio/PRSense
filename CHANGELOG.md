@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.6] — 2026-06-11
+
+### Fixed
+
+- Wired in ollama service check
+
 ## [0.11.5] — 2026-06-11
 
 ### Changed

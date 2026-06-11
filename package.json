@@ -1,6 +1,6 @@
 {
   "name": "prsense-meta",
-  "version": "0.11.5",
+  "version": "0.11.6",
   "private": true,
   "description": "An open-source, LLM-powered pull request reviewer that surfaces high-confidence issues as structured signals.",
   "main": "index.js",
