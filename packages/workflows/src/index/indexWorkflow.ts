@@ -141,7 +141,7 @@ export async function runIndexWorkflow({
     if (stored) {
       if (!stored.chunking || stored.chunking.version !== CHUNK_VERSION) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → ${CHUNK_VERSION})`,
         );
       }
       if (stored.embedding.dimension !== embeddingDimension) {
