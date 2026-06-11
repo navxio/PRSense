@@ -125,13 +125,14 @@ export async function runIndexWorkflow({
     // Compute Current Fingerprint
     // -------------------------------------------------
 
+    //TODO: create proper abstraction for updating the chunkversion
     const currentFingerprint = {
       commitSha: revision.commitSha,
       embeddingProvider: config.embeddings.provider,
       embeddingModel: config.embeddings.model,
       embeddingDimension,
       chunkStrategy: "default",
-      chunkVersion: 3,
+      chunkVersion: 4,
     };
 
     const incompatibilityReasons: string[] = [];
