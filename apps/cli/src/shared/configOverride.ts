@@ -45,7 +45,7 @@ export function buildOverrides(options: any) {
       temperature: options.llmTemperature,
     },
     review: {
-      maxSignals: options.maxSignals,
+      topSignals: options.topSignals,
       confidenceThreshold: options.confidenceThreshold,
     },
     context: {

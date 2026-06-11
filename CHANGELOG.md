@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.3] — 2026-06-10
+
+### Breaking
+
+- review.maxSignals renamed to review.topSignals; CLI flag --max-signals → --top-signals
+
 ## [0.11.2] — 2026-06-09
 
 ### Changed
