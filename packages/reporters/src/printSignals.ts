@@ -71,9 +71,9 @@ function wrap(text: string, width: number): string[] {
 
 function renderHeader(signal: ReviewSignal): string {
   const sev = signal.severity.toLowerCase();
-  const badge = (SEVERITY_BADGE[sev] ?? SEVERITY_BADGE.info)(
-    ` ${signal.severity.toUpperCase()} `,
-  );
+  const fallback: (s: string) => string = chalk.bgGray.white.bold;
+  const style = SEVERITY_BADGE[sev] ?? fallback;
+  const badge = style(` ${signal.severity.toUpperCase()} `);
   return `${badge}  ${styles.path(signal.file)}`;
 }
 
