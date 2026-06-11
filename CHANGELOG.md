@@ -3,11 +3,55 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.12.0] — 2026-06-12
+
+### Breaking
+
+- `chunkingVersion` bumped to 4. Existing indexes must be rebuilt with
+  `prsense index . --force`.
+
+### Changed
+
+- Indexing now filters non-code files out of retrieval:
+  - Tree-anywhere noise directories: `node_modules`, `dist`, `build`,
+    `out`, `coverage`, `target`, `vendor`, `.github`, `.gitlab`,
+    `.husky`, `.vscode`, `.idea`, `.next`, `.turbo`, `.cache`
+  - Dotfiles at any depth (`.prettierrc`, `.editorconfig`,
+    `.gitattributes`, `.nvmrc`, ...)
+  - Tracked meta documents (`LICENSE*`, `CONTRIBUTING*`, `CHANGELOG*`,
+    `CODE_OF_CONDUCT*`, `SECURITY*`, ...) when their extension is
+    doc-ish (`.md`, `.rst`, `.txt`, `.adoc`, or none). Both hyphen and
+    underscore separators recognized (`CHANGELOG-2024.md`,
+    `CHANGELOG_2024.md`, `CODE_OF_CONDUCT.md`).
+  - `README*` is intentionally retained — architectural intent lives there
+- `git ls-files` no longer includes `--others`. Only tracked files are
+  considered for indexing; anything uncommitted is treated as noise.
+
+### Fixed
+
+- Chunk version was hardcoded in five separate sites in `indexWorkflow`,
+  with the planner's fingerprint and the metadata writer reading from
+  different literals. Drift between them caused every post-`force` run
+  to plan a full rebuild instead of incremental or noop. Unified behind
+  a single `CHUNK_VERSION` constant.
+- Removed a duplicate `incompatibilityReasons` push for the embedding
+  provider/model check.
+
+### Notes
+
+- Deny-list filter is hardcoded; project-specific noise belongs in
+  `.gitignore`.
+- Under `context.maxChunks`, every chunk slot is contested. Meta files
+  and tooling configs are tracked-on-purpose but contribute no semantic
+  signal to code review and crowd out useful retrieval.
+
 ## [0.11.6] — 2026-06-11
 
 ### Fixed
 
 - Wired in ollama service check
+
 
 ## [0.11.5] — 2026-06-11
 

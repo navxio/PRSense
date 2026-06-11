@@ -4,6 +4,8 @@ import {
   createCompositeChunker,
   IndexMetadataRepository,
   RagChunkRepository,
+  CHUNK_STRATEGY,
+  CHUNK_VERSION,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -130,16 +132,16 @@ export async function runIndexWorkflow({
       embeddingProvider: config.embeddings.provider,
       embeddingModel: config.embeddings.model,
       embeddingDimension,
-      chunkStrategy: "default",
-      chunkVersion: 3,
+      chunkStrategy: CHUNK_STRATEGY,
+      chunkVersion: CHUNK_VERSION,
     };
 
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
-      if (!stored.chunking || stored.chunking.version !== 3) {
+      if (!stored.chunking || stored.chunking.version !== CHUNK_VERSION) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → ${CHUNK_VERSION})`,
         );
       }
       if (stored.embedding.dimension !== embeddingDimension) {
@@ -147,16 +149,6 @@ export async function runIndexWorkflow({
           `embedding dimension changed (${stored.embedding.dimension} → ${embeddingDimension})`,
         );
       }
-
-      if (
-        stored.embedding.provider !== config.embeddings.provider ||
-        stored.embedding.model !== config.embeddings.model
-      ) {
-        incompatibilityReasons.push(
-          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
-        );
-      }
-
       if (
         stored.embedding.provider !== config.embeddings.provider ||
         stored.embedding.model !== config.embeddings.model
@@ -302,8 +294,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -366,8 +358,8 @@ export async function runIndexWorkflow({
               dimension: embeddingDimension,
             },
             chunking: {
-              strategy: "default",
-              version: 3,
+              strategy: CHUNK_STRATEGY,
+              version: CHUNK_VERSION,
             },
             prsenseVersion: version,
             createdAt: new Date().toISOString(),
@@ -491,8 +483,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
