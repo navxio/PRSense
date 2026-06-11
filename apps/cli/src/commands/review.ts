@@ -145,6 +145,10 @@ export const reviewCommand = new Command("review")
         process.exit(1);
       }
 
+      eventBus.emit(CoreEvents.RunConfigDetermined, {
+        config: effectiveConfig,
+      });
+
       // -------------------------------------------------
       // Auto-index (incremental)
       // -------------------------------------------------
