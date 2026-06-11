@@ -4,6 +4,8 @@ import {
   createCompositeChunker,
   IndexMetadataRepository,
   RagChunkRepository,
+  CHUNK_STRATEGY,
+  CHUNK_VERSION,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
@@ -125,20 +127,19 @@ export async function runIndexWorkflow({
     // Compute Current Fingerprint
     // -------------------------------------------------
 
-    //TODO: create proper abstraction for updating the chunkversion
     const currentFingerprint = {
       commitSha: revision.commitSha,
       embeddingProvider: config.embeddings.provider,
       embeddingModel: config.embeddings.model,
       embeddingDimension,
-      chunkStrategy: "default",
-      chunkVersion: 4,
+      chunkStrategy: CHUNK_STRATEGY,
+      chunkVersion: CHUNK_VERSION,
     };
 
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
-      if (!stored.chunking || stored.chunking.version !== 3) {
+      if (!stored.chunking || stored.chunking.version !== CHUNK_VERSION) {
         incompatibilityReasons.push(
           `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
         );
@@ -303,8 +304,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -367,8 +368,8 @@ export async function runIndexWorkflow({
               dimension: embeddingDimension,
             },
             chunking: {
-              strategy: "default",
-              version: 3,
+              strategy: CHUNK_STRATEGY,
+              version: CHUNK_VERSION,
             },
             prsenseVersion: version,
             createdAt: new Date().toISOString(),
@@ -492,8 +493,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
