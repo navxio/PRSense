@@ -3,6 +3,28 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] — 2026-06-12
+
+### Changed
+
+- Redesigned CLI signal output for higher signal-to-noise. Severity now
+  renders as a colored badge, file paths are cyan, the claim is at full
+  weight, evidence is dimmed under a `↳` leader, and suggestions appear
+  in green under `💡`. Inline backticked code is highlighted within each
+  block.
+- CLI output now wraps at word boundaries instead of breaking mid-token.
+  Width adapts to the terminal, capped at 100 columns for readability.
+- Signal-printing logic moved from `apps/cli` into `@prsense/reporters`
+  as `printSignals`, matching the existing `printStats` shape.
+
+### Notes
+
+- ANSI styling auto-disables when stdout is not a TTY (pipes, files, CI
+  without color support), so existing scripts that grep plain CLI output
+  are unaffected.
+- The `2 of N signal(s) shown` footer is now `N signals` when no
+  suppression occurred; the `M of N` form appears only when the
+  `topSignals` cap actually trimmed results.
 
 ## [0.12.0] — 2026-06-12
 
@@ -51,7 +73,6 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ### Fixed
 
 - Wired in ollama service check
-
 
 ## [0.11.5] — 2026-06-11
 

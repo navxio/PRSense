@@ -13,7 +13,11 @@ import {
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter, printStats } from "@prsense/reporters";
+import {
+  stdoutConfigReporter,
+  printStats,
+  printSignals,
+} from "@prsense/reporters";
 import path from "node:path";
 import {
   LocalGitDiffProvider,
@@ -283,27 +287,11 @@ export const reviewCommand = new Command("review")
       // -------------------------------------------------
 
       if (result.payload.signals.length === 0) {
-        console.log("✔ No review signals (change looks safe)");
+        console.log("✔ No review signals (change looks safe).");
         process.exit(0);
       }
 
-      const signals = result.payload.signals;
-      for (const signal of signals) {
-        console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
-        console.log(signal.message);
-
-        if (signal.rationale) {
-          console.log(`  ↳ ${signal.rationale}`);
-        }
-
-        if (signal.suggestedFix) {
-          console.log(`  💡 ${signal.suggestedFix}`);
-        }
-      }
-
-      console.log(
-        `\n${result.payload.signals.length} of ${result.payload.totalSignalCount} signal(s) shown`,
-      );
+      printSignals(result.payload.signals);
 
       process.exit(0);
     } catch (err) {
