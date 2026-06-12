@@ -3,7 +3,7 @@
 import { CoreEvents } from "@prsense/core";
 import { buildDiffEmbeddingQuery } from "../lib/buildDiffEmbeddingQuery.js";
 
-import { retrieveContext } from "../lib/reviewContext.js";
+import { retrieveContext } from "../lib/retrieveContext.js";
 
 export async function resolveContext({
   repository,

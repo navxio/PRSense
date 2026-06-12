@@ -1,7 +1,7 @@
 // packages/workflows/src/review/__tests__/contextExclusion.test.ts
 import fs from "node:fs/promises";
 import { runIndexWorkflow } from "../../index/indexWorkflow.js";
-import { retrieveContext } from "../lib/reviewContext.js";
+import { retrieveContext } from "../lib/retrieveContext.js";
 import { resolveRepositorySource } from "../../index/util.js";
 import {
   createTestRepo,

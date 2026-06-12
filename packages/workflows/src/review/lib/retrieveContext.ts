@@ -1,4 +1,4 @@
-// packages/workflows/src/review/lib/reviewContext.ts
+// packages/workflows/src/review/lib/retrieveContext.ts
 import type { RetrievedContext, EventBus, ContextChunk } from "@prsense/core";
 import { CoreEvents } from "@prsense/core";
 import type { ResolvedConfig } from "@prsense/config";
