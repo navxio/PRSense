@@ -8,7 +8,8 @@ export function formatContextForFile(chunks: ContextChunk[]): string {
 
   let acc = "";
   for (const c of chunks) {
-    const block = `// ${c.metadata.path}\n${c.content}\n\n`;
+    if (c.source.kind !== "file") continue; // non-file sources unsupported for now
+    const block = `// ${c.source.path}\n${c.content}\n\n`;
     if (acc.length + block.length > MAX_CHARS_PER_FILE) break;
     acc += block;
   }

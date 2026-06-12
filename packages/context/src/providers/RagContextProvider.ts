@@ -20,7 +20,7 @@ export class RagContextProvider implements ContextProvider {
       embedClient: Embedder;
       embedding: { provider: string; model: string };
       maxChunks: number;
-      prMetadata?: { title?: string; description: string };
+      prMetadata?: { title?: string };
     },
   ) {}
 
