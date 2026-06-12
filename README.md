@@ -13,6 +13,7 @@
 **PRSense(Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
 
 <p align="center">
+  <img src="https://img.shields.io/badge/join-discord-purple">https://discord.gg/sX3WBw8Zr</img>
   <img src="https://img.shields.io/badge/license-Apache_2.0-blue" />
   <img src="https://img.shields.io/npm/dw/%40prsense%2Fcli" />
   <img src="https://img.shields.io/npm/v/@prsense/cli" />
