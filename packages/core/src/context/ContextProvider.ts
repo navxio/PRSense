@@ -2,11 +2,7 @@
 import type { UnifiedDiff, DiffFile } from "../diff/Diff.js";
 import type { ContextChunk } from "./index.js";
 import type { EventBus } from "../events/types.js";
-
-export type RepositoryIdentity = {
-  provider: string;
-  id: string;
-};
+import type { RepositoryIdentity } from "../repository/identity.js";
 
 export type ContextAvailabilityInput = {
   repositoryIdentity: RepositoryIdentity;
