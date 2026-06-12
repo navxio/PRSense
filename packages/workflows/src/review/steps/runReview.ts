@@ -1,34 +1,40 @@
-// src/review/steps/runReview.ts
+// packages/workflows/src/review/steps/runReview.ts
 import os from "node:os";
-import { CoreEvents, DiffFile, ReviewSignal, EventBus } from "@prsense/core";
-import type { LlmClient } from "@prsense/llm";
+import {
+  CoreEvents,
+  type DiffFile,
+  type ReviewSignal,
+  type EventBus,
+  type ContextChunk,
+} from "@prsense/core";
+import type { LlmClient, LlmUsage } from "@prsense/llm";
+import type { ResolvedConfig } from "@prsense/config";
 
 import { runFileReview } from "../lib/runFileReview.js";
-
-import { FileReviewResult, ReviewMetadata } from "../types.js";
-import { LlmUsage } from "@prsense/llm";
-import { ResolvedConfig } from "@prsense/config";
+import { formatContextForFile } from "../lib/formatContextForFile.js";
+import type { FileReviewResult, ReviewMetadata } from "../types.js";
 import { runConcurrent } from "../util.js";
 
 type RunReviewParams = {
   files: DiffFile[];
   llmClient: LlmClient;
-  contextText: string;
+  contextByFile: Map<string, ContextChunk[]>;
   metadata?: ReviewMetadata;
   config: ResolvedConfig;
   eventBus: EventBus;
 };
+
 export async function runReview({
   files,
   llmClient,
-  contextText,
+  contextByFile,
   metadata,
   config,
   eventBus,
 }: RunReviewParams) {
   const concurrency = Math.min(4, Math.max(1, os.cpus().length));
   const allSignals: ReviewSignal[] = [];
-  let totalUsage: LlmUsage = {
+  const totalUsage: LlmUsage = {
     promptTokens: 0,
     completionTokens: 0,
     totalTokens: 0,
@@ -44,15 +50,19 @@ export async function runReview({
     results = await runConcurrent({
       items: files,
       concurrency,
-      worker: (file) =>
-        runFileReview({
+      worker: (file) => {
+        const chunks = contextByFile.get(file.path) ?? [];
+        const contextText = formatContextForFile(chunks);
+
+        return runFileReview({
           file,
           llmClient,
           contextText,
           ...(metadata ? { metadata } : {}),
           config,
           eventBus,
-        }),
+        });
+      },
     });
   } catch (err) {
     eventBus.emit(CoreEvents.WorkflowReviewFailed, {

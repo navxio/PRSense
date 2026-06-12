@@ -20,6 +20,7 @@ export class RagContextProvider implements ContextProvider {
       embedClient: Embedder;
       embedding: { provider: string; model: string };
       maxChunks: number;
+      prMetadata?: { title?: string; description: string };
     },
   ) {}
 
@@ -52,7 +53,10 @@ export class RagContextProvider implements ContextProvider {
   async getContextForFile(input: ContextInput): Promise<ContextChunk[]> {
     const { chunks, embedClient, maxChunks } = this.deps;
 
-    const query = buildFileEmbeddingQuery({ file: input.file });
+    const query = buildFileEmbeddingQuery({
+      file: input.file,
+      ...(this.deps.prMetadata ? { prMetadata: this.deps.prMetadata } : {}),
+    });
     const [queryEmbedding] = await embedClient.embed([query]);
     if (!queryEmbedding) {
       throw new Error("Failed to generate query embedding");

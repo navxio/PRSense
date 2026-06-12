@@ -17,6 +17,7 @@ import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
 } from "@prsense/llm";
+import type { ReviewMetadata } from "../types.js";
 
 type Params = {
   config: ResolvedConfig;
@@ -24,8 +25,9 @@ type Params = {
   revision: string;
   diff: UnifiedDiff;
   eventBus: EventBus;
-  chunks: RagChunkRepository;
-  metadataRepo: IndexMetadataRepository;
+  repository: RagChunkRepository; // was: chunks
+  metadataRepository: IndexMetadataRepository; // was: metadataRepo
+  metadata?: ReviewMetadata; // NEW — PR title/description for the query
 };
 
 type Result = {
@@ -40,8 +42,9 @@ export async function resolveContext(params: Params): Promise<Result> {
     revision,
     diff,
     eventBus,
-    chunks,
-    metadataRepo,
+    repository,
+    metadataRepository,
+    metadata,
   } = params;
 
   const embedClient =
@@ -54,14 +57,15 @@ export async function resolveContext(params: Params): Promise<Result> {
 
   const providers: ContextProvider[] = [
     new RagContextProvider({
-      chunks,
-      metadata: metadataRepo,
+      chunks: repository,
+      metadata: metadataRepository,
       embedClient,
       embedding: {
         provider: config.embeddings.provider,
         model: config.embeddings.model,
       },
       maxChunks: config.context.maxChunks,
+      ...(metadata ? { prMetadata: metadata } : {}),
     }),
   ];
 
