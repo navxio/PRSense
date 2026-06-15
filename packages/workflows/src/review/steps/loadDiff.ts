@@ -1,4 +1,4 @@
-// steps/loadDiff.ts
+// packages/workflows/src/review/steps/loadDiff.ts
 
 import type { DiffProvider } from "@prsense/core";
 

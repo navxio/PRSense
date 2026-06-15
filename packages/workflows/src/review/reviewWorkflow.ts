@@ -1,15 +1,16 @@
 // packages/workflows/src/review/reviewWorkflow.ts
-
-import { CoreEvents, EventBus } from "@prsense/core";
-import type { DiffProvider } from "@prsense/core";
+import { CoreEvents, type EventBus, type DiffProvider } from "@prsense/core";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
-import type { ReviewWorkflowResult } from "../types.js";
-import { loadDiff } from "../steps/loadDiff.js";
-import { resolveContext } from "../steps/resolveContext.js";
-import { createLlmClientSafe } from "../steps/createLlmClient.js";
-import { runReview } from "../steps/runReview.js";
-import { finalizeSignals } from "../steps/finaliseSignals.js";
-import { IndexMetadataRepository, RagChunkRepository } from "@prsense/context";
+import type { ReviewWorkflowResult } from "./types.js";
+import { loadDiff } from "./steps/loadDiff.js";
+import { resolveContext } from "./steps/resolveContext.js";
+import { createLlmClientSafe } from "./steps/createLlmClient.js";
+import { runReview } from "./steps/runReview.js";
+import { finalizeSignals } from "./steps/finaliseSignals.js";
+import type {
+  IndexMetadataRepository,
+  RagChunkRepository,
+} from "@prsense/context";
 
 export async function runReviewWorkflow({
   repository,
@@ -27,7 +28,6 @@ export async function runReviewWorkflow({
   eventBus: EventBus;
 }): Promise<ReviewWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowReviewStarted);
-
   let diffSummary: { files: string[] } | undefined;
 
   try {
@@ -43,7 +43,6 @@ export async function runReviewWorkflow({
       files: diff.files.length,
       summary,
     });
-
     diffSummary = summary;
 
     if (diff.files.length === 0) {
@@ -53,15 +52,15 @@ export async function runReviewWorkflow({
       };
     }
 
-    const { contextText } = await resolveContext({
-      repository,
-      metadataRepository,
+    const { contextByFile } = await resolveContext({
       config,
       repositoryIdentity,
       revision,
-      metadata,
       diff,
       eventBus,
+      repository,
+      metadataRepository,
+      ...(metadata ? { metadata } : {}),
     });
 
     const llmClient = createLlmClientSafe(config, credentials);
@@ -69,14 +68,13 @@ export async function runReviewWorkflow({
     const { allSignals, totalUsage } = await runReview({
       files: diff.files,
       llmClient,
-      contextText,
+      contextByFile,
       ...(metadata ? { metadata } : {}),
       config,
       eventBus,
     });
 
     const count = allSignals.length;
-
     const signals = finalizeSignals(allSignals, config, eventBus);
 
     eventBus.emit(CoreEvents.WorkflowReviewFinished);
@@ -92,11 +90,7 @@ export async function runReviewWorkflow({
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-
-    eventBus.emit(CoreEvents.WorkflowReviewFailed, {
-      error: message,
-    });
-
+    eventBus.emit(CoreEvents.WorkflowReviewFailed, { error: message });
     return {
       outcome: "failure",
       payload: {

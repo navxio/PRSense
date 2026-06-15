@@ -18,3 +18,5 @@ export * from "./doctor.js";
 
 export * from "./IndexedRepository.js";
 export * from "./paths.js";
+
+export * from "./llm/EmbeddingClient.js";

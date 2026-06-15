@@ -25,7 +25,8 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@google/generative-ai": "^0.24.1",
     "node-fetch": "^3.3.2",
-    "openai": "^6.16.0"
+    "openai": "^6.16.0",
+    "@prsense/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

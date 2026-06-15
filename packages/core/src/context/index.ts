@@ -41,4 +41,7 @@ export type ContextChunk = {
     kind?: "code" | "test" | "doc" | "config";
     [key: string]: unknown;
   };
+  provider?: "rag" | "references";
 };
+
+export * from "./ContextProvider.js";
