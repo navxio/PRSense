@@ -3,6 +3,33 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-06-15
+
+### Changed
+
+- **RAG context retrieval is now per-file.** Each changed file gets a
+  targeted embedding query (path + hunks + PR title) and its own chunk
+  budget, instead of a single PR-wide retrieval shared across all files.
+  Reviews see more focused context per file.
+
+- **`context.maxChunks` now applies per file.** With the default of 5
+  and an N-file PR, total chunks retrieved is now ~5N rather than 5.
+  Lower the value if cumulative prompt size becomes a concern.
+
+### Internal
+
+- Introduced `ContextProvider` port in `@prsense/core`. RAG retrieval
+  is now an adapter (`RagContextProvider` in `@prsense/context`) behind
+  it, setting the seam for future context sources.
+- Unified `EmbeddingClient` interface in `@prsense/core`; `@prsense/llm`
+  now depends on `@prsense/core`.
+
+### Migration
+
+No re-indexing required. If you've tuned `context.maxChunks` above the
+default, consider lowering it — the value now applies per file rather
+than per PR.
+
 ## [0.13.0] — 2026-06-12
 
 ### Changed
