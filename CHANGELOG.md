@@ -3,7 +3,7 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.14.1] - 2026-06-16
+## [0.14.1] - 2026-06-15
 
 ### Fixed
 
