@@ -1,4 +1,4 @@
-// packages/context/src/symbol-graph/git/gitObjectReader.ts
+// packages/context/src/symbolGraph/git/gitObjectReader.ts
 //
 // Reads git objects at arbitrary SHAs without touching the working tree.
 // Used by SymbolGraphContextProvider to materialize base into an in-memory

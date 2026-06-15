@@ -1,4 +1,4 @@
-// packages/context/src/symbol-graph/git/__tests__/gitObjectReader.test.ts
+// packages/context/src/symbolGraph/git/__tests__/gitObjectReader.test.ts
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
