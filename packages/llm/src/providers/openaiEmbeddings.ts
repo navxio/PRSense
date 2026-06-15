@@ -4,11 +4,11 @@ import type { EmbeddingClient } from "@prsense/core";
 
 // OpenAI /v1/embeddings caps: ~300k tokens aggregate per request, 2048 array items.
 // Leave headroom — our token estimate is approximate.
-const MAX_TOKENS_PER_REQUEST = 250_000;
+const MAX_TOKENS_PER_REQUEST = 150_000;
 const MAX_INPUTS_PER_REQUEST = 2048;
 
 // chars/4 is the standard rough estimate for mixed English + code.
-const estimateTokens = (s: string) => Math.ceil(s.length / 4);
+const estimateTokens = (s: string) => Math.ceil(s.length / 2);
 
 function* packBatches(
   texts: string[],
@@ -51,6 +51,7 @@ export function createOpenAiEmbeddingClient(opts: {
 }): EmbeddingClient {
   const client = new OpenAI({
     apiKey: opts.apiKey,
+    maxRetries: 8,
   });
   let cachedDimension: number | null = null;
 
@@ -59,6 +60,7 @@ export function createOpenAiEmbeddingClient(opts: {
 
     const out: number[][] = new Array(texts.length);
     for (const { slice, start } of packBatches(texts)) {
+      const estTok = slice.reduce((a, s) => a + Math.ceil(s.length / 4), 0);
       const response = await client.embeddings.create({
         model: opts.model,
         input: slice,
