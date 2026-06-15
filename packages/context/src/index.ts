@@ -20,3 +20,4 @@ export * from "./index/SqliteIndexMetadataRepository.js";
 export * from "./db/SqliteDatabase.js";
 
 export * from "./providers/RagContextProvider.js";
+export * from "./rag/SqliteRagChunkRepository.js";
