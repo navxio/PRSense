@@ -1,3 +1,4 @@
+// packages/llm/src/types.ts
 /**
  * A minimal, explicit prompt contract.
  * No chat history, no tools, no streaming (yet).

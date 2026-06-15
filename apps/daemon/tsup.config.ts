@@ -55,7 +55,7 @@ export default defineConfig({
     /^@gitbeaker\//,
     "openai",
     "@anthropic-ai/sdk",
-    "@google/generative-ai",
+    "@google/genai",
     "yaml",
     "ts-morph",
     "better-sqlite3",

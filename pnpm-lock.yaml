@@ -41,6 +41,9 @@ importers:
       '@gitbeaker/rest':
         specifier: ^43.8.0
         version: 43.8.0
+      '@google/genai':
+        specifier: ^2.8.0
+        version: 2.8.0
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1

@@ -42,7 +42,7 @@ export default defineConfig({
     /^@gitbeaker\//,
     "openai",
     "@anthropic-ai/sdk",
-    "@google/generative-ai",
+    "@google/genai",
     "got",
     "dotenv",
     "ts-morph",
