@@ -1,6 +1,6 @@
 //packages/llm/src/providers/openaiEmbeddings.ts
 import OpenAI from "openai";
-import type { EmbeddingClient } from "../types.js";
+import type { EmbeddingClient } from "@prsense/core";
 
 export function createOpenAiEmbeddingClient(opts: {
   apiKey: string;

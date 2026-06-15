@@ -6,7 +6,7 @@ import {
   type ContextInput,
   type ContextAvailabilityInput,
 } from "@prsense/core";
-import { Embedder } from "../rag/types.js";
+import { EmbeddingClient } from "@prsense/core";
 import { RagChunkRepository } from "../rag/RagChunkRepository.js";
 import { IndexMetadataRepository } from "../index/IndexMetadataRepository.js";
 import { buildFileEmbeddingQuery } from "../rag/buildFileEmbeddingQuery.js";
@@ -17,7 +17,7 @@ export class RagContextProvider implements ContextProvider {
     private deps: {
       chunks: RagChunkRepository;
       metadata: IndexMetadataRepository;
-      embedClient: Embedder;
+      embedClient: EmbeddingClient;
       embedding: { provider: string; model: string };
       maxChunks: number;
       prMetadata?: { title?: string };

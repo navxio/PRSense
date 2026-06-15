@@ -1,6 +1,6 @@
 // packages/llm/src/providers/googleEmbeddings.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { EmbeddingClient } from "../types.js";
+import type { EmbeddingClient } from "@prsense/core";
 
 export function createGoogleEmbeddingClient(opts: {
   apiKey: string;
