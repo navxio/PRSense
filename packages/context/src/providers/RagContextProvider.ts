@@ -52,9 +52,11 @@ export class RagContextProvider implements ContextProvider {
 
   async getContextForFile(input: ContextInput): Promise<ContextChunk[]> {
     const { chunks, embedClient, maxChunks } = this.deps;
+    const maxChars = embedClient.maxInputChars ?? 4000;
 
     const query = buildFileEmbeddingQuery({
       file: input.file,
+      maxChars,
       ...(this.deps.prMetadata ? { prMetadata: this.deps.prMetadata } : {}),
     });
     const [queryEmbedding] = await embedClient.embed([query]);

@@ -3,21 +3,24 @@ import type { DiffFile } from "@prsense/core";
 
 export function buildFileEmbeddingQuery(params: {
   file: DiffFile;
-  prMetadata?: { title?: string; description?: string };
+  maxChars?: number;
+  prMetadata?: { title?: string };
 }): string {
-  const { file, prMetadata } = params;
-  const parts: string[] = [];
+  const { file, prMetadata, maxChars = 4000 } = params;
 
-  if (prMetadata?.title) parts.push(`PR title: ${prMetadata.title}`);
-  parts.push(`File: ${file.path}`);
+  const headerParts: string[] = [];
+  if (prMetadata?.title) headerParts.push(`PR title: ${prMetadata.title}`);
+  headerParts.push(`File: ${file.path}`);
+  headerParts.push("Changes:");
+  const header = headerParts.join("\n");
 
-  if (file.hunks && file.hunks.length > 0) {
-    parts.push("Changes:");
-    for (const hunk of file.hunks) parts.push(hunk.content);
-  } else {
-    parts.push("Changes:");
-    parts.push(file.patch);
-  }
+  const body =
+    file.hunks && file.hunks.length > 0
+      ? file.hunks.map((h) => h.content).join("\n")
+      : file.patch;
 
-  return parts.join("\n");
+  const budget = maxChars - header.length - 1;
+  const truncatedBody = body.length > budget ? body.slice(0, budget) : body;
+
+  return `${header}\n${truncatedBody}`;
 }

@@ -62,5 +62,6 @@ export function createOllamaEmbeddingClient(opts: {
       return results;
     },
     dimension: detectDimension,
+    maxInputChars: 6000,
   };
 }

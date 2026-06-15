@@ -36,5 +36,6 @@ export function createGoogleEmbeddingClient(opts: {
   return {
     embed,
     dimension: detectDimension,
+    maxInputChars: 6000,
   };
 }

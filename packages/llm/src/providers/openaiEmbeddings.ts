@@ -33,5 +33,6 @@ export function createOpenAiEmbeddingClient(opts: {
   return {
     embed,
     dimension: detectDimension,
+    maxInputChars: 28000,
   };
 }
