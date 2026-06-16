@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.4] - 2026-06-16
+
+### Fixed
+
+- Wire totalBeforeCap into printSignals, align reviewWorkflow to the same, fix build
+
 ## [0.14.3] - 2026-06-16
 
 ### Fixed
