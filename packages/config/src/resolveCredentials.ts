@@ -1,4 +1,4 @@
-// packages/config/src/buildCredentialContext.ts
+// packages/config/src/resolveCredentials.ts
 import type { CredentialContext } from "./types.js";
 
 export function resolveCredentials(): CredentialContext {
@@ -23,6 +23,16 @@ export function resolveCredentials(): CredentialContext {
       ? {
           available: true,
           apiKey: process.env.PRSENSE_ANTHROPIC_API_KEY,
+        }
+      : { available: false },
+
+    codeberg: process.env.PRSENSE_CODEBERG_TOKEN
+      ? {
+          available: true,
+          token: process.env.PRSENSE_CODEBERG_TOKEN,
+          ...(process.env.PRSENSE_CODEBERG_WEBHOOK_SECRET
+            ? { webhookSecret: process.env.PRSENSE_CODEBERG_WEBHOOK_SECRET }
+            : {}),
         }
       : { available: false },
 
