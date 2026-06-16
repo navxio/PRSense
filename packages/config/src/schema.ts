@@ -22,7 +22,7 @@ const IndexConfigSchema = z
   .object({
     chunkSizeChars: z.number().int().positive().default(1000),
     chunkOverlapChars: z.number().int().nonnegative().default(200),
-    auto: z.boolean().default(true).default(true),
+    auto: z.boolean().default(true),
   })
   .refine((v) => v.chunkOverlapChars < v.chunkSizeChars, {
     message: "chunkOverlapChars must be smaller than chunkSizeChars",
@@ -64,7 +64,6 @@ const runtimeShape = {
   review: ReviewConfigSchema,
   context: ContextConfigSchema,
   git: GitConfigSchema,
-  logLevel: z.enum(["debug", "info", "warn", "error"]).default("warn"),
   delivery: DeliveryConfigSchema.optional(),
 };
 
