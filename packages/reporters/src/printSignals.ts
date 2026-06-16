@@ -103,7 +103,10 @@ function renderBlock(
 // Public API
 // ---------------------------------------------------------------------------
 
-export function printSignals(signals: ReadonlyArray<ReviewSignal>): void {
+export function printSignals(
+  signals: ReadonlyArray<ReviewSignal>,
+  totalBeforeCap?: number,
+): void {
   if (signals.length === 0) {
     console.log(`${styles.ok("✔")} No review signals (change looks safe)`);
     return;
@@ -144,7 +147,11 @@ export function printSignals(signals: ReadonlyArray<ReviewSignal>): void {
   }
 
   console.log();
-  console.log(
-    styles.footer(`${signals.length} signal${signals.length === 1 ? "" : "s"}`),
-  );
+  const shown = signals.length;
+  const total = totalBeforeCap ?? shown;
+  const footer =
+    total > shown
+      ? `${shown} of ${total} signals (raise --top-signals to see more)`
+      : `${shown} signal${shown === 1 ? "" : "s"}`;
+  console.log(styles.footer(footer));
 }
