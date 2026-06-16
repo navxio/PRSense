@@ -32,9 +32,12 @@ describe("buildFileEmbeddingQuery", () => {
   });
 
   it("falls back to the raw patch when hunks are absent", () => {
-    const query = buildFileEmbeddingQuery({
-      file: makeFile({ hunks: undefined }),
-    });
+    const file: DiffFile = {
+      path: "src/auth/session.ts",
+      patch:
+        "--- a/src/auth/session.ts\n+++ b/src/auth/session.ts\n@@ -1,5 +1,5 @@\n-old\n+new",
+    };
+    const query = buildFileEmbeddingQuery({ file });
     expect(query).toContain("--- a/src/auth/session.ts");
   });
 

@@ -3,6 +3,21 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-06-15
+
+### Fixed
+
+- Tune OpenAI embedding provider parameters, reduced MAX_TOKENS_PER_REQUEST to 150_000
+- Better estimate token generation from string(code+english text) to <string length> / 2
+- Fix bench build errors by using ResolvedConfigSchema.parse({})
+- Fix RagContextProvider, buildFileEmbeddingQuery module test type errors
+- Fix `prsense init` bug with google as embeddings provider
+- Migrate from deprecated google generative AI sdk to `@google/genai` v2.8.0
+
+### Changed
+
+- Remove unused `@changesets/cli` package
+
 ## [0.14.0] - 2026-06-15
 
 ### Changed

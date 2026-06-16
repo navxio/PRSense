@@ -1,6 +1,6 @@
 {
   "name": "prsense-meta",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "private": true,
   "description": "Code reviewer that surfaces high risk signals from diff",
   "main": "index.js",
@@ -47,7 +47,6 @@
   },
   "bugs": "https://github.com/navxio/prsense/issues",
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
     "@jest/globals": "^30.3.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",

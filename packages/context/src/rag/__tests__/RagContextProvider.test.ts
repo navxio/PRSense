@@ -1,10 +1,10 @@
-// packages/context/src/providers/rag/__tests__/RagContextProvider.test.ts
+// packages/context/src/rag/__tests__/RagContextProvider.test.ts
 import { describe, it, expect, jest } from "@jest/globals";
 import { CoreEvents } from "@prsense/core";
 import type { EmbeddingClient, UnifiedDiff, DiffFile } from "@prsense/core";
+import type { RagChunkRepository } from "../RagChunkRepository.js";
+import type { IndexMetadataRepository } from "../../index/IndexMetadataRepository.js";
 import { RagContextProvider } from "../../providers/RagContextProvider.js";
-import { IndexMetadataRepository } from "../../index/IndexMetadataRepository.js";
-import { RagChunkRepository } from "../RagChunkRepository.js";
 
 class TestEventBus {
   events: Array<{ event: string; fields?: unknown }> = [];
@@ -17,8 +17,10 @@ function mockEmbedClient(
   overrides: Partial<EmbeddingClient> = {},
 ): EmbeddingClient {
   return {
-    embed: jest.fn(async () => [[0.1, 0.2, 0.3]]),
-    dimension: jest.fn(async () => 3),
+    embed: jest.fn(
+      async (_texts: string[]): Promise<number[][]> => [[0.1, 0.2, 0.3]],
+    ),
+    dimension: jest.fn(async (): Promise<number> => 3),
     maxInputChars: 4000,
     ...overrides,
   } as EmbeddingClient;
@@ -83,7 +85,7 @@ function makeFile(path = "src/auth/session.ts"): DiffFile {
   };
 }
 
-const identity = { provider: "github", id: "owner/repo" };
+const identity = { provider: "github" as const, id: "owner/repo" };
 
 describe("RagContextProvider", () => {
   describe("isAvailable", () => {
@@ -163,12 +165,11 @@ describe("RagContextProvider", () => {
   });
 
   describe("getContextForFile", () => {
-    const diff: UnifiedDiff = { files: [makeFile()] };
-
     function makeInput(diffOverride?: UnifiedDiff) {
-      const d = diffOverride ?? diff;
+      const d = diffOverride ?? { files: [makeFile()] };
+      const file = d.files[0]!;
       return {
-        file: d.files[0]!,
+        file,
         diff: d,
         repositoryIdentity: identity,
         revision: "abc123",
@@ -176,7 +177,7 @@ describe("RagContextProvider", () => {
       };
     }
 
-    it("returns chunks from the repository as ContextChunks tagged with rag provider", async () => {
+    it("returns chunks tagged with rag provider", async () => {
       const provider = makeProvider({
         chunks: mockChunks([
           {
@@ -201,20 +202,22 @@ describe("RagContextProvider", () => {
     });
 
     it("calls embedClient.embed with a query under maxInputChars", async () => {
-      const embed = jest.fn(async () => [[0.1, 0.2, 0.3]]);
+      const embed = jest.fn(
+        async (_texts: string[]): Promise<number[][]> => [[0.1, 0.2, 0.3]],
+      );
       const provider = makeProvider({
-        embedClient: mockEmbedClient({
-          embed,
-          maxInputChars: 200,
-        }),
+        embedClient: mockEmbedClient({ embed, maxInputChars: 200 }),
       });
       await provider.getContextForFile(makeInput());
-      const callArgs = embed.mock.calls[0]?.[0] as string[];
-      expect(callArgs?.[0]?.length).toBeLessThanOrEqual(200);
+
+      const firstCall = embed.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const queries = firstCall![0];
+      expect(queries[0]!.length).toBeLessThanOrEqual(200);
     });
 
     it("passes maxChunks as the search limit", async () => {
-      const searchNearest = jest.fn(async () => []);
+      const searchNearest = jest.fn(async (_params: unknown) => [] as never[]);
       const provider = makeProvider({
         chunks: { searchNearest } as unknown as RagChunkRepository,
         maxChunks: 3,
@@ -226,7 +229,7 @@ describe("RagContextProvider", () => {
     });
 
     it("excludes every file in the diff from search results", async () => {
-      const searchNearest = jest.fn(async () => []);
+      const searchNearest = jest.fn(async (_params: unknown) => [] as never[]);
       const multiFileDiff: UnifiedDiff = {
         files: [makeFile("a.ts"), makeFile("b.ts"), makeFile("c.ts")],
       };
@@ -244,7 +247,7 @@ describe("RagContextProvider", () => {
     it("throws when embedding generation returns nothing", async () => {
       const provider = makeProvider({
         embedClient: mockEmbedClient({
-          embed: jest.fn(async () => []),
+          embed: jest.fn(async (_texts: string[]): Promise<number[][]> => []),
         }),
       });
       await expect(provider.getContextForFile(makeInput())).rejects.toThrow(
@@ -253,14 +256,19 @@ describe("RagContextProvider", () => {
     });
 
     it("forwards PR metadata title into the embedding query", async () => {
-      const embed = jest.fn(async () => [[0.1, 0.2, 0.3]]);
+      const embed = jest.fn(
+        async (_texts: string[]): Promise<number[][]> => [[0.1, 0.2, 0.3]],
+      );
       const provider = makeProvider({
         embedClient: mockEmbedClient({ embed, maxInputChars: 10_000 }),
         prMetadata: { title: "Fix critical session bug" },
       });
       await provider.getContextForFile(makeInput());
-      const callArgs = embed.mock.calls[0]?.[0] as string[];
-      expect(callArgs?.[0]).toContain("Fix critical session bug");
+
+      const firstCall = embed.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const queries = firstCall![0];
+      expect(queries[0]).toContain("Fix critical session bug");
     });
 
     it("emits context-retrieved event with file path and chunk count", async () => {

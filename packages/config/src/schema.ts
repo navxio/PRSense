@@ -13,7 +13,7 @@ const LlmConfigSchema = z
 
 const EmbeddingConfigSchema = z
   .object({
-    provider: z.enum(["ollama", "openai"]).default("ollama"),
+    provider: z.enum(["ollama", "openai", "google"]).default("ollama"),
     model: z.string().min(1).default("nomic-embed-text"),
   })
   .prefault({});

@@ -1,80 +1,112 @@
 // packages/llm/src/providers/google.ts
-import {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
-} from "@google/generative-ai";
+import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
+
 import { LlmClient, LlmRequest, LlmResponse } from "../types.js";
-
-function stripMarkdownJson(text: string): string {
-  const trimmed = text.trim();
-
-  if (!trimmed.startsWith("```")) return trimmed;
-
-  const lines = trimmed.split("\n");
-
-  if (lines[0]?.startsWith("```")) lines.shift();
-  if (lines.at(-1)?.startsWith("```")) lines.pop();
-
-  return lines.join("\n").trim();
-}
 
 export function createGoogleClient(config: {
   apiKey: string;
   model: string;
   temperature?: number;
 }): LlmClient {
-  const genAI = new GoogleGenerativeAI(config.apiKey);
+  /**
+   * Migration note (2026):
+   *
+   * Google migrated from:
+   *
+   *   @google/generative-ai
+   *
+   * to:
+   *
+   *   @google/genai
+   *
+   * Key changes:
+   *
+   * - GoogleGenerativeAI -> GoogleGenAI
+   * - getGenerativeModel() removed
+   * - generateContent() now hangs off ai.models
+   * - systemInstruction moved into config
+   * - response.text is available directly
+   *
+   * Keep provider-specific behavior isolated here so the
+   * rest of PRSense remains provider-agnostic.
+   */
+  const ai = new GoogleGenAI({
+    apiKey: config.apiKey,
+  });
 
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
-      const { prompt, temperature = 0.05 } = req;
-
-      const model = genAI.getGenerativeModel({
+      const response = await ai.models.generateContent({
         model: config.model,
-        systemInstruction: prompt.system,
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-        ],
-      });
 
-      const res = await model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt.user }],
-          },
-        ],
-        generationConfig: {
-          temperature,
-          maxOutputTokens: 1024,
+        /**
+         * The new SDK accepts a plain string for simple
+         * single-turn interactions.
+         */
+        contents: req.prompt.user,
+
+        config: {
+          systemInstruction: req.prompt.system,
+
+          temperature: req.temperature ?? config.temperature ?? 0.05,
+
+          /**
+           * Runtime hint from the engine.
+           *
+           * Providers may ignore unsupported fields,
+           * but Gemini supports output token limits.
+           */
+          maxOutputTokens: req.maxTokens ?? 2048,
+
+          /**
+           * PRSense expects machine-readable JSON.
+           */
           responseMimeType: "application/json",
+
+          /**
+           * Source-code reviews frequently discuss
+           * security-sensitive topics. Disable the
+           * dangerous-content safety filter to reduce
+           * false positives.
+           */
+          safetySettings: [
+            {
+              category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+          ],
         },
       });
 
-      const candidate = res.response.candidates?.[0];
+      const text = response.text?.trim();
 
-      const raw =
-        candidate?.content?.parts
-          ?.map((p) => ("text" in p ? p.text : ""))
-          .join("") ?? "";
-
-      if (!raw) {
+      if (!text) {
         throw new Error("Gemini returned empty response");
       }
 
-      const text = stripMarkdownJson(raw);
+      /**
+       * Fail fast if Gemini violates JSON mode.
+       */
+      try {
+        JSON.parse(text);
+      } catch (err) {
+        throw new Error(
+          `Gemini returned invalid JSON: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
 
       return {
         text,
+
         usage: {
-          promptTokens: res.response.usageMetadata?.promptTokenCount ?? 0,
-          completionTokens:
-            res.response.usageMetadata?.candidatesTokenCount ?? 0,
-          totalTokens: res.response.usageMetadata?.totalTokenCount ?? 0,
+          promptTokens: response.usageMetadata?.promptTokenCount ?? 0,
+
+          completionTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+
+          totalTokens: response.usageMetadata?.totalTokenCount ?? 0,
         },
       };
     },
