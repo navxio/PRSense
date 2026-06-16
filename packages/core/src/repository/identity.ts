@@ -9,3 +9,8 @@ export type RepositoryIdentity = {
   provider: RepositoryProvider;
   id: string;
 };
+
+export type RepositoryRevision = {
+  commitSha: string;
+  defaultBranch?: string;
+};
