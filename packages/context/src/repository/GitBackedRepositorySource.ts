@@ -1,14 +1,5 @@
 // packages/context/src/repository/RepositorySource.ts
-
-export type RepositoryIdentity = {
-  provider: "filesystem" | "github" | "gitlab";
-  id: string;
-};
-
-export type RepositoryRevision = {
-  commitSha: string;
-  defaultBranch?: string;
-};
+import { RepositoryProvider, RepositoryRevision } from "@prsense/core";
 
 export interface GitBackedRepositorySource {
   listFiles(): Promise<string[]>;
@@ -19,10 +10,7 @@ export interface GitBackedRepositorySource {
    * Returns the canonical revision identifier for this repository.
    * For git-backed repos, this is the current commit SHA.
    */
-  getRevision(): Promise<{
-    commitSha: string;
-    defaultBranch?: string;
-  }>;
+  getRevision(): Promise<RepositoryRevision>;
 
   /**
    * Unique identifier for this repository.
@@ -31,12 +19,11 @@ export interface GitBackedRepositorySource {
    *   github:owner/repo
    */
   getRepositoryIdentity(): {
-    provider: "filesystem" | "github" | "gitlab";
-    id: string;
+    provider: RepositoryProvider;
   };
 
   getLocalPath(): string;
 }
 
+export type RepositorySource = GitBackedRepositorySource;
 
-export type RepositorySource = GitBackedRepositorySource
