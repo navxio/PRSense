@@ -1,6 +1,6 @@
 {
   "name": "prsense-meta",
-  "version": "0.14.2",
+  "version": "0.14.4",
   "private": true,
   "description": "Code reviewer that surfaces high risk signals from diff",
   "main": "index.js",

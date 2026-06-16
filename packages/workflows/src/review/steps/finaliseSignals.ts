@@ -35,5 +35,8 @@ export function finalizeSignals(
     droppedByCap: ranked.length - signals.length,
   });
 
-  return signals;
+  return {
+    signals,
+    totalBeforeCap: ranked.length,
+  };
 }
