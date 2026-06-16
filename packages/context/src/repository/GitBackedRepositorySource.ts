@@ -1,5 +1,5 @@
 // packages/context/src/repository/RepositorySource.ts
-import { RepositoryProvider, RepositoryRevision } from "@prsense/core";
+import { RepositoryRevision, RepositoryIdentity } from "@prsense/core";
 
 export interface GitBackedRepositorySource {
   listFiles(): Promise<string[]>;
@@ -18,12 +18,9 @@ export interface GitBackedRepositorySource {
    *   filesystem:/abs/path
    *   github:owner/repo
    */
-  getRepositoryIdentity(): {
-    provider: RepositoryProvider;
-  };
+  getRepositoryIdentity(): RepositoryIdentity;
 
   getLocalPath(): string;
 }
 
 export type RepositorySource = GitBackedRepositorySource;
-
