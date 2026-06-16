@@ -291,7 +291,7 @@ export const reviewCommand = new Command("review")
         process.exit(0);
       }
 
-      printSignals(result.payload.signals);
+      printSignals(result.payload.signals, result.payload.totalBeforeCap);
 
       process.exit(0);
     } catch (err) {
