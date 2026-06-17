@@ -7,6 +7,7 @@ import { deepMerge } from "./merge.js";
 import { RuntimeConfigSchema } from "./schema.js";
 import { buildResolvedConfig } from "./buildResolvedConfig.js";
 import type { ResolvedConfig, RuntimeMode } from "./types.js";
+import { RepositoryProvider } from "packages/core/dist/index.js";
 
 export function getGlobalConfigPath(): string {
   const base =
@@ -18,7 +19,10 @@ const cache = new Map<string, ResolvedConfig>();
 
 export function resolveConfig(
   mode: RuntimeMode,
-  repository: { root: string; provider: "github" | "gitlab" | "filesystem" },
+  repository: {
+    root: string;
+    provider: RepositoryProvider;
+  },
 ): ResolvedConfig {
   const key = `${mode}::${repository.root}`;
   const hit = cache.get(key);

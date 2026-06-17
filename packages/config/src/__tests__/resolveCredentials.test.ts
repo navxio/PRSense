@@ -1,3 +1,4 @@
+// packages/config/src/__tests__/resolveCredentials.test.ts
 import { resolveCredentials } from "../resolveCredentials.js";
 import { snapshotEnv, restoreEnv, clearPrsenseEnv } from "./_helpers/env.js";
 
@@ -12,6 +13,7 @@ describe("resolveCredentials", () => {
     const c = resolveCredentials();
     expect(c.openai?.available).toBe(false);
     expect(c.github?.available).toBe(false);
+    expect(c.codeberg?.available).toBe(false);
   });
 
   it("picks up openai key", () => {
@@ -40,7 +42,24 @@ describe("resolveCredentials", () => {
 
   it("requires all three app fields for app mode", () => {
     process.env.PRSENSE_GITHUB_APP_ID = "123";
-    // missing private key and installation id
     expect(resolveCredentials().github?.available).toBe(false);
+  });
+
+  it("picks up codeberg token", () => {
+    process.env.PRSENSE_CODEBERG_TOKEN = "cb_test";
+    expect(resolveCredentials().codeberg).toEqual({
+      available: true,
+      token: "cb_test",
+    });
+  });
+
+  it("includes codeberg webhook secret when set alongside token", () => {
+    process.env.PRSENSE_CODEBERG_TOKEN = "cb_test";
+    process.env.PRSENSE_CODEBERG_WEBHOOK_SECRET = "whsec";
+    expect(resolveCredentials().codeberg).toEqual({
+      available: true,
+      token: "cb_test",
+      webhookSecret: "whsec",
+    });
   });
 });

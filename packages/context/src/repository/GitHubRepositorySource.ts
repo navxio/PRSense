@@ -2,13 +2,10 @@ import { execSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
-import {
-  GitBackedRepositorySource,
-  RepositoryIdentity,
-  RepositoryRevision,
-} from "./GitBackedRepositorySource.js";
+import { GitBackedRepositorySource } from "./GitBackedRepositorySource.js";
 import { FileSystemRepositorySource } from "./FilesystemRepositorySource.js";
 
+import { RepositoryIdentity, RepositoryRevision } from "@prsense/core";
 export class GitHubRepositorySource implements GitBackedRepositorySource {
   private tempDir: string | null = null;
   private fsSource: FileSystemRepositorySource | null = null;

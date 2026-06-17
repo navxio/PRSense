@@ -21,3 +21,6 @@ export * from "./db/SqliteDatabase.js";
 
 export * from "./providers/RagContextProvider.js";
 export * from "./rag/SqliteRagChunkRepository.js";
+
+export * from "./repository/CodebergRepositorySource.js";
+export * from "./diff/CodebergPrDiffProvider.js";

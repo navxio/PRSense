@@ -26,7 +26,8 @@
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "yaml": "^2.8.2",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "@prsense/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

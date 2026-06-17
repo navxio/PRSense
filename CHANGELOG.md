@@ -3,6 +3,52 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] — 2026-06-17
+
+### Added
+
+- **Codeberg support.** PRSense can now review pull requests hosted on
+  Codeberg (and self-hosted Forgejo instances via host parameter).
+  - `CodebergPrDiffProvider` — fetches PR metadata and unified diff via
+    the Forgejo v1 API using native `fetch` (no SDK dependency).
+  - `CodebergRepositorySource` — clones Codeberg repositories for
+    contextual indexing.
+  - `CodebergReporter` — upserts a single review comment per PR using
+    the `<!-- PRSENSE:REVIEW -->` marker, with defensive pagination.
+  - URL dispatch in `prsense review` recognizes
+    `https://codeberg.org/<owner>/<repo>/pulls/<n>` targets.
+  - Configurable host (default `codeberg.org`) on all three adapters
+    for self-hosted Forgejo support.
+
+### Changed
+
+- **`RepositoryProvider` is now the single source of truth.** Replaced
+  inline `"github" | "gitlab" | "filesystem"` unions across
+  `@prsense/config` with imports from `@prsense/core`. Adding future
+  providers is now a one-line change in `packages/core/src/repository/identity.ts`.
+- Exposed `REPOSITORY_PROVIDERS` as a `const` tuple alongside the type,
+  enabling iteration without pulling Zod into `@prsense/core`.
+
+### Environment
+
+- New environment variables:
+  - `PRSENSE_CODEBERG_TOKEN` — Codeberg/Forgejo personal access token.
+  - `PRSENSE_CODEBERG_WEBHOOK_SECRET` — webhook secret for future
+    daemon-mode delivery.
+
+### Tests
+
+- Added `resolveCredentials` coverage for Codeberg token and webhook
+  secret resolution.
+
+### Notes
+
+- Codeberg daemon-mode delivery (webhooks, `delivery.platform: codeberg`)
+  is not yet wired. CLI review is the supported surface in this release.
+- This release was dogfooded against its own implementation PR; one
+  shell-injection signal was a true positive and is fixed above. See
+  `docs/in-the-wild.md` for the full review log.
+
 ## [0.14.4] - 2026-06-16
 
 ### Fixed
