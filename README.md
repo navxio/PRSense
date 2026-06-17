@@ -10,7 +10,7 @@
   <sub>High-confidence signals for pull request review</sub>
 </p>
 
-**PRSense is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from pull request changes.**
+**PRSense is an open-source, self-hosted, LLM-powered code review CLI that surfaces high-confidence review signals from pull request changes.**
 
 <p align="center">
   <img src="https://img.shields.io/github/license/navxio/prsense" />
@@ -24,9 +24,9 @@
 
 Review of a real-world pull request:
 
-✔ Signals reference actual changed files  
-✔ No hallucinated files or symbols  
-✔ 0 hallucinated signals (validated against diff)  
+✔ Signals reference actual changed files
+✔ No hallucinated files or symbols
+✔ 0 hallucinated signals (validated against diff)
 ✔ Signals are derived directly from pull request diff
 
 **Excerpt from CLI output**
@@ -46,15 +46,7 @@ It is built for engineers who want review assistance that is:
 - Intentional
 - Inspectable
 - Deterministic
-- Self-hosted
-
-PRSense separates review logic from delivery. The same core engine can run:
-
-- Locally via CLI
-- As a long-lived daemon
-- Behind webhooks
-
-This keeps the review system transparent and infrastructure-friendly while remaining flexible in how it is deployed.
+- Local-first
 
 ## Table of Contents
 
@@ -87,27 +79,32 @@ PRSense is built around a few core principles:
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
-- **Self-hosted by default** — run entirely on your own machine or infrastructure
-- **Persistent background daemon**
-  - Idempotent job creation
+- **Self-hosted by default** — runs entirely on your own machine, no external services required
+- **Zero-infrastructure** — bundled SQLite + sqlite-vec, no database to provision
 - **Diff-first intelligence**, understanding:
   - local changes
-  - pull request diffs from GitHub, GitLab
-- **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
-- **Flexible outputs** for humans and machines:
-  - terminal summaries
-  - GitHub/GitLab pull request comments
-- Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
+  - pull request diffs from GitHub, GitLab, and Codeberg / Forgejo
+- **Pluggable LLM backends** — Ollama, Anthropic, Google, OpenAI
+- **Pre-push git hook** — gate pushes on review outcome (`prsense hook install`)
+- Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
 
-- Node.Js >= 22 <25
-- git >=2.31
-- (optional)Ollama
+- Node.js >= 22 <25
+- git >= 2.31
+- (optional) Ollama for local inference
 
 ## Installation
 
-`npm i -g @prsense/cli`
+```bash
+npm i -g @prsense/cli
+```
+
+First run will walk you through provider setup:
+
+```bash
+prsense init
+```
 
 ## What PRSense Does Not Do
 
@@ -120,18 +117,7 @@ PRSense intentionally avoids actions that reduce developer agency:
 
 ## Usage
 
-PRSense is an AI-powered code review engine that can run in two modes:
-
-- **CLI mode** — local, interactive usage (this package, `@prsense/cli`)
-- **Daemon mode** — long-lived HTTP service for automation and webhooks (separate package, `@prsense/daemon`)
-
-Both modes use the same core review engine and configuration model.
-
-### CLI Mode
-
-The CLI is ideal for local development and experimentation.
-
-#### Review a local repository
+### Review a local repository
 
 ```bash
 prsense review .
@@ -139,25 +125,31 @@ prsense review .
 
 Compares your current branch against the configured base branch and prints review signals to stdout.
 
-#### Review a GitHub Pull Request
+### Review a GitHub Pull Request
 
 ```bash
 prsense review https://github.com/owner/repo/pull/123
 ```
 
-#### Review a GitLab Merge Request
+### Review a GitLab Merge Request
 
 ```bash
 prsense review https://gitlab.com/group/project/-/merge_requests/42
 ```
 
-#### Index a repository (enable contextual review)
+### Review a Codeberg / Forgejo Pull Request
+
+```bash
+prsense review https://codeberg.org/owner/repo/pulls/7
+```
+
+### Index a repository (enable contextual review)
 
 ```bash
 prsense index .
 ```
 
-This builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews.
+Builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews.
 
 Optional flags:
 
@@ -167,120 +159,21 @@ prsense index . --dry-run
 prsense index . --stats
 ```
 
-### Daemon Mode
-
-The daemon runs PRSense as a long-lived HTTP service, intended for automation and webhook-based review. It is distributed as a separate package.
-
-#### Install and start the daemon
+### Install the pre-push hook
 
 ```bash
-npm i -g @prsense/daemon
-prsense-daemon
+prsense hook install
 ```
 
-By default, it listens on:
+Runs PRSense against each pushed ref before the push completes. Bypass with `git push --no-verify`. See `prsense hook --help` for details.
 
-```
-http://localhost:11000
-```
-
-#### Health & Readiness
-
-```
-GET /health
-GET /ready
-```
-
-Example:
+### Diagnose your setup
 
 ```bash
-curl http://localhost:11000/health
+prsense doctor
 ```
-
-#### Trigger Review via API
-
-```
-POST /jobs/review
-```
-
-Example:
-
-```bash
-curl -X POST http://localhost:11000/jobs/review \
-  -H "Content-Type: application/json" \
-  -d '{"target":"https://github.com/owner/repo/pull/123"}'
-```
-
-Response:
-
-```json
-{
-  "jobId": "..."
-}
-```
-
-#### Trigger Indexing via API
-
-```
-POST /jobs/index
-```
-
-Example:
-
-```bash
-curl -X POST http://localhost:11000/jobs/index \
-  -H "Content-Type: application/json" \
-  -d '{"target":"https://github.com/owner/repo"}'
-```
-
-### Webhook Endpoints
-
-The daemon supports webhook-triggered reviews.
-
-#### GitHub
-
-```
-POST /webhooks/github
-```
-
-Requires: `PRSENSE_GITHUB_WEBHOOK_SECRET`
-
-Supports `pull_request` events: `opened`, `synchronize`.
-
-#### GitLab
-
-```
-POST /webhooks/gitlab
-```
-
-Requires: `PRSENSE_GITLAB_WEBHOOK_SECRET`
-
-Supports `merge_request` events.
-
-### How It All Fits Together
-
-- **CLI mode** is interactive and developer-focused.
-- **Daemon mode** is automation-focused.
-- Both share the same configuration, indexing system, review workflow, and validation pipeline.
-
-PRSense is delivery-agnostic — the core engine remains the same.
-
-### Typical Workflows
-
-#### Local Development
-
-1. `prsense index .`
-2. `prsense review .`
-
-#### Team Automation
-
-1. Install and run the daemon: `npm i -g @prsense/daemon && prsense-daemon`
-2. Configure GitHub/GitLab webhook
-3. Reviews trigger automatically on PR/MR updates
 
 ## Configuration
-
-This is the configuration structure
 
 ```
 defaults
@@ -289,25 +182,21 @@ global config
    ↓
 repo config
    ↓
-derive runtime fields
+CLI flags
    ↓
-validate
-   ↓
-Resolved Environment
+Resolved Configuration
 ```
 
-PRSense separates **review behavior** from **runtime infrastructure configuration**.
-
-Configuration is layered and deterministic.
+PRSense separates **review behavior** from **runtime credentials**.
 
 ### Configuration Layers (Lowest → Highest Priority)
 
 1. Built-in defaults
 2. Global config (`~/.config/prsense/config.yml`)
 3. Repository config (`prsense.yml`)
-4. CLI flags (when applicable)
+4. CLI flags
 
-Environment variables are used exclusively for **credentials and infrastructure**, never review behavior.
+Environment variables are used exclusively for **credentials**, never review behavior.
 
 This ensures:
 
@@ -316,7 +205,7 @@ This ensures:
 - Deterministic layering
 - Clear separation of domain vs runtime concerns
 
-## Global Configuration (Optional)
+### Global Configuration (Optional)
 
 Location:
 
@@ -332,8 +221,6 @@ or
 
 Global config defines personal defaults applied to all repositories.
 
-Example:
-
 ```yaml
 llm:
   provider: ollama
@@ -347,20 +234,9 @@ embeddings:
 
 Repository config overrides global config.
 
-## Repository Configuration (`prsense.yml`)
+### Repository Configuration (`prsense.yml`)
 
-Placed at the root of your repository.
-
-This file defines review behavior:
-
-- LLM provider and model
-- Embedding model
-- Chunking strategy
-- Review thresholds
-- Retrieval limits
-- Delivery channels (daemon mode)
-
-## Example
+Placed at the root of your repository. Defines review behavior:
 
 ```yaml
 llm:
@@ -369,7 +245,7 @@ llm:
   temperature: 0.1
 
 embeddings:
-  provider: ollama # ollama | openai
+  provider: ollama # ollama | openai | google
   model: nomic-embed-text
 
 index:
@@ -385,84 +261,43 @@ context:
 
 git:
   baseBranch: main
-
-# Daemon mode only
-delivery:
-  platform: github # github | gitlab
 ```
 
-## Configuration Sections Explained
+### Configuration Sections
 
-## `llm`
+#### `llm`
 
-Controls review generation model.
+Controls the review generation model. `temperature` controls randomness; lower values produce more deterministic output.
 
-Supported providers:
+#### `embeddings`
 
-- `ollama`
-- `openai`
-- `google`
-- `anthropic`
+Controls vector embeddings used for indexing and retrieval. If changed, re-indexing is required.
 
-`temperature` controls randomness.
-
-Lower values produce more deterministic output.
-
-## `embeddings`
-
-Controls vector embeddings used for indexing and retrieval.
-
-If changed:
-
-- Re-indexing is required.
-- Embedding dimensions must match the database schema.
-
-## `index`
+#### `index`
 
 Controls repository chunking.
 
-- `chunkSizeChars` — characters per chunk.
-- `chunkOverlapChars` — overlap between chunks.
+- `chunkSizeChars` — characters per chunk
+- `chunkOverlapChars` — overlap between chunks
 
-## `review`
+#### `review`
 
 Controls signal filtering.
 
-- `confidenceThreshold` — minimum confidence.
-- `topSignals` — number of highest risk emitted signals.
+- `confidenceThreshold` — minimum confidence
+- `topSignals` — number of highest-priority signals emitted
 
-## `context`
+#### `context`
 
 Controls retrieval (RAG).
 
-- `maxChunks` — number of chunks retrieved per review.
+- `maxChunks` — number of chunks retrieved **per changed file**
 
-## `delivery` (Daemon Mode Only)
+### Environment Variables
 
-Defines where review results are posted.
+Credentials only. Never store in `prsense.yml`.
 
-Example:
-
-```yaml
-delivery:
-  - github
-  - slack
-```
-
-Rules:
-
-- Only one VCS channel allowed (`github` or `gitlab`)
-- Additional channels optional (`slack`, `jira`)
-
-Ignored in CLI mode.
-
-## Environment Variables
-
-Environment variables configure runtime infrastructure and credentials.
-
-They are never stored in `prsense.yml`.
-
-## LLM Credentials
+#### LLM credentials
 
 | Provider | Variable                         |
 | -------- | -------------------------------- |
@@ -471,144 +306,52 @@ They are never stored in `prsense.yml`.
 | Claude   | `PRSENSE_ANTHROPIC_API_KEY`      |
 | Ollama   | `PRSENSE_OLLAMA_HOST` (optional) |
 
-## Embeddings (OpenAI)
+#### VCS read tokens (for remote PR/MR review)
+
+| Platform           | Variable                 |
+| ------------------ | ------------------------ |
+| GitHub             | `PRSENSE_GITHUB_TOKEN`   |
+| GitLab             | `PRSENSE_GITLAB_TOKEN`   |
+| Codeberg / Forgejo | `PRSENSE_CODEBERG_TOKEN` |
+
+#### Storage
+
+Bundled SQLite + sqlite-vec. Stored under the PRSense state directory (`~/.local/state/prsense/`). No setup required.
+
+#### Logging
 
 ```
-PRSENSE_OPENAI_API_KEY
-```
-
-## Database
-
-Bundled sqlite with sqlite-vec. Used for indexing.
-
-```
-
-## GitHub Delivery
-
-### Personal Access Token
-
-```
-
-PRSENSE_GITHUB_TOKEN
-PRSENSE_GITHUB_WEBHOOK_SECRET
-
-```
-
-### GitHub App (Recommended)
-
-```
-
-PRSENSE_GITHUB_APP_ID
-PRSENSE_GITHUB_APP_PRIVATE_KEY
-PRSENSE_GITHUB_INSTALLATION_ID
-PRSENSE_GITHUB_WEBHOOK_SECRET
-
-```
-
-## GitLab Delivery
-
-```
-
-PRSENSE_GITLAB_TOKEN
-PRSENSE_GITLAB_WEBHOOK_SECRET
-
-```
-
-## Slack Delivery
-
-```
-
-PRSENSE_SLACK_BOT_TOKEN
-
-```
-
-## Logging
-
-```
-
 PRSENSE_LOG_LEVEL=debug | info | warn | error
-
-````
-
-## CLI Mode vs Daemon Mode
-
-### CLI Mode
-
-- Loads global + repo config
-- Ignores `delivery`
-- No webhook secrets required
-- Can run fully local
-
-Example:
-
-```sh
-prsense review .
-````
-
-### Daemon Mode
-
-- Loads global config at startup
-- Validates credentials at boot
-- Requires delivery configuration
-- Requires webhook secrets
-- Loads repo config dynamically per review job
-
-Start daemon:
-
-```sh
-prsense-daemon
 ```
-
-Daemon refuses to start if:
-
-- Delivery enabled but credentials missing
-- Webhook secret missing
-- Required LLM credentials missing
 
 ### Inspecting Effective Configuration
 
-You can inspect merged configuration:
-
-```sh
+```bash
 prsense config inspect
 ```
 
-This shows:
-
-- Global config
-- Repository config
-- Effective merged config
-- Runtime resolved config
-- Credential availability
+Shows the layered merge with provenance per field, plus credential availability per provider (never the secrets themselves).
 
 ### Defaults
 
 If no configuration is provided:
 
-- `ollama` is used as default LLM
-- `nomic-embed-text` used for embeddings
+- `ollama` is used as the default LLM provider
+- `nomic-embed-text` is used for embeddings
 - Safe chunking defaults applied
-- No delivery enabled
 
 ### Security Notes
 
-- Never commit API keys.
-- Never commit webhook secrets.
-- Prefer GitHub App over PAT in production.
-- Use separate credentials for staging/production.
+- Never commit API keys or tokens.
 - Global config should not contain secrets.
 
 ### Configuration Summary
 
-| Type              | Location                              | Purpose                |
-| ----------------- | ------------------------------------- | ---------------------- |
-| Global defaults   | `~/.config/prsense/config.yml`        | Personal defaults      |
-| Repository config | `prsense.yml`                         | Review behavior        |
-| Credentials       | Environment variables                 | Secrets / API access   |
-| Database          | Environment variables                 | Index storage          |
-| Delivery channels | `prsense.yml` + environment variables | Posting review results |
-
-PRSense enforces strict separation between domain behavior and runtime credentials to ensure reproducibility, determinism, and security.
+| Type              | Location                       | Purpose              |
+| ----------------- | ------------------------------ | -------------------- |
+| Global defaults   | `~/.config/prsense/config.yml` | Personal defaults    |
+| Repository config | `prsense.yml`                  | Review behavior      |
+| Credentials       | Environment variables          | Secrets / API access |
 
 ## Design
 
@@ -664,19 +407,7 @@ Adapters are inherently imperative and may fail. Those failures are handled at t
 
 ### Imperative Shell
 
-The outermost layer consists of applications:
-
-- the CLI
-- background workers
-- future GitHub integrations
-
-These applications:
-
-- parse user input
-- load configuration
-- wire adapters together
-- call the core
-- present results
+The outermost layer consists of applications that parse user input, load configuration, wire adapters together, call the core, and present results.
 
 The shell is free to be messy. The core is not.
 
@@ -684,9 +415,9 @@ The shell is free to be messy. The core is not.
 
 This architecture allows PRSense to:
 
-- run locally, or as a service
 - swap LLM providers without touching review logic
 - add new retrieval strategies without rewriting the engine
+- support new VCS platforms with a small adapter
 - remain understandable as complexity grows
 
 Most importantly, it allows PRSense to treat LLMs as interchangeable tools rather than structural dependencies.
@@ -732,9 +463,8 @@ PRSense follows a hexagonal architecture:
 
 ```
 
-
-CLI / Daemon / GitHub App
-─────────────── execution environments
+CLI
+─────────────── execution environment
 Workflows
 ─────────────── orchestration
 Engine / Context / Adapters / LLM
@@ -742,26 +472,24 @@ Engine / Context / Adapters / LLM
 Domain
 ─────────────── pure types
 
-
 ```
 
 ### Monorepo Layout
 
 ```
 apps/
-  cli/ # CLI entrypoint
-  daemon/ # http + scheduler
+  cli/         # CLI entrypoint
 
 packages/
-  core/ # core domain types and engine
-  context/ # diff parsing and contextual retrieval
-  llm/ # LLM provider abstractions
-  config/ # prsense.yml and env validation
-  reporters/ # CLI and other output formats
-  workflows/ # all workflows (cli+daemon)
-  preflight/ #executable infa truths and enforcement
-  logging/ # structured logging
-  bench/ # benchmarking primitives
+  core/        # core domain types and engine
+  context/     # diff parsing and contextual retrieval
+  llm/         # LLM provider abstractions
+  config/      # prsense.yml and env validation
+  reporters/   # CLI and other output formats
+  workflows/   # review and indexing workflows
+  preflight/   # executable infrastructure checks
+  logging/     # structured logging
+  bench/       # benchmarking primitives
 ```
 
 ## Command Reference
@@ -772,40 +500,37 @@ A complete command reference is available in:
 
 ## Benchmarks
 
-Currently benchmarks track the time for each review, token usage, grounding etc for flagship
-models and local models via ollama
+Benchmarks track per-review latency, token usage, and grounding metrics for flagship and local (Ollama) models.
 
-See [benchmarks.json](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json)
+See [benchmarks.json](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json).
 
-#### Running benchmarking
+### Running benchmarks
 
-You can run the benchmarks on your own machine by cloning the repository, installing the packages with `pnpm i` from the root
+Clone the repo, install with `pnpm i` from the root, then:
 
-1. Create a github token and set it up `PRSENSE_GITHUB_BENCH_TOKEN`
+1. Create a GitHub token and set `PRSENSE_GITHUB_BENCH_TOKEN`
 2. `pnpm bench`
 
-Make sure all the environment variables related to cloud providers have been set up and ollama is running with the models being tested available
+Ensure cloud provider credentials are set, and Ollama is running with the models under test available.
 
 ## Project Status
 
-PRSense is under active development.
+PRSense is under active development. Interfaces and core concepts are stabilizing; integrations and signal-quality work continue.
 
-Interfaces and core concepts are stabilizing, while integrations and performance improvements continue.
-
-## ToDo
+### Roadmap
 
 - [x] incremental indexing
+- [x] AST-based chunking (TypeScript)
+- [x] Codeberg / Forgejo support
+- [ ] AST-based chunking (Python, Go, Rust, C++)
 - [ ] hybrid retrieval strategy
-- [x] ast based chunking
-- [ ] codeberg support
-- [ ] multiple embedding dimensions
-- [ ] automated tests
-- [ ] optional multi pass review
-- [ ] gh action
+- [ ] symbol-graph context provider
+- [ ] machine-readable output mode (`--json` / NDJSON)
+- [ ] optional multi-pass review
 
 ## Contributing
 
-PRs are welcome
+PRs welcome.
 
 ## License
 
