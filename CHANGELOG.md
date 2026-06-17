@@ -3,6 +3,329 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.1] — 2026-06-17
+
+### Fixed
+
+- Manpage: remove stale Postgres/pgvector references, drop daemon-only
+  env vars and config keys, align config example with current schema,
+  add Codeberg as a review target.
+
+## [0.15.0] — 2026-06-17
+
+### Added
+
+- **Codeberg support.** PRSense can now review pull requests hosted on
+  Codeberg (and self-hosted Forgejo instances via host parameter).
+  - `CodebergPrDiffProvider` — fetches PR metadata and unified diff via
+    the Forgejo v1 API using native `fetch` (no SDK dependency).
+  - `CodebergRepositorySource` — clones Codeberg repositories for
+    contextual indexing.
+  - `CodebergReporter` — upserts a single review comment per PR using
+    the `<!-- PRSENSE:REVIEW -->` marker, with defensive pagination.
+  - URL dispatch in `prsense review` recognizes
+    `https://codeberg.org/<owner>/<repo>/pulls/<n>` targets.
+  - Configurable host (default `codeberg.org`) on all three adapters
+    for self-hosted Forgejo support.
+
+### Changed
+
+- **`RepositoryProvider` is now the single source of truth.** Replaced
+  inline `"github" | "gitlab" | "filesystem"` unions across
+  `@prsense/config` with imports from `@prsense/core`. Adding future
+  providers is now a one-line change in `packages/core/src/repository/identity.ts`.
+- Exposed `REPOSITORY_PROVIDERS` as a `const` tuple alongside the type,
+  enabling iteration without pulling Zod into `@prsense/core`.
+
+### Environment
+
+- New environment variables:
+  - `PRSENSE_CODEBERG_TOKEN` — Codeberg/Forgejo personal access token.
+  - `PRSENSE_CODEBERG_WEBHOOK_SECRET` — webhook secret for future
+    daemon-mode delivery.
+
+### Tests
+
+- Added `resolveCredentials` coverage for Codeberg token and webhook
+  secret resolution.
+
+### Notes
+
+- Codeberg daemon-mode delivery (webhooks, `delivery.platform: codeberg`)
+  is not yet wired. CLI review is the supported surface in this release.
+- This release was dogfooded against its own implementation PR; one
+  shell-injection signal was a true positive and is fixed above. See
+  `docs/in-the-wild.md` for the full review log.
+
+## [0.14.4] - 2026-06-16
+
+### Fixed
+
+- Wire totalBeforeCap into printSignals, align reviewWorkflow to the same, fix build
+
+## [0.14.3] - 2026-06-16
+
+### Fixed
+
+- Report total number of signals whenever they differ from number of top signals
+
+## [0.14.2] - 2026-06-16
+
+### Changed
+
+- Remove `logLevel` from runtimeShape
+
+## [0.14.1] - 2026-06-15
+
+### Fixed
+
+- Tune OpenAI embedding provider parameters, reduced MAX_TOKENS_PER_REQUEST to 150_000
+- Better estimate token generation from string(code+english text) to <string length> / 2
+- Fix bench build errors by using ResolvedConfigSchema.parse({})
+- Fix RagContextProvider, buildFileEmbeddingQuery module test type errors
+- Fix `prsense init` bug with google as embeddings provider
+- Migrate from deprecated google generative AI sdk to `@google/genai` v2.8.0
+
+### Changed
+
+- Remove unused `@changesets/cli` package
+
+## [0.14.0] - 2026-06-15
+
+### Changed
+
+- **RAG context retrieval is now per-file.** Each changed file gets a
+  targeted embedding query (path + hunks + PR title) and its own chunk
+  budget, instead of a single PR-wide retrieval shared across all files.
+  Reviews see more focused context per file.
+
+- **`context.maxChunks` now applies per file.** With the default of 5
+  and an N-file PR, total chunks retrieved is now ~5N rather than 5.
+  Lower the value if cumulative prompt size becomes a concern.
+
+### Internal
+
+- Introduced `ContextProvider` port in `@prsense/core`. RAG retrieval
+  is now an adapter (`RagContextProvider` in `@prsense/context`) behind
+  it, setting the seam for future context sources.
+- Unified `EmbeddingClient` interface in `@prsense/core`; `@prsense/llm`
+  now depends on `@prsense/core`.
+
+### Migration
+
+No re-indexing required. If you've tuned `context.maxChunks` above the
+default, consider lowering it — the value now applies per file rather
+than per PR.
+
+## [0.13.0] — 2026-06-12
+
+### Changed
+
+- Redesigned CLI signal output for higher signal-to-noise. Severity now
+  renders as a colored badge, file paths are cyan, the claim is at full
+  weight, evidence is dimmed under a `↳` leader, and suggestions appear
+  in green under `💡`. Inline backticked code is highlighted within each
+  block.
+- CLI output now wraps at word boundaries instead of breaking mid-token.
+  Width adapts to the terminal, capped at 100 columns for readability.
+- Signal-printing logic moved from `apps/cli` into `@prsense/reporters`
+  as `printSignals`, matching the existing `printStats` shape.
+
+### Notes
+
+- ANSI styling auto-disables when stdout is not a TTY (pipes, files, CI
+  without color support), so existing scripts that grep plain CLI output
+  are unaffected.
+- The `2 of N signal(s) shown` footer is now `N signals` when no
+  suppression occurred; the `M of N` form appears only when the
+  `topSignals` cap actually trimmed results.
+
+## [0.12.0] — 2026-06-12
+
+### Breaking
+
+- `chunkingVersion` bumped to 4. Existing indexes must be rebuilt with
+  `prsense index . --force`.
+
+### Changed
+
+- Indexing now filters non-code files out of retrieval:
+  - Tree-anywhere noise directories: `node_modules`, `dist`, `build`,
+    `out`, `coverage`, `target`, `vendor`, `.github`, `.gitlab`,
+    `.husky`, `.vscode`, `.idea`, `.next`, `.turbo`, `.cache`
+  - Dotfiles at any depth (`.prettierrc`, `.editorconfig`,
+    `.gitattributes`, `.nvmrc`, ...)
+  - Tracked meta documents (`LICENSE*`, `CONTRIBUTING*`, `CHANGELOG*`,
+    `CODE_OF_CONDUCT*`, `SECURITY*`, ...) when their extension is
+    doc-ish (`.md`, `.rst`, `.txt`, `.adoc`, or none). Both hyphen and
+    underscore separators recognized (`CHANGELOG-2024.md`,
+    `CHANGELOG_2024.md`, `CODE_OF_CONDUCT.md`).
+  - `README*` is intentionally retained — architectural intent lives there
+- `git ls-files` no longer includes `--others`. Only tracked files are
+  considered for indexing; anything uncommitted is treated as noise.
+
+### Fixed
+
+- Chunk version was hardcoded in five separate sites in `indexWorkflow`,
+  with the planner's fingerprint and the metadata writer reading from
+  different literals. Drift between them caused every post-`force` run
+  to plan a full rebuild instead of incremental or noop. Unified behind
+  a single `CHUNK_VERSION` constant.
+- Removed a duplicate `incompatibilityReasons` push for the embedding
+  provider/model check.
+
+### Notes
+
+- Deny-list filter is hardcoded; project-specific noise belongs in
+  `.gitignore`.
+- Under `context.maxChunks`, every chunk slot is contested. Meta files
+  and tooling configs are tracked-on-purpose but contribute no semantic
+  signal to code review and crowd out useful retrieval.
+
+## [0.11.6] — 2026-06-11
+
+### Fixed
+
+- Wired in ollama service check
+
+## [0.11.5] — 2026-06-11
+
+### Changed
+
+- Minor improvements to the init command
+
+## [0.11.4] — 2026-06-11
+
+### Added
+
+- RunConfigDetermined event as core event for every workflow run
+
+### Changed
+
+- RunConfigDetermined is emitted on every index / review workflow run after
+  finalising the config
+
+## [0.11.3] — 2026-06-10
+
+### Breaking
+
+- review.maxSignals renamed to review.topSignals; CLI flag --max-signals → --top-signals
+
+## [0.11.2] — 2026-06-09
+
+### Changed
+
+- Consolidated all structural config validation into the Zod schema.
+  `validateResolvedConfig` and the workflow-scoped validators in
+  `apps/cli/.../validation` are gone; the schema is now the single source
+  of truth for shape, ranges, cross-field rules (e.g. `chunkOverlapChars
+< chunkSizeChars`), and the daemon→delivery requirement.
+- Defaults now live on the schema via `.prefault({})`. The standalone
+  `defaults` export is removed; `RuntimeConfigSchema.parse({})` yields a
+  fully-populated baseline. `prsense init` derives its boilerplate the
+  same way.
+
+### Fixed
+
+- `resolveConfig` cache is now keyed by `(mode, repository.root)`. The
+  previous module-level cache ignored its arguments and returned the
+  first resolved config for every subsequent call.
+- `resolveConfig` reads `prsense.yml` from the supplied repository root
+  rather than `process.cwd()`, fixing wrong-config resolution when the
+  CLI is invoked from a subdirectory.
+- `buildResolvedConfig` no longer carries a stale Postgres connection
+  string and no longer relies on a non-null assertion for `delivery`.
+- `prsense config inspect` now actually prints the resolved configuration
+  table. The previous output rendered the header and separator but
+  dropped every row. The misleading "Sources" legend (left over from
+  the removed provenance tracking) is gone.
+- `prsense.yml` is now resolved from the repository root rather than the
+  current working directory. Running CLI commands from subdirectories
+  previously failed to pick up the repository's config.
+
+### Internal
+
+- Added a comprehensive Jest suite for `@prsense/config` covering
+  schema refinements, layered merging, credential resolution, cache
+  behavior, and the resolved-environment integration.
+
+## 0.11.1
+
+### Changed
+
+Review output now lists displayed vs generated signal numbers
+
+## [0.11.0] — 2026-06-06
+
+### Changed
+
+- **Review prompt recalibrated.** Reframed from "senior software
+  engineer" to a precision-oriented review assistant whose value is
+  measured by signal actionability, not signal count. Severity now
+  carries an explicit triage rubric:
+  - `high` — will fire on inputs the code actually produces today
+  - `medium` — latent fragility a plausible near-term change could trip
+  - `low` — theoretical concern requiring inputs the code path cannot produce
+
+  Expect a noticeable shift in severity distribution on the same
+  diffs: fewer `high` signals, more `medium`, fewer signals overall.
+  This is intentional.
+
+### Removed
+
+- Source-of-truth disambiguation block from the review prompt. It
+  compensated for a RAG staleness problem resolved architecturally in
+  earlier releases and was priming the model to expect conflicts that
+  no longer occur.
+
+### Notes
+
+- No config, flag, or schema changes. Existing `prsense.yml` files
+  continue to work unchanged.
+- If you've tuned thresholds or downstream automation around the
+  previous severity distribution, re-check after upgrading.
+
+## [0.10.0] — 2026-06-05
+
+### Changed
+
+- Embedding throughput improved on multi-file indexing runs.
+  - Per-provider batch sizes (OpenAI 512, Google 100, Ollama 32).
+  - Concurrent in-flight embedding requests for cloud providers
+    (OpenAI 6, Google 4; Ollama remains serial).
+  - Prepared statement reuse in the SQLite chunk repository.
+
+No configuration changes required.
+
+## 0.9.0 - 2026-06-05
+
+### Changed
+
+- `prsense init` now configures a single provider for both review and embeddings.
+  Choices: Ollama, OpenAI, Google.
+- API keys are now written to `.env` in the current directory instead of printed
+  as shell `export` instructions.
+- Updated default models to current recommendations:
+  - OpenAI: `gpt-5.4-mini` (review), `text-embedding-3-small` (embeddings)
+  - Google: `gemini-2.5-flash` (review), `gemini-embedding-001` (embeddings)
+  - Ollama: unchanged
+
+### Removed
+
+- Anthropic dropped from `prsense init` choices. Anthropic has no embeddings API,
+  so single-key setup isn't possible. Users who want Claude for review can still
+  configure it manually in `prsense.yml` alongside a separate embeddings provider.
+
+### Added
+
+- Google embeddings provider (`gemini-embedding-001` via `@google/generative-ai`).
+
+## 0.8.2
+
+### Changed
+
+- manpage is now automatically installed on `npm i -g @prsense/cli`
+
 ## 0.8.1
 
 ### Fixed

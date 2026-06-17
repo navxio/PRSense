@@ -1,5 +1,6 @@
 // packages/context/src/rag/SqliteRagChunkRepository.ts
 import type { RagChunkRepository, ChunkRow } from "./RagChunkRepository.js";
+import { Statement } from "better-sqlite3";
 import { ensureVecTable, type Db } from "../db/SqliteDatabase.js";
 
 function toF32(embedding: number[]): Uint8Array {
@@ -9,39 +10,46 @@ function toF32(embedding: number[]): Uint8Array {
 
 export class SqliteRagChunkRepository implements RagChunkRepository {
   constructor(private readonly db: Db) {}
+  private _insertChunkStmt?: Statement;
+  private _insertVecStmt?: Statement;
 
+  private get insertChunkStmt(): Statement {
+    return (this._insertChunkStmt ??= this.db.prepare(
+      `INSERT INTO rag_chunks (
+       id, repo_provider, repo_owner, repo_name, repo_ref,
+       path, kind, language, content, line_start, line_end
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    ));
+  }
+
+  private get insertVecStmt(): Statement {
+    return (this._insertVecStmt ??= this.db.prepare(
+      `INSERT INTO vec_rag_chunks (rowid, embedding)
+     VALUES (last_insert_rowid(), ?)`,
+    ));
+  }
+
+  // INVARIANT: no other inserts may occur between insertChunkStmt and insertVecStmt on this connection. The vec row depends on SQLite's last_insert_rowid() referring to the chunk row we just inserted.
   private insertRow(row: ChunkRow): void {
     const { chunk } = row;
     const sourcePath = chunk.source.kind === "file" ? chunk.source.path : null;
     const contentKind = chunk.metadata?.kind ?? "code";
 
-    this.db
-      .prepare(
-        `INSERT INTO rag_chunks (
-         id, repo_provider, repo_owner, repo_name, repo_ref,
-         path, kind, language, content, line_start, line_end
-       ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      )
-      .run(
-        chunk.id,
-        row.repoProvider,
-        row.repoOwner ?? null,
-        row.repoName,
-        row.repoRef,
-        sourcePath,
-        contentKind,
-        chunk.metadata?.language ?? null,
-        chunk.content,
-        chunk.metadata?.lineStart ?? null,
-        chunk.metadata?.lineEnd ?? null,
-      );
+    this.insertChunkStmt.run(
+      chunk.id,
+      row.repoProvider,
+      row.repoOwner ?? null,
+      row.repoName,
+      row.repoRef,
+      sourcePath,
+      contentKind,
+      chunk.metadata?.language ?? null,
+      chunk.content,
+      chunk.metadata?.lineStart ?? null,
+      chunk.metadata?.lineEnd ?? null,
+    );
 
-    this.db
-      .prepare(
-        `INSERT INTO vec_rag_chunks (rowid, embedding)
-       VALUES (last_insert_rowid(), ?)`,
-      )
-      .run(toF32(row.embedding));
+    this.insertVecStmt.run(toF32(row.embedding));
   }
 
   async rebuildRepository(

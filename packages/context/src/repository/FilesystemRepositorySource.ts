@@ -2,12 +2,9 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  GitBackedRepositorySource,
-  RepositoryIdentity,
-  RepositoryRevision,
-} from "./GitBackedRepositorySource.js";
-
+import { GitBackedRepositorySource } from "./GitBackedRepositorySource.js";
+import { isIndexable } from "./isIndexable.js";
+import { RepositoryIdentity, RepositoryRevision } from "@prsense/core";
 export class FileSystemRepositorySource implements GitBackedRepositorySource {
   private readonly root: string;
   constructor(root: string) {
@@ -17,11 +14,15 @@ export class FileSystemRepositorySource implements GitBackedRepositorySource {
   async listFiles(): Promise<string[]> {
     try {
       const output = execSync(
-        "git -c core.quotepath=false ls-files -z --cached --others --exclude-standard",
+        "git -c core.quotepath=false ls-files -z --cached --exclude-standard",
         { cwd: this.root },
       );
 
-      const candidates = output.toString("utf8").split("\0").filter(Boolean);
+      const candidates = output
+        .toString("utf8")
+        .split("\0")
+        .filter(Boolean)
+        .filter(isIndexable);
 
       const files: string[] = [];
 
@@ -59,7 +60,8 @@ export class FileSystemRepositorySource implements GitBackedRepositorySource {
         if (entry.isDirectory()) {
           await walk(fullPath);
         } else if (entry.isFile()) {
-          files.push(path.relative(root, fullPath));
+          const rel = path.relative(root, fullPath);
+          if (isIndexable(rel)) files.push(rel);
         }
       }
     }

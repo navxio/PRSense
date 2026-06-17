@@ -1,82 +1,14 @@
-import type { RuntimeConfig } from "./schema.js";
-import type {
-  ResolvedConfig,
-  CliResolvedConfig,
-  DaemonResolvedConfig,
-  PlatformDeliveryChannel,
-} from "./types.js";
-
-/* -------------------------------------------------- */
-/* Database resolution                                */
-/* -------------------------------------------------- */
-
-function resolveDatabase() {
-  const url = process.env.PRSENSE_DATABASE_URL;
-
-  if (url) {
-    return {
-      url,
-      mode: "external" as const,
-    };
-  }
-
-  return {
-    url: "postgresql://prsense:prsense@localhost:10000/prsense_dev",
-    mode: "bundled" as const,
-  };
-}
-
-/* -------------------------------------------------- */
-/* Delivery resolution                                */
-/* -------------------------------------------------- */
-
-function resolveDelivery(runtime: RuntimeConfig) {
-  if (!runtime.delivery) return undefined;
-
-  return {
-    platform: runtime.delivery.platform as PlatformDeliveryChannel,
-    other: runtime.delivery.other ?? [],
-  };
-}
-
-/* -------------------------------------------------- */
-/* Main builder                                       */
-/* -------------------------------------------------- */
+import { ResolvedConfigSchema, type RuntimeConfig } from "./schema.js";
+import type { ResolvedConfig, RuntimeMode } from "./types.js";
+import { RepositoryProvider } from "@prsense/core";
 
 export function buildResolvedConfig(
   runtime: RuntimeConfig,
-  mode: "cli" | "daemon",
-  repository: { root: string; provider: "github" | "gitlab" | "filesystem" },
+  mode: RuntimeMode,
+  repository: {
+    root: string;
+    provider: RepositoryProvider;
+  },
 ): ResolvedConfig {
-  const database = resolveDatabase();
-
-  const base = {
-    repository,
-    index: runtime.index,
-    review: runtime.review,
-    context: runtime.context,
-    git: runtime.git,
-    llm: runtime.llm,
-    embeddings: runtime.embeddings,
-    database,
-  };
-
-  if (mode === "cli") {
-    const resolved: CliResolvedConfig = {
-      ...base,
-      mode: "cli",
-    };
-
-    return resolved;
-  }
-
-  const delivery = resolveDelivery(runtime);
-
-  const resolved: DaemonResolvedConfig = {
-    ...base,
-    mode: "daemon",
-    delivery: delivery!,
-  };
-
-  return resolved;
+  return ResolvedConfigSchema.parse({ ...runtime, mode, repository });
 }

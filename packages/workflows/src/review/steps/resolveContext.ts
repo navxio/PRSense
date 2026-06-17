@@ -1,85 +1,102 @@
 // packages/workflows/src/review/steps/resolveContext.ts
+import {
+  CoreEvents,
+  type UnifiedDiff,
+  type ContextChunk,
+  type ContextProvider,
+  type EventBus,
+  type RepositoryIdentity,
+} from "@prsense/core";
+import type { ResolvedConfig } from "@prsense/config";
+import {
+  RagContextProvider,
+  type RagChunkRepository,
+  type IndexMetadataRepository,
+} from "@prsense/context";
+import {
+  createOpenAiEmbeddingClient,
+  createOllamaEmbeddingClient,
+} from "@prsense/llm";
+import type { ReviewMetadata } from "../types.js";
 
-import { CoreEvents } from "@prsense/core";
-import { buildDiffEmbeddingQuery } from "../lib/buildDiffEmbeddingQuery.js";
+type Params = {
+  config: ResolvedConfig;
+  repositoryIdentity: RepositoryIdentity;
+  revision: string;
+  diff: UnifiedDiff;
+  eventBus: EventBus;
+  repository: RagChunkRepository; // was: chunks
+  metadataRepository: IndexMetadataRepository; // was: metadataRepo
+  metadata?: ReviewMetadata; // NEW — PR title/description for the query
+};
 
-import { retrieveContext } from "../lib/reviewContext.js";
+type Result = {
+  contextByFile: Map<string, ContextChunk[]>;
+  contextualReviewAvailable: boolean;
+};
 
-export async function resolveContext({
-  repository,
-  metadataRepository,
-  config,
-  repositoryIdentity,
-  revision,
-  metadata,
-  diff,
-  eventBus,
-}: any) {
-  const storedMetadata = await metadataRepository.load(
-    repositoryIdentity.provider,
-    repositoryIdentity.id,
-  );
+export async function resolveContext(params: Params): Promise<Result> {
+  const {
+    config,
+    repositoryIdentity,
+    revision,
+    diff,
+    eventBus,
+    repository,
+    metadataRepository,
+    metadata,
+  } = params;
 
-  let contextualReviewAvailable = false;
+  const embedClient =
+    config.embeddings.provider === "openai"
+      ? createOpenAiEmbeddingClient({
+          apiKey: process.env.OPENAI_API_KEY!,
+          model: config.embeddings.model,
+        })
+      : createOllamaEmbeddingClient({ model: config.embeddings.model });
 
-  if (storedMetadata) {
-    const embeddingMatches =
-      storedMetadata.embedding.provider === config.embeddings.provider &&
-      storedMetadata.embedding.model === config.embeddings.model;
+  const providers: ContextProvider[] = [
+    new RagContextProvider({
+      chunks: repository,
+      metadata: metadataRepository,
+      embedClient,
+      embedding: {
+        provider: config.embeddings.provider,
+        model: config.embeddings.model,
+      },
+      maxChunks: config.context.maxChunks,
+      ...(metadata ? { prMetadata: metadata } : {}),
+    }),
+  ];
 
-    contextualReviewAvailable = embeddingMatches;
-
-    if (!embeddingMatches || storedMetadata.revision.commitSha !== revision) {
-      eventBus.emit(CoreEvents.WorkflowReviewIndexOutdated, {
-        indexedCommit: storedMetadata.revision.commitSha,
-        currentCommit: revision,
-      });
+  const available: ContextProvider[] = [];
+  for (const p of providers) {
+    if (await p.isAvailable({ repositoryIdentity, revision, eventBus })) {
+      available.push(p);
     }
-  } else {
-    eventBus.emit(CoreEvents.WorkflowReviewContextUnavailable);
   }
 
-  if (!contextualReviewAvailable) {
-    return { contextText: "" };
+  if (available.length === 0) {
+    return { contextByFile: new Map(), contextualReviewAvailable: false };
   }
 
   eventBus.emit(CoreEvents.WorkflowReviewContextAvailable);
 
-  const retrievalQuery = buildDiffEmbeddingQuery({
-    diff,
-    ...(metadata ?? {}),
-  });
-
-  const excludePaths = diff.files.map((f: { path: string }) => f.path);
-  eventBus.emit(CoreEvents.WorkflowReviewContextQueryBuilt, {
-    preview: retrievalQuery.slice(0, 500),
-    excludePaths,
-  });
-
-  const retrieved = await retrieveContext({
-    repository,
-    config,
-    query: retrievalQuery,
-    repoProvider: repositoryIdentity.provider,
-    repoName: repositoryIdentity.id,
-    limit: config.context.maxChunks,
-    eventBus,
-    excludePaths,
-  });
-
-  const MAX_CONTEXT_CHARS = 20000;
-
-  let accumulated = "";
-  for (const chunk of retrieved.chunks) {
-    if (accumulated.length + chunk.content.length > MAX_CONTEXT_CHARS) break;
-    accumulated += chunk.content + "\n\n";
+  const contextByFile = new Map<string, ContextChunk[]>();
+  for (const file of diff.files) {
+    const collected: ContextChunk[] = [];
+    for (const p of available) {
+      const result = await p.getContextForFile({
+        file,
+        diff,
+        repositoryIdentity,
+        revision,
+        eventBus,
+      });
+      collected.push(...result);
+    }
+    contextByFile.set(file.path, collected);
   }
 
-  eventBus.emit(CoreEvents.WorkflowReviewContextRetrieved, {
-    chunks: retrieved.stats.totalChunks,
-    truncated: retrieved.stats.truncated,
-    contextChars: accumulated.length,
-  });
-
-  return { contextText: accumulated };
+  return { contextByFile, contextualReviewAvailable: true };
 }

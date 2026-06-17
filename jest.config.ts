@@ -15,9 +15,7 @@ const config: Config = {
     ],
   },
 
-  transformIgnorePatterns: [
-    "/node_modules/(?!(\\@octokit|@octokit)/)",
-  ],
+  transformIgnorePatterns: ["/node_modules/(?!(\\@octokit|@octokit)/)"],
 
   extensionsToTreatAsEsm: [],
 
@@ -32,9 +30,11 @@ const config: Config = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
     "^@prsense/(.*)$": "<rootDir>/packages/$1/src",
+    "^@octokit/rest$": "<rootDir>/test/mocks/octokit-rest.ts",
   },
 
   testMatch: ["**/*.test.ts"],
 };
 
 export default config;
+

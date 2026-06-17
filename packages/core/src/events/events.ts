@@ -9,6 +9,7 @@ export const CoreEvents = {
    * Run lifecycle (top-level invocation)
    * ------------------------------------------------- */
   RunStarted: "run.started",
+  RunConfigDetermined: "run.config.determined",
   RunFinished: "run.finished",
   RunFailed: "run.failed",
 

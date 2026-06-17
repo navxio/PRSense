@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import type { EmbeddingClient } from "../types.js";
+import type { EmbeddingClient } from "@prsense/core";
 
 export function createOllamaEmbeddingClient(opts: {
   baseUrl?: string;
@@ -62,5 +62,6 @@ export function createOllamaEmbeddingClient(opts: {
       return results;
     },
     dimension: detectDimension,
+    maxInputChars: 6000,
   };
 }

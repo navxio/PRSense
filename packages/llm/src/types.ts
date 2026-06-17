@@ -1,3 +1,4 @@
+// packages/llm/src/types.ts
 /**
  * A minimal, explicit prompt contract.
  * No chat history, no tools, no streaming (yet).
@@ -73,9 +74,4 @@ export type OpenAiConfig = {
   apiKey: string;
   model: string;
   baseUrl?: string; // supports Azure / proxies
-};
-
-export type EmbeddingClient = {
-  embed(texts: string[]): Promise<number[][]>;
-  dimension(): Promise<number>;
 };

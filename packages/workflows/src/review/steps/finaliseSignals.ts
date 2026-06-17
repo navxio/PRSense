@@ -28,12 +28,15 @@ export function finalizeSignals(
     return sev !== 0 ? sev : b.confidence - a.confidence;
   });
 
-  const signals = ranked.slice(0, config.review.maxSignals);
+  const signals = ranked.slice(0, config.review.topSignals);
 
   eventBus.emit(CoreEvents.SignalCompiled, {
     count: signals.length,
     droppedByCap: ranked.length - signals.length,
   });
 
-  return signals;
+  return {
+    signals,
+    totalBeforeCap: ranked.length,
+  };
 }

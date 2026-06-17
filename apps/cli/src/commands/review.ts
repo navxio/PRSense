@@ -3,17 +3,27 @@ import { Command } from "commander";
 import { runReviewWorkflow, runIndexWorkflow } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
-import { resolveEnvironment, ValidationIssue } from "@prsense/config";
-import { validateReviewEffectiveConfig } from "./validation/review.js";
+import {
+  issuesFor,
+  resolveEnvironment,
+  REVIEW_PREFIXES,
+  validateEnvironment,
+  ValidationIssue,
+} from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
-import { stdoutConfigReporter, printStats } from "@prsense/reporters";
+import {
+  stdoutConfigReporter,
+  printStats,
+  printSignals,
+} from "@prsense/reporters";
 import path from "node:path";
 import {
   LocalGitDiffProvider,
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
+  CodebergPrDiffProvider,
 } from "@prsense/context";
 import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 import { ensureInit } from "./init/ensureInit.js";
@@ -26,7 +36,7 @@ const PRSENSE_VERSION = pkg.version;
 export const reviewCommand = new Command("review")
   .argument("[target]", "Path to repository", ".")
   .option("-b, --base-branch <branch>", "Base branch to diff against")
-  .option("-n, --max-signals <n>", "Maximum number of signals requested")
+  .option("-n, --top-signals <n>", "Number of highest risk signals to display")
   .option(
     "-c, --max-chunks <n>",
     "Maximum number of indexed chunks to retrieve for context",
@@ -92,12 +102,17 @@ export const reviewCommand = new Command("review")
       const gitlabMrMatch = target.match(
         /gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
       );
+      const codebergPrMatch = target.match(
+        /codeberg\.org\/([^\/]+)\/([^\/]+)\/pulls\/(\d+)/,
+      );
 
       const repoProvider = githubPrMatch
         ? "github"
         : gitlabMrMatch
           ? "gitlab"
-          : "filesystem";
+          : codebergPrMatch
+            ? "codeberg"
+            : "filesystem";
 
       const env = resolveEnvironment("cli", {
         root: repoRoot,
@@ -116,19 +131,33 @@ export const reviewCommand = new Command("review")
       const overrides = buildOverrides(options);
       const effectiveConfig = applyOverrides(env.config, overrides);
 
-      const cliIssues = validateReviewEffectiveConfig(
+      const effectiveIssues = validateEnvironment(
         effectiveConfig,
         env.credentials,
       );
+      const reviewConfigurationIssues = issuesFor(
+        effectiveIssues,
+        REVIEW_PREFIXES,
+      );
 
-      if (cliIssues.some((i: ValidationIssue) => i.level === "error")) {
+      if (
+        reviewConfigurationIssues.some(
+          (i: ValidationIssue) => i.level === "error",
+        )
+      ) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-cli-config",
         });
 
-        await stdoutConfigReporter.report({ issues: cliIssues });
+        await stdoutConfigReporter.report({
+          issues: reviewConfigurationIssues,
+        });
         process.exit(1);
       }
+
+      eventBus.emit(CoreEvents.RunConfigDetermined, {
+        config: effectiveConfig,
+      });
 
       // -------------------------------------------------
       // Auto-index (incremental)
@@ -167,7 +196,6 @@ export const reviewCommand = new Command("review")
 
       if (githubPrMatch) {
         const [, owner, repo, prNumber] = githubPrMatch;
-
         diffProvider = new GitHubPrDiffProvider(
           owner,
           repo.replace(".git", ""),
@@ -175,11 +203,18 @@ export const reviewCommand = new Command("review")
         );
       } else if (gitlabMrMatch) {
         const [, group, project, mrNumber] = gitlabMrMatch;
-
         diffProvider = new GitLabMrDiffProvider(
           group,
           project.replace(".git", ""),
           mrNumber,
+        );
+      } else if (codebergPrMatch) {
+        const [, owner, repo, prNumber] = codebergPrMatch;
+        diffProvider = new CodebergPrDiffProvider(
+          owner,
+          repo.replace(".git", ""),
+          prNumber,
+          env.credentials.codeberg?.token,
         );
       } else {
         diffProvider = new LocalGitDiffProvider(
@@ -264,35 +299,11 @@ export const reviewCommand = new Command("review")
       // -------------------------------------------------
 
       if (result.payload.signals.length === 0) {
-        console.log("✔ No review signals (change looks safe)");
+        console.log("✔ No review signals (change looks safe).");
         process.exit(0);
       }
 
-      const severityOrder: Record<string, number> = {
-        high: 3,
-        medium: 2,
-        low: 1,
-        info: 0,
-      };
-
-      const sortedSignals = [...result.payload.signals].sort((a, b) => {
-        return (
-          (severityOrder[b.severity] ?? -1) - (severityOrder[a.severity] ?? -1)
-        );
-      });
-
-      for (const signal of sortedSignals) {
-        console.log(`\n[${signal.severity.toUpperCase()}] ${signal.file}`);
-        console.log(signal.message);
-
-        if (signal.rationale) {
-          console.log(`  ↳ ${signal.rationale}`);
-        }
-
-        if (signal.suggestedFix) {
-          console.log(`  💡 ${signal.suggestedFix}`);
-        }
-      }
+      printSignals(result.payload.signals, result.payload.totalBeforeCap);
 
       process.exit(0);
     } catch (err) {

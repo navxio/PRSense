@@ -4,19 +4,24 @@ import {
   createCompositeChunker,
   IndexMetadataRepository,
   RagChunkRepository,
+  CHUNK_STRATEGY,
+  CHUNK_VERSION,
 } from "@prsense/context";
 import type { IndexWorkflowResult } from "./types.js";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import {
   createOpenAiEmbeddingClient,
   createOllamaEmbeddingClient,
+  createGoogleEmbeddingClient,
 } from "@prsense/llm";
 import {
   resolveRepositorySource,
   planIndex,
   buildChunks,
   resolveExecutionPlan,
+  mapWithConcurrency,
 } from "./util.js";
+import { defaultBatchSize, defaultConcurrency } from "@prsense/llm";
 
 export async function runIndexWorkflow({
   config,
@@ -96,8 +101,17 @@ export async function runIndexWorkflow({
         apiKey,
         model: config.embeddings.model,
       });
-    } else {
+    } else if (config.embeddings.provider === "ollama") {
       embeddingClient = createOllamaEmbeddingClient({
+        model: config.embeddings.model,
+      });
+    } else {
+      const apiKey = credentials.google?.apiKey;
+      if (!apiKey) {
+        throw new Error("Google embedding credentials missing");
+      }
+      embeddingClient = createGoogleEmbeddingClient({
+        apiKey,
         model: config.embeddings.model,
       });
     }
@@ -118,16 +132,16 @@ export async function runIndexWorkflow({
       embeddingProvider: config.embeddings.provider,
       embeddingModel: config.embeddings.model,
       embeddingDimension,
-      chunkStrategy: "default",
-      chunkVersion: 3,
+      chunkStrategy: CHUNK_STRATEGY,
+      chunkVersion: CHUNK_VERSION,
     };
 
     const incompatibilityReasons: string[] = [];
 
     if (stored) {
-      if (!stored.chunking || stored.chunking.version !== 3) {
+      if (!stored.chunking || stored.chunking.version !== CHUNK_VERSION) {
         incompatibilityReasons.push(
-          `chunking version changed (${stored.chunking?.version ?? "unknown"} → 3)`,
+          `chunking version changed (${stored.chunking?.version ?? "unknown"} → ${CHUNK_VERSION})`,
         );
       }
       if (stored.embedding.dimension !== embeddingDimension) {
@@ -135,16 +149,6 @@ export async function runIndexWorkflow({
           `embedding dimension changed (${stored.embedding.dimension} → ${embeddingDimension})`,
         );
       }
-
-      if (
-        stored.embedding.provider !== config.embeddings.provider ||
-        stored.embedding.model !== config.embeddings.model
-      ) {
-        incompatibilityReasons.push(
-          `embedding changed (${stored.embedding.provider}/${stored.embedding.model} → ${config.embeddings.provider}/${config.embeddings.model})`,
-        );
-      }
-
       if (
         stored.embedding.provider !== config.embeddings.provider ||
         stored.embedding.model !== config.embeddings.model
@@ -290,8 +294,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),
@@ -354,8 +358,8 @@ export async function runIndexWorkflow({
               dimension: embeddingDimension,
             },
             chunking: {
-              strategy: "default",
-              version: 3,
+              strategy: CHUNK_STRATEGY,
+              version: CHUNK_VERSION,
             },
             prsenseVersion: version,
             createdAt: new Date().toISOString(),
@@ -430,27 +434,22 @@ export async function runIndexWorkflow({
         // Embed + Persist Chunks
         // -------------------------------------------------
 
-        //PERF: different batch size for openai based embedding
-        const BATCH_SIZE = 32;
+        const BATCH_SIZE = defaultBatchSize(config.embeddings.provider) || 32;
+        const CONCURRENCY = defaultConcurrency(config.embeddings.provider) || 1;
 
+        const batches: ContextChunk[][] = [];
         for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-          const batch = chunks.slice(i, i + BATCH_SIZE);
+          batches.push(chunks.slice(i, i + BATCH_SIZE));
+        }
 
-          eventBus.emit(CoreEvents.WorkflowIndexProgress, {
-            processed: Math.min(i + BATCH_SIZE, chunks.length),
-            total: chunks.length,
-          });
-
+        let processed = 0;
+        await mapWithConcurrency(batches, CONCURRENCY, async (batch) => {
           const embeddings = await embeddingClient.embed(
             batch.map((c) => c.content),
           );
-
           const rows = batch.map((chunk, idx) => {
             const embedding = embeddings[idx];
-
-            if (!embedding) {
-              throw new Error("Embedding generation mismatch");
-            }
+            if (!embedding) throw new Error("Embedding generation mismatch");
             return {
               chunk,
               repoProvider: identity.provider,
@@ -460,7 +459,12 @@ export async function runIndexWorkflow({
             };
           });
           await chunkRepository.insertChunks(rows);
-        }
+          processed += batch.length;
+          eventBus.emit(CoreEvents.WorkflowIndexProgress, {
+            processed,
+            total: chunks.length,
+          });
+        });
 
         await metadataRepository.save({
           repository: {
@@ -479,8 +483,8 @@ export async function runIndexWorkflow({
             dimension: embeddingDimension,
           },
           chunking: {
-            strategy: "default",
-            version: 3,
+            strategy: CHUNK_STRATEGY,
+            version: CHUNK_VERSION,
           },
           prsenseVersion: version,
           createdAt: new Date().toISOString(),

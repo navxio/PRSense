@@ -1,6 +1,6 @@
 // packages/bench/src/runner/runModel.ts
 import type { BenchmarkScenario, ModelConfig, BenchRun } from "../types.js";
-import { resolveEnvironment } from "@prsense/config";
+import { ResolvedConfig, resolveEnvironment } from "@prsense/config";
 
 import { runReviewWorkflow } from "@prsense/workflows";
 import { GitHubPrDiffProvider } from "@prsense/context";
@@ -8,6 +8,7 @@ import { GitHubPrDiffProvider } from "@prsense/context";
 import { benchConfig } from "../benchConfig.js";
 import { silentEventBus } from "../utils/silentEventBus.js";
 import { extractPRDetails, type PRDetails } from "../utils/PR.js";
+import { buildServices } from "./composition.js";
 
 const eventBus = silentEventBus();
 
@@ -17,6 +18,7 @@ export async function runModelOnScenario(
 ): Promise<BenchRun> {
   const TIMEOUT_MS = model.provider === "ollama" ? 120_000 : 60_000;
   const start = Date.now();
+  const services = buildServices();
 
   const GH_TOKEN = process.env.PRSENSE_GITHUB_BENCH_TOKEN;
   try {
@@ -25,7 +27,7 @@ export async function runModelOnScenario(
       provider: "github",
     });
 
-    const config = {
+    const config: ResolvedConfig = {
       ...benchConfig,
       llm: {
         ...benchConfig.llm,
@@ -49,6 +51,8 @@ export async function runModelOnScenario(
       credentials: runtimeEnv.credentials,
       diffProvider,
       eventBus,
+      repository: services.chunkRepo,
+      metadataRepository: services.metadataRepo,
     });
 
     const result = await Promise.race([

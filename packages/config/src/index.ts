@@ -1,4 +1,3 @@
-import "dotenv/config";
 export * from "./types.js";
 export * from "./resolveEnvironment.js";
 export * from "./loadYamlConfig.js";
@@ -8,6 +7,6 @@ export * from "./merge.js";
 export * from "./resolveCredentials.js";
 export * from "./resolveEnvironment.js";
 export * from "./validateEnvironment.js";
-export * from "./defaults.js";
 export * from "./resolveConfig.js";
 export * from "./buildResolvedConfig.js";
+export * from "./helpers.js";
