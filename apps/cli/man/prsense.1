@@ -15,25 +15,22 @@ prsense [command] [options] [target]
 
 DESCRIPTION
 
-PRSense is an open-source AI-powered code review engine that surfaces high-confidence review signals from code changes.
+PRSense is an open-source, self-hosted, AI-powered code review CLI
+that surfaces high-confidence review signals from code changes.
 
-It is delivery-agnostic. The same review engine can run:
+It operates on diffs, with optional retrieval-augmented context from a
+local repository index. Output is validated against the diff,
+normalized, deduplicated, and filtered by confidence before being
+emitted. Signals are grounded — PRSense will not reference files,
+symbols, or lines that do not appear in the change under review.
 
-- As an interactive CLI
-- Behind webhooks
-- Inside CI pipelines
-
-PRSense focuses on structured review signals rather than autonomous modification. It prioritizes:
+PRSense prioritizes:
 
 - Risk detection
 - Change comprehension
 - Explicit reasoning
 - Deterministic configuration
-- Self-hosted infrastructure
-
-PRSense operates on diffs and optionally surrounding repository context using retrieval-augmented generation (RAG). Output is validated, normalized, deduplicated, and filtered by confidence before being emitted.
-
-The CLI is a delivery surface over the same core review engine.
+- Local-first, zero-infrastructure operation
 
 ⸻
 
@@ -96,6 +93,9 @@ https://github.com/.../pull/<number>
 https://gitlab.com/.../-/merge_requests/<number>
     GitLab Merge Request
 
+https://codeberg.org/.../pulls/<number>
+    Codeberg / Forgejo Pull Request
+
 OPTIONS
 
 -b, --base-branch <branch>
@@ -123,7 +123,7 @@ OPTIONS
     Print structured review statistics alongside results.
 
 -d, --no-auto-index
-    Review with existing index without automatically bringing it up to date
+    Review with existing index without automatically bringing it up to date.
 
 EXAMPLES
 
@@ -152,7 +152,7 @@ Indexing:
 - Scans repository files
 - Chunks content deterministically
 - Generates embeddings
-- Stores vectors in PostgreSQL with pgvector
+- Stores vectors in a local SQLite database (sqlite-vec)
 - Tracks repository fingerprint metadata
 
 The process is idempotent and safe to run repeatedly.
@@ -178,6 +178,7 @@ TARGETS
 
 https://github.com/org/repo
 https://gitlab.com/group/project
+https://codeberg.org/owner/repo
 
 OPTIONS
 
@@ -225,13 +226,9 @@ github/django-extensions/django-extensions
 
 NOTES
 
-Indexing requires:
-
-- PostgreSQL
-- pgvector extension
-- Valid embedding provider credentials
-
-Embedding dimension must match the database schema.
+Indexing requires valid embedding provider credentials. Storage is
+local: a SQLite database under the PRSense state directory. No
+external database, container, or daemon is required.
 
 EXAMPLES
 
@@ -336,8 +333,7 @@ Performs structured diagnostic checks:
 
 - Configuration validation
 - Credential validation
-- Database connectivity
-- pgvector availability
+- Local index storage
 - LLM provider configuration
 - Repository state
 
@@ -393,7 +389,7 @@ CONFIGURATION
 
 PRSense separates:
     1. Review behavior configuration (repository-level)
-    2. Runtime configuration and credentials (environment)
+    2. Runtime credentials (environment)
 
 USER CONFIGURATION
 
@@ -425,37 +421,24 @@ context:
 git:
   baseBranch: main
 
-delivery:
-  platform: github
-
 If absent, sensible defaults are applied.
 
 ENVIRONMENT VARIABLES
 
-Environment variables configure infrastructure and credentials.
+Environment variables configure credentials.
 
 Common variables:
 
-PRSENSE_DATABASE_URL
 PRSENSE_OPENAI_API_KEY
 PRSENSE_GOOGLE_API_KEY
 PRSENSE_ANTHROPIC_API_KEY
-PRSENSE_GITHUB_TOKEN
-PRSENSE_GITHUB_APP_ID
-PRSENSE_GITHUB_APP_PRIVATE_KEY
-PRSENSE_GITHUB_INSTALLATION_ID
-PRSENSE_GITHUB_WEBHOOK_SECRET
-PRSENSE_GITLAB_TOKEN
-PRSENSE_GITLAB_WEBHOOK_SECRET
-PRSENSE_GITHUB_BENCH_TOKEN
-PRSENSE_SLACK_BOT_TOKEN
 PRSENSE_OLLAMA_HOST
-PRSENSE_LOG_LEVEL
-PRSENSE_DAEMON_PORT
-PRSENSE_DAEMON_HOST
+PRSENSE_GITHUB_TOKEN
+PRSENSE_GITLAB_TOKEN
 PRSENSE_CODEBERG_TOKEN
+PRSENSE_GITHUB_BENCH_TOKEN
+PRSENSE_LOG_LEVEL
 PRSENSE_NON_INTERACTIVE
-PRSENSE_CODEBERG_WEBHOOK_TOKEN
 
 Environment variables are validated before workflows execute.
 
@@ -478,7 +461,7 @@ prsense.yml
     Optional user-level configuration.
 
 ~/.local/state/prsense/
-    Runtime state directory.
+    Runtime state directory (includes the local index database).
 
 <git-hooks-dir>/pre-push
     PRSense pre-push hook shim, when installed via `prsense hook install`.
@@ -490,7 +473,7 @@ DESIGN PRINCIPLES
 
 PRSense is intentionally:
 
-- Delivery-agnostic
+- Local-first
 - Self-hosted
 - Retrieval-augmented
 - Deterministic
