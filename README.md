@@ -7,52 +7,33 @@
 </p>
 <h1 align="center">PRSense</h1>
 <p align="center">
-  <sub>High-confidence signals for pull request review</sub>
+  <sub>High-confidence signals grounded in diff</sub>
 </p>
-
-**PRSense is an open-source, self-hosted, LLM-powered code review CLI that surfaces high-confidence review signals from pull request changes.**
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/navxio/prsense" />
-  <img src="https://img.shields.io/npm/dw/%40prsense%2Fcli" />
-  <img src="https://img.shields.io/npm/v/@prsense/cli" />
+  <a href="https://www.npmjs.com/package/@prsense/cli"><img src="https://img.shields.io/npm/v/@prsense/cli?color=cb3837&label=npm" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@prsense/cli"><img src="https://img.shields.io/npm/dw/%40prsense%2Fcli?color=cb3837" alt="npm downloads"></a>
+  <a href="https://github.com/navxio/prsense/blob/main/LICENSE"><img src="https://img.shields.io/github/license/navxio/prsense?color=blue" alt="License"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@prsense/cli?color=339933" alt="Node version"></a>
+  <a href="https://discord.gg/sX3WBw8Zr"><img src="https://img.shields.io/badge/chat-discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
+
+**PRSense (Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
 
 > PRSense is experimental software, expect bugs.
 
-## Example Review
+---
 
-Review of a real-world pull request:
+<p align="center">
+  <img src="assets/demo.gif" alt="PRSense in action" width="900">
+</p>
 
-✔ Signals reference actual changed files
-✔ No hallucinated files or symbols
-✔ 0 hallucinated signals (validated against diff)
-✔ Signals are derived directly from pull request diff
-
-**Excerpt from CLI output**
-
-![Example PRSense output](docs/example.png)
-
-PRSense does not rewrite your code or flood your PR with generic comments.
-
-It surfaces what matters:
-
-- What changed
-- Where risk exists
-- Why attention is warranted
-
-It is built for engineers who want review assistance that is:
-
-- Intentional
-- Inspectable
-- Deterministic
-- Local-first
+---
 
 ## Table of Contents
 
 - [Philosophy](#philosophy)
 - [Features](#features)
-- [What PRSense Does Not Do](#what-prsense-does-not-do)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -61,7 +42,6 @@ It is built for engineers who want review assistance that is:
 - [Architecture](#architecture)
 - [Command Reference](#command-reference)
 - [Benchmarks](#benchmarks)
-- [Project Status](#project-status)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -75,17 +55,27 @@ PRSense is built around a few core principles:
 - transparency over automation
 - inspectable reasoning
 - composability over monoliths
+- extensibility via hexagonal architecture — make it your own
 
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
-- **Self-hosted by default** — runs entirely on your own machine, no external services required
+- **Self-hosted by default** — run entirely on your own machine, no external services required
 - **Zero-infrastructure** — bundled SQLite + sqlite-vec, no database to provision
+- One-command setup
+- Automatically reads your intent from branch name locally or PR description
+- Pluggable models, or run everything locally via Ollama
+- Auto-indexing by default for context-enriched review
+- Human-in-the-loop decision making
 - **Diff-first intelligence**, understanding:
   - local changes
   - pull request diffs from GitHub, GitLab, and Codeberg / Forgejo
 - **Pluggable LLM backends** — Ollama, Anthropic, Google, OpenAI
-- **Pre-push git hook** — gate pushes on review outcome (`prsense hook install`)
+- Built-in profiling
+- Automatically reads from and writes to local `.env`
+- AST-based chunking for TypeScript (more languages on the roadmap)
+- Deterministic pipeline for identifying cross-file issues
+- Bundled `pre-push` git hook
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
@@ -105,15 +95,6 @@ First run will walk you through provider setup:
 ```bash
 prsense init
 ```
-
-## What PRSense Does Not Do
-
-PRSense intentionally avoids actions that reduce developer agency:
-
-- It does not write or modify code
-- It does not open or merge pull requests
-- It does not enforce opinions or style choices
-- It does not act autonomously
 
 ## Usage
 
@@ -173,6 +154,11 @@ Runs PRSense against each pushed ref before the push completes. Bypass with `git
 prsense doctor
 ```
 
+### Typical Workflow
+
+1. `prsense index .`
+2. `prsense review .`
+
 ## Configuration
 
 ```
@@ -187,7 +173,7 @@ CLI flags
 Resolved Configuration
 ```
 
-PRSense separates **review behavior** from **runtime credentials**.
+PRSense separates **review behavior** from **runtime credentials**. Configuration is layered and deterministic.
 
 ### Configuration Layers (Lowest → Highest Priority)
 
@@ -238,6 +224,14 @@ Repository config overrides global config.
 
 Placed at the root of your repository. Defines review behavior:
 
+- LLM provider and model
+- Embedding model
+- Chunking strategy
+- Review thresholds
+- Retrieval limits
+
+### Example
+
 ```yaml
 llm:
   provider: ollama # ollama | openai | google | anthropic
@@ -267,11 +261,11 @@ git:
 
 #### `llm`
 
-Controls the review generation model. `temperature` controls randomness; lower values produce more deterministic output.
+Controls the review generation model. Supported providers: `ollama`, `openai`, `google`, `anthropic`. `temperature` controls randomness; lower values produce more deterministic output.
 
 #### `embeddings`
 
-Controls vector embeddings used for indexing and retrieval. If changed, re-indexing is required.
+Controls vector embeddings used for indexing and retrieval. If changed, re-indexing is required and embedding dimensions must match the database schema.
 
 #### `index`
 
@@ -474,29 +468,13 @@ Domain
 
 ```
 
-### Monorepo Layout
-
-```
-apps/
-  cli/         # CLI entrypoint
-
-packages/
-  core/        # core domain types and engine
-  context/     # diff parsing and contextual retrieval
-  llm/         # LLM provider abstractions
-  config/      # prsense.yml and env validation
-  reporters/   # CLI and other output formats
-  workflows/   # review and indexing workflows
-  preflight/   # executable infrastructure checks
-  logging/     # structured logging
-  bench/       # benchmarking primitives
-```
-
 ## Command Reference
 
 A complete command reference is available in:
 
 [docs/man/prsense.1](docs/man/prsense.1)
+
+or just run `man prsense`
 
 ## Benchmarks
 
@@ -512,21 +490,6 @@ Clone the repo, install with `pnpm i` from the root, then:
 2. `pnpm bench`
 
 Ensure cloud provider credentials are set, and Ollama is running with the models under test available.
-
-## Project Status
-
-PRSense is under active development. Interfaces and core concepts are stabilizing; integrations and signal-quality work continue.
-
-### Roadmap
-
-- [x] incremental indexing
-- [x] AST-based chunking (TypeScript)
-- [x] Codeberg / Forgejo support
-- [ ] AST-based chunking (Python, Go, Rust, C++)
-- [ ] hybrid retrieval strategy
-- [ ] symbol-graph context provider
-- [ ] machine-readable output mode (`--json` / NDJSON)
-- [ ] optional multi-pass review
 
 ## Contributing
 
