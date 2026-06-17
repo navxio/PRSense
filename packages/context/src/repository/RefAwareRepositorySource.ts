@@ -1,11 +1,8 @@
 // packages/context/src/repository/RefAwareRepositorySource.ts
 
 import { execFileSync } from "node:child_process";
-import {
-  GitBackedRepositorySource,
-  RepositoryIdentity,
-  RepositoryRevision,
-} from "./GitBackedRepositorySource.js";
+import { GitBackedRepositorySource } from "./GitBackedRepositorySource.js";
+import { RepositoryIdentity, RepositoryRevision } from "@prsense/core";
 /**
  * Wraps a GitBackedRepositorySource to read from a specific commit-ish ref
  * (branch name, tag, or SHA). Tree-ish expressions (e.g. HEAD^{tree}) are

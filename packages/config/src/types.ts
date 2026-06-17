@@ -1,3 +1,4 @@
+// packages/config/src/types.ts
 export type {
   RuntimeConfig,
   ResolvedConfig,
@@ -29,6 +30,7 @@ export type CredentialContext = {
   };
   gitlab?: { available: boolean; token?: string; webhookSecret?: string };
   slack?: { available: boolean; botToken?: string };
+  codeberg?: { available: boolean; token?: string; webhookSecret?: string };
 };
 
 export type RuntimeEnvironment = {

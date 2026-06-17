@@ -2,13 +2,9 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  GitBackedRepositorySource,
-  RepositoryIdentity,
-  RepositoryRevision,
-} from "./GitBackedRepositorySource.js";
+import { GitBackedRepositorySource } from "./GitBackedRepositorySource.js";
 import { isIndexable } from "./isIndexable.js";
-
+import { RepositoryIdentity, RepositoryRevision } from "@prsense/core";
 export class FileSystemRepositorySource implements GitBackedRepositorySource {
   private readonly root: string;
   constructor(root: string) {

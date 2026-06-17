@@ -1,6 +1,7 @@
+import { RepositoryProvider } from "../repository/identity.js";
 export type IndexMetadata = {
   repository: {
-    provider: "filesystem" | "github" | "gitlab";
+    provider: RepositoryProvider;
     id: string; // e.g. absolute path OR owner/repo
     defaultBranch?: string;
   };

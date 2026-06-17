@@ -23,6 +23,7 @@ import {
   LocalGitDiffProvider,
   GitHubPrDiffProvider,
   GitLabMrDiffProvider,
+  CodebergPrDiffProvider,
 } from "@prsense/context";
 import { buildOverrides, applyOverrides } from "../shared/configOverride.js";
 import { ensureInit } from "./init/ensureInit.js";
@@ -101,12 +102,17 @@ export const reviewCommand = new Command("review")
       const gitlabMrMatch = target.match(
         /gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
       );
+      const codebergPrMatch = target.match(
+        /codeberg\.org\/([^\/]+)\/([^\/]+)\/pulls\/(\d+)/,
+      );
 
       const repoProvider = githubPrMatch
         ? "github"
         : gitlabMrMatch
           ? "gitlab"
-          : "filesystem";
+          : codebergPrMatch
+            ? "codeberg"
+            : "filesystem";
 
       const env = resolveEnvironment("cli", {
         root: repoRoot,
@@ -190,7 +196,6 @@ export const reviewCommand = new Command("review")
 
       if (githubPrMatch) {
         const [, owner, repo, prNumber] = githubPrMatch;
-
         diffProvider = new GitHubPrDiffProvider(
           owner,
           repo.replace(".git", ""),
@@ -198,11 +203,18 @@ export const reviewCommand = new Command("review")
         );
       } else if (gitlabMrMatch) {
         const [, group, project, mrNumber] = gitlabMrMatch;
-
         diffProvider = new GitLabMrDiffProvider(
           group,
           project.replace(".git", ""),
           mrNumber,
+        );
+      } else if (codebergPrMatch) {
+        const [, owner, repo, prNumber] = codebergPrMatch;
+        diffProvider = new CodebergPrDiffProvider(
+          owner,
+          repo.replace(".git", ""),
+          prNumber,
+          env.credentials.codeberg?.token,
         );
       } else {
         diffProvider = new LocalGitDiffProvider(
@@ -291,7 +303,7 @@ export const reviewCommand = new Command("review")
         process.exit(0);
       }
 
-      printSignals(result.payload.signals);
+      printSignals(result.payload.signals, result.payload.totalBeforeCap);
 
       process.exit(0);
     } catch (err) {
