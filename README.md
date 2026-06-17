@@ -24,7 +24,7 @@
 ## Demo
 
 <p align="center">
-  <img src="assets/prsense_demo_zod.gif" alt="Demo" width="800">
+  <img src="assets/demo.gif" alt="Demo" width="800">
 </p>
 
 ## Table of Contents
