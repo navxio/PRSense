@@ -10,22 +10,25 @@
   <sub>High-confidence signals grounded in diff</sub>
 </p>
 
-**PRSense(Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
-
 <p align="center">
-  <img src="https://img.shields.io/badge/join-discord-purple">https://discord.gg/sX3WBw8Zr</img>
-  <img src="https://img.shields.io/badge/license-Apache_2.0-blue" />
-  <img src="https://img.shields.io/npm/dw/%40prsense%2Fcli" />
-  <img src="https://img.shields.io/npm/v/@prsense/cli" />
+  <a href="https://www.npmjs.com/package/@prsense/cli"><img src="https://img.shields.io/npm/v/@prsense/cli?color=cb3837&label=npm" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@prsense/cli"><img src="https://img.shields.io/npm/dw/%40prsense%2Fcli?color=cb3837" alt="npm downloads"></a>
+  <a href="https://github.com/navxio/prsense/blob/main/LICENSE"><img src="https://img.shields.io/github/license/navxio/prsense?color=blue" alt="License"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@prsense/cli?color=339933" alt="Node version"></a>
+  <a href="https://discord.gg/sX3WBw8Zr"><img src="https://img.shields.io/badge/chat-discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
+
+**PRSense (Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
 
 > PRSense is experimental software, expect bugs.
 
-## Demo
+---
 
 <p align="center">
-  <img src="assets/demo.gif" alt="Demo" width="800">
+  <img src="assets/demo.gif" alt="PRSense in action" width="900">
 </p>
+
+---
 
 ## Table of Contents
 
@@ -52,52 +55,50 @@ PRSense is built around a few core principles:
 - transparency over automation
 - inspectable reasoning
 - composability over monoliths
-- extensibility via hexagonal architecture - make it your own
+- extensibility via hexagonal architecture — make it your own
 
 ## Features
 
 - **Fast, local-first CLI** for reviewing and analyzing code changes
-- **Self-hosted by default** — run entirely on your own machine or infrastructure
-- One command setup
-- Automatically reads your intent from branch name on locally or PR description
-- Pluggable models or run everything locally via ollama
-- Auto indexing by default for context enriched review
-- Human in the loop decision making
+- **Self-hosted by default** — run entirely on your own machine, no external services required
+- **Zero-infrastructure** — bundled SQLite + sqlite-vec, no database to provision
+- One-command setup
+- Automatically reads your intent from branch name locally or PR description
+- Pluggable models, or run everything locally via Ollama
+- Auto-indexing by default for context-enriched review
+- Human-in-the-loop decision making
 - **Diff-first intelligence**, understanding:
   - local changes
-  - pull request diffs from GitHub, GitLab
-- **Pluggable LLM backends** - Ollama, Anthropic, Google, OpenAI
-- Built in profiling
+  - pull request diffs from GitHub, GitLab, and Codeberg / Forgejo
+- **Pluggable LLM backends** — Ollama, Anthropic, Google, OpenAI
+- Built-in profiling
 - Automatically reads from and writes to local `.env`
-- Supports remote repositories from GitHub, GitLab
-- AST based chunking for TypeScript(more langs on the roadmap)
-- Deterministic pipeline for identifying cross file issues
+- AST-based chunking for TypeScript (more languages on the roadmap)
+- Deterministic pipeline for identifying cross-file issues
 - Bundled `pre-push` git hook
-- Tested with real world C, C++, Rust, Go, TypeScript, Python, Java repositories (See [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
+- Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
 
-- Node.Js >= 22 <25
-- git >=2.31
-- (optional)Ollama
+- Node.js >= 22 <25
+- git >= 2.31
+- (optional) Ollama for local inference
 
 ## Installation
 
-`npm i -g @prsense/cli`
+```bash
+npm i -g @prsense/cli
+```
+
+First run will walk you through provider setup:
+
+```bash
+prsense init
+```
 
 ## Usage
 
-PRSense is CLI first run in two modes:
-
-- **CLI mode** — local, interactive usage (this package, `@prsense/cli`)
-
-Both modes use the same core review engine and configuration model.
-
-### CLI Mode
-
-The CLI is ideal for local development and experimentation.
-
-#### Review a local repository
+### Review a local repository
 
 ```bash
 prsense review .
@@ -105,25 +106,31 @@ prsense review .
 
 Compares your current branch against the configured base branch and prints review signals to stdout.
 
-#### Review a GitHub Pull Request
+### Review a GitHub Pull Request
 
 ```bash
 prsense review https://github.com/owner/repo/pull/123
 ```
 
-#### Review a GitLab Merge Request
+### Review a GitLab Merge Request
 
 ```bash
 prsense review https://gitlab.com/group/project/-/merge_requests/42
 ```
 
-#### Index a repository (enable contextual review)
+### Review a Codeberg / Forgejo Pull Request
+
+```bash
+prsense review https://codeberg.org/owner/repo/pulls/7
+```
+
+### Index a repository (enable contextual review)
 
 ```bash
 prsense index .
 ```
 
-This builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews.
+Builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews.
 
 Optional flags:
 
@@ -133,16 +140,26 @@ prsense index . --dry-run
 prsense index . --stats
 ```
 
-### Typical Workflows
+### Install the pre-push hook
 
-#### Local Development
+```bash
+prsense hook install
+```
+
+Runs PRSense against each pushed ref before the push completes. Bypass with `git push --no-verify`. See `prsense hook --help` for details.
+
+### Diagnose your setup
+
+```bash
+prsense doctor
+```
+
+### Typical Workflow
 
 1. `prsense index .`
 2. `prsense review .`
 
 ## Configuration
-
-This is the configuration structure
 
 ```
 defaults
@@ -151,27 +168,21 @@ global config
    ↓
 repo config
    ↓
-environment variables
+CLI flags
    ↓
-derive runtime fields
-   ↓
-validate
-   ↓
-Resolved Environment
+Resolved Configuration
 ```
 
-PRSense separates **review behavior** from **runtime infrastructure configuration**.
-
-Configuration is layered and deterministic.
+PRSense separates **review behavior** from **runtime credentials**. Configuration is layered and deterministic.
 
 ### Configuration Layers (Lowest → Highest Priority)
 
 1. Built-in defaults
 2. Global config (`~/.config/prsense/config.yml`)
 3. Repository config (`prsense.yml`)
-4. CLI flags (when applicable)
+4. CLI flags
 
-Environment variables are used exclusively for **credentials and infrastructure**, never review behavior.
+Environment variables are used exclusively for **credentials**, never review behavior.
 
 This ensures:
 
@@ -180,7 +191,7 @@ This ensures:
 - Deterministic layering
 - Clear separation of domain vs runtime concerns
 
-## Global Configuration (Optional)
+### Global Configuration (Optional)
 
 Location:
 
@@ -196,8 +207,6 @@ or
 
 Global config defines personal defaults applied to all repositories.
 
-Example:
-
 ```yaml
 llm:
   provider: ollama
@@ -211,11 +220,9 @@ embeddings:
 
 Repository config overrides global config.
 
-## Repository Configuration (`prsense.yml`)
+### Repository Configuration (`prsense.yml`)
 
-Placed at the root of your repository.
-
-This file defines review behavior:
+Placed at the root of your repository. Defines review behavior:
 
 - LLM provider and model
 - Embedding model
@@ -223,7 +230,7 @@ This file defines review behavior:
 - Review thresholds
 - Retrieval limits
 
-## Example
+### Example
 
 ```yaml
 llm:
@@ -232,7 +239,7 @@ llm:
   temperature: 0.1
 
 embeddings:
-  provider: ollama # ollama | openai
+  provider: ollama # ollama | openai | google
   model: nomic-embed-text
 
 index:
@@ -241,7 +248,7 @@ index:
 
 review:
   confidenceThreshold: 0.8
-  maxSignals: 3
+  topSignals: 3
 
 context:
   maxChunks: 5
@@ -250,59 +257,41 @@ git:
   baseBranch: main
 ```
 
-## Configuration Sections Explained
+### Configuration Sections
 
-## `llm`
+#### `llm`
 
-Controls review generation model.
+Controls the review generation model. Supported providers: `ollama`, `openai`, `google`, `anthropic`. `temperature` controls randomness; lower values produce more deterministic output.
 
-Supported providers:
+#### `embeddings`
 
-- `ollama`
-- `openai`
-- `google`
-- `anthropic`
+Controls vector embeddings used for indexing and retrieval. If changed, re-indexing is required and embedding dimensions must match the database schema.
 
-`temperature` controls randomness.
-
-Lower values produce more deterministic output.
-
-## `embeddings`
-
-Controls vector embeddings used for indexing and retrieval.
-
-If changed:
-
-- Re-indexing is required.
-- Embedding dimensions must match the database schema.
-
-## `index`
+#### `index`
 
 Controls repository chunking.
 
-- `chunkSizeChars` — characters per chunk.
-- `chunkOverlapChars` — overlap between chunks.
+- `chunkSizeChars` — characters per chunk
+- `chunkOverlapChars` — overlap between chunks
 
-## `review`
+#### `review`
 
 Controls signal filtering.
 
-- `confidenceThreshold` — minimum confidence.
-- `maxSignals` — maximum number of emitted signals.
+- `confidenceThreshold` — minimum confidence
+- `topSignals` — number of highest-priority signals emitted
 
-## `context`
+#### `context`
 
 Controls retrieval (RAG).
 
-- `maxChunks` — number of chunks retrieved per review.
+- `maxChunks` — number of chunks retrieved **per changed file**
 
-## Environment Variables
+### Environment Variables
 
-Environment variables configure runtime infrastructure and credentials.
+Credentials only. Never store in `prsense.yml`.
 
-They are never stored in `prsense.yml`.
-
-## LLM Credentials
+#### LLM credentials
 
 | Provider | Variable                         |
 | -------- | -------------------------------- |
@@ -311,123 +300,52 @@ They are never stored in `prsense.yml`.
 | Claude   | `PRSENSE_ANTHROPIC_API_KEY`      |
 | Ollama   | `PRSENSE_OLLAMA_HOST` (optional) |
 
-## Embeddings (OpenAI)
+#### VCS read tokens (for remote PR/MR review)
+
+| Platform           | Variable                 |
+| ------------------ | ------------------------ |
+| GitHub             | `PRSENSE_GITHUB_TOKEN`   |
+| GitLab             | `PRSENSE_GITLAB_TOKEN`   |
+| Codeberg / Forgejo | `PRSENSE_CODEBERG_TOKEN` |
+
+#### Storage
+
+Bundled SQLite + sqlite-vec. Stored under the PRSense state directory (`~/.local/state/prsense/`). No setup required.
+
+#### Logging
 
 ```
-PRSENSE_OPENAI_API_KEY
-```
-
-## Database
-
-Bundled sqlite with sqlite-vec. Used for indexing.
-
-```
-
-## GitHub Delivery
-
-### Personal Access Token
-
-```
-
-PRSENSE_GITHUB_TOKEN
-PRSENSE_GITHUB_WEBHOOK_SECRET
-
-```
-
-### GitHub App (Recommended)
-
-```
-
-PRSENSE_GITHUB_APP_ID
-PRSENSE_GITHUB_APP_PRIVATE_KEY
-PRSENSE_GITHUB_INSTALLATION_ID
-PRSENSE_GITHUB_WEBHOOK_SECRET
-
-```
-
-## GitLab Delivery
-
-```
-
-PRSENSE_GITLAB_TOKEN
-PRSENSE_GITLAB_WEBHOOK_SECRET
-
-```
-
-## Slack Delivery
-
-```
-
-PRSENSE_SLACK_BOT_TOKEN
-
-```
-
-## Logging
-
-```
-
 PRSENSE_LOG_LEVEL=debug | info | warn | error
-
-````
-
-
-### CLI Mode
-
-- Loads global + repo config
-- Ignores `delivery`
-- No webhook secrets required
-- Can run fully local
-
-Example:
-
-```sh
-prsense review .
-````
+```
 
 ### Inspecting Effective Configuration
 
-You can inspect merged configuration:
-
-```sh
+```bash
 prsense config inspect
 ```
 
-This shows:
-
-- Global config
-- Repository config
-- Effective merged config
-- Runtime resolved config
-- Credential availability
+Shows the layered merge with provenance per field, plus credential availability per provider (never the secrets themselves).
 
 ### Defaults
 
 If no configuration is provided:
 
-- `ollama` is used as default LLM
-- `nomic-embed-text` used for embeddings
+- `ollama` is used as the default LLM provider
+- `nomic-embed-text` is used for embeddings
 - Safe chunking defaults applied
-- No delivery enabled
 
 ### Security Notes
 
-- Never commit API keys.
-- Never commit webhook secrets.
-- Prefer GitHub App over PAT in production.
-- Use separate credentials for staging/production.
+- Never commit API keys or tokens.
 - Global config should not contain secrets.
 
 ### Configuration Summary
 
-| Type              | Location                              | Purpose                |
-| ----------------- | ------------------------------------- | ---------------------- |
-| Global defaults   | `~/.config/prsense/config.yml`        | Personal defaults      |
-| Repository config | `prsense.yml`                         | Review behavior        |
-| Credentials       | Environment variables                 | Secrets / API access   |
-| Database          | Environment variables                 | Index storage          |
-| Delivery channels | `prsense.yml` + environment variables | Posting review results |
-
-PRSense enforces strict separation between domain behavior and runtime credentials to ensure reproducibility, determinism, and security.
+| Type              | Location                       | Purpose              |
+| ----------------- | ------------------------------ | -------------------- |
+| Global defaults   | `~/.config/prsense/config.yml` | Personal defaults    |
+| Repository config | `prsense.yml`                  | Review behavior      |
+| Credentials       | Environment variables          | Secrets / API access |
 
 ## Design
 
@@ -483,19 +401,7 @@ Adapters are inherently imperative and may fail. Those failures are handled at t
 
 ### Imperative Shell
 
-The outermost layer consists of applications:
-
-- the CLI
-- background workers
-- future GitHub integrations
-
-These applications:
-
-- parse user input
-- load configuration
-- wire adapters together
-- call the core
-- present results
+The outermost layer consists of applications that parse user input, load configuration, wire adapters together, call the core, and present results.
 
 The shell is free to be messy. The core is not.
 
@@ -503,9 +409,9 @@ The shell is free to be messy. The core is not.
 
 This architecture allows PRSense to:
 
-- run locally, or as a service
 - swap LLM providers without touching review logic
 - add new retrieval strategies without rewriting the engine
+- support new VCS platforms with a small adapter
 - remain understandable as complexity grows
 
 Most importantly, it allows PRSense to treat LLMs as interchangeable tools rather than structural dependencies.
@@ -551,16 +457,14 @@ PRSense follows a hexagonal architecture:
 
 ```
 
-
-CLI  / GitHub App
-─────────────── execution environments
+CLI
+─────────────── execution environment
 Workflows
 ─────────────── orchestration
 Engine / Context / Adapters / LLM
 ─────────────── capabilities
 Domain
 ─────────────── pure types
-
 
 ```
 
@@ -570,27 +474,26 @@ A complete command reference is available in:
 
 [docs/man/prsense.1](docs/man/prsense.1)
 
-or just issue `man prsense`
+or just run `man prsense`
 
 ## Benchmarks
 
-Currently benchmarks track the time for each review, token usage, grounding etc for flagship
-models and local models via ollama
+Benchmarks track per-review latency, token usage, and grounding metrics for flagship and local (Ollama) models.
 
-See [benchmarks.json](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json)
+See [benchmarks.json](packages/bench/bench-results/2026-03-19T14-32-19.234Z.json).
 
-#### Running benchmarking
+### Running benchmarks
 
-You can run the benchmarks on your own machine by cloning the repository, installing the packages with `pnpm i` from the root
+Clone the repo, install with `pnpm i` from the root, then:
 
-1. Create a github token and set it up `PRSENSE_GITHUB_BENCH_TOKEN`
+1. Create a GitHub token and set `PRSENSE_GITHUB_BENCH_TOKEN`
 2. `pnpm bench`
 
-Make sure all the environment variables related to cloud providers have been set up and ollama is running with the models being tested available
+Ensure cloud provider credentials are set, and Ollama is running with the models under test available.
 
 ## Contributing
 
-PRs are welcome
+PRs welcome.
 
 ## License
 
