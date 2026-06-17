@@ -3,6 +3,14 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.1] — 2026-06-17
+
+### Fixed
+
+- Manpage: remove stale Postgres/pgvector references, drop daemon-only
+  env vars and config keys, align config example with current schema,
+  add Codeberg as a review target.
+
 ## [0.15.0] — 2026-06-17
 
 ### Added
