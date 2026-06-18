@@ -51,10 +51,22 @@ export async function runFirstTimeSetup() {
     { onCancel },
   )) as { provider: InitProvider };
 
+  const { baseBranch } = (await prompts(
+    {
+      type: "text",
+      name: "baseBranch",
+      message: "Default base branch:",
+      initial: "main",
+      validate: (v: string) => (v.trim().length > 0 ? true : "Required"),
+    },
+    { onCancel },
+  )) as { baseBranch: string };
+
   // Build config through the schema — defaults fill in everything else.
   const config = RuntimeConfigSchema.parse({
     llm: { provider, model: DEFAULT_LLM_MODELS[provider] },
     embeddings: { provider, model: DEFAULT_EMBEDDING_MODELS[provider] },
+    git: { baseBranch: baseBranch.trim() },
   });
 
   console.log(`✔ LLM model:        ${config.llm.model}`);
