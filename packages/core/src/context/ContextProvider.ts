@@ -8,6 +8,7 @@ export type ContextAvailabilityInput = {
   repositoryIdentity: RepositoryIdentity;
   revision: string;
   eventBus?: EventBus;
+  diff: UnifiedDiff;
 };
 
 export type ContextInput = {

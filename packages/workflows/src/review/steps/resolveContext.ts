@@ -10,6 +10,7 @@ import {
 import type { ResolvedConfig } from "@prsense/config";
 import {
   RagContextProvider,
+  SymbolGraphContextProvider,
   type RagChunkRepository,
   type IndexMetadataRepository,
 } from "@prsense/context";
@@ -67,11 +68,12 @@ export async function resolveContext(params: Params): Promise<Result> {
       maxChunks: config.context.maxChunks,
       ...(metadata ? { prMetadata: metadata } : {}),
     }),
+    new SymbolGraphContextProvider({ repoRoot: config.repository.root }),
   ];
 
   const available: ContextProvider[] = [];
   for (const p of providers) {
-    if (await p.isAvailable({ repositoryIdentity, revision, eventBus })) {
+    if (await p.isAvailable({ repositoryIdentity, revision, eventBus, diff })) {
       available.push(p);
     }
   }
