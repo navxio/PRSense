@@ -3,6 +3,13 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] — 2026-06-18
+
+### Changed
+
+- `prsense init` now prompts for the default base branch (prefilled with
+  `main`) and writes it to `git.baseBranch` in the generated config.
+
 ## [0.15.1] — 2026-06-17
 
 ### Fixed
