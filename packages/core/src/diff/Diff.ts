@@ -1,3 +1,4 @@
+// packages/core/src/diff/Diff.ts
 export type DiffHunk = {
   /** Start line in the new file */
   startLine: number;
