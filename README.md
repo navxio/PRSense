@@ -22,13 +22,9 @@
 
 > PRSense is experimental software, expect bugs.
 
----
-
 <p align="center">
   <img src="assets/demo.gif" alt="PRSense in action" width="900">
 </p>
-
----
 
 ## Table of Contents
 
