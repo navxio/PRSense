@@ -2,30 +2,6 @@
 import path from "node:path";
 import { findRepoRoot } from "./findRepoRoot.js";
 
-export type ClassifiedTarget =
-  | {
-      provider: "github";
-      root: string;
-      owner: string;
-      repo: string;
-      pr: string;
-    }
-  | {
-      provider: "gitlab";
-      root: string;
-      group: string;
-      project: string;
-      mr: string;
-    }
-  | {
-      provider: "codeberg";
-      root: string;
-      owner: string;
-      repo: string;
-      pr: string;
-    }
-  | { provider: "filesystem"; root: string };
-
 const GITHUB = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
 const GITLAB = /gitlab\.com\/([^/]+)\/([^/]+)\/-\/merge_requests\/(\d+)/;
 const CODEBERG = /codeberg\.org\/([^/]+)\/([^/]+)\/pulls\/(\d+)/;
