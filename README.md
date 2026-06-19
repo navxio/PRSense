@@ -429,34 +429,7 @@ The result is a system that is flexible without being fragile.
 
 ## Architecture
 
-          ┌─────────────┐
-          │   Git / PR  │
-          └──────┬──────┘
-                 │
-            [ Diff Input ]
-                 │
-        ┌────────▼────────┐
-        │ Ingestion       │
-        │ (diff + meta)   │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Context Builder │◄──── Repository, files, history
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Review Engine   │
-        │ (LLM + Context) │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Signal Compiler │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Reporters       │
-        │ (CLI, others)   │
-        └─────────────────┘
+![architecture](./assets/architecture.png)
 
 PRSense follows a hexagonal architecture:
 
