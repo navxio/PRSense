@@ -58,7 +58,7 @@ export async function runIndexWorkflow({
     // Resolve Repository Source
     // -------------------------------------------------
 
-    let repositorySource = resolveRepositorySource(target, ref);
+    let repositorySource = resolveRepositorySource(target, credentials, ref);
 
     // -------------------------------------------------
     // Resolve Identity + Revision
