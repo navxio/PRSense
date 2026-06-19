@@ -3,6 +3,40 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] — 2026-06-19
+
+### Added
+
+- **Codeberg indexing.** `prsense index https://codeberg.org/<owner>/<repo>`
+  now clones and indexes Codeberg repositories. Closes the parity gap
+  with `prsense review` against Codeberg PRs introduced in 0.15.0.
+
+### Fixed
+
+- **Private-repo indexing for GitHub and GitLab.** `resolveRepositorySource`
+  was constructing `GitHubRepositorySource` and `GitLabRepositorySource`
+  without passing the configured token, so indexing a private repo by
+  URL failed at clone time despite `PRSENSE_GITHUB_TOKEN` or
+  `PRSENSE_GITLAB_TOKEN` being set. Tokens now thread from
+  `CredentialContext` through to each clone-based source.
+- Codeberg private-repo indexing benefits from the same fix at
+  introduction.
+
+### Internal
+
+- `resolveRepositorySource` now takes `CredentialContext` as a required
+  parameter. Internal API; no impact outside the workflows package.
+
+### Notes
+
+- Self-hosted Forgejo hosts are not yet routed to `CodebergRepositorySource`
+  — `classifyTarget` only matches `codeberg.org`. A `host` parameter or
+  CLI flag is a follow-up.
+- The three clone-based sources duplicate the same shell-out pattern.
+  Collapsing into a single `HttpsCloneRepositorySource` is tracked
+  separately; the existing `execSync` call sites should migrate to
+  `execFileSync` as part of that work.
+
 ## [0.15.4] — 2026-06-19
 
 ### Fixed
