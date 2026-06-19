@@ -7,7 +7,7 @@ import { deepMerge } from "./merge.js";
 import { RuntimeConfigSchema } from "./schema.js";
 import { buildResolvedConfig } from "./buildResolvedConfig.js";
 import type { ResolvedConfig, RuntimeMode } from "./types.js";
-import { RepositoryProvider } from "packages/core/dist/index.js";
+import { RepositoryProvider } from "@prsense/core";
 
 export function getGlobalConfigPath(): string {
   const base =

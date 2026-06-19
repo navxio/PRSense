@@ -30,6 +30,7 @@ import { ensureInit } from "./init/ensureInit.js";
 
 import pkg from "../../package.json" with { type: "json" };
 import { buildServices } from "../composition.js";
+import { findRepoRoot } from "../shared/findRepoRoot.js";
 
 const PRSENSE_VERSION = pkg.version;
 
@@ -94,8 +95,6 @@ export const reviewCommand = new Command("review")
       // Load Config
       // -------------------------------------------------
 
-      const repoRoot = path.resolve(target);
-
       const githubPrMatch = target.match(
         /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
       );
@@ -105,6 +104,12 @@ export const reviewCommand = new Command("review")
       const codebergPrMatch = target.match(
         /codeberg\.org\/([^\/]+)\/([^\/]+)\/pulls\/(\d+)/,
       );
+
+      const isUrl = githubPrMatch || gitlabMrMatch || codebergPrMatch;
+
+      const repoRoot = isUrl
+        ? path.resolve(target)
+        : findRepoRoot(path.resolve(target));
 
       const repoProvider = githubPrMatch
         ? "github"
