@@ -30,7 +30,7 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
 
   const indexRepo = () =>
     runIndexWorkflow({
-      target: repo,
+      target: { provider: "filesystem", root: repo },
       config: testConfig(),
       credentials: testCredentials(),
       force: true,
@@ -56,7 +56,10 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
     await indexRepo();
 
     // Use the same identity the indexer wrote with
-    const identity = resolveRepositorySource(repo).getRepositoryIdentity();
+    const identity = resolveRepositorySource({
+      provider: "filesystem",
+      root: repo,
+    }).getRepositoryIdentity();
 
     const retrieved = await retrieveContext({
       config: testConfig(),
@@ -81,7 +84,10 @@ describe("RAG retrieval excludes diff-modified files (option A)", () => {
 
     await indexRepo();
 
-    const identity = resolveRepositorySource(repo).getRepositoryIdentity();
+    const identity = resolveRepositorySource({
+      provider: "filesystem",
+      root: repo,
+    }).getRepositoryIdentity();
 
     const retrieved = await retrieveContext({
       config: testConfig(),
