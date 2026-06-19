@@ -147,11 +147,10 @@ export const reviewCommand = new Command("review")
 
       if (options.autoIndex) {
         try {
-          //TODO: move away from passing raw target here
           await runIndexWorkflow({
             config: effectiveConfig,
             credentials: env.credentials,
-            target,
+            target: t,
             force: false,
             dryRun: false,
             eventBus,
@@ -175,23 +174,32 @@ export const reviewCommand = new Command("review")
 
       console.log("→ Running review...\n");
 
-      const diffProvider =
-        t.provider === "github"
-          ? new GitHubPrDiffProvider(t.owner, t.repo, t.pr)
-          : t.provider === "gitlab"
-            ? new GitLabMrDiffProvider(t.group, t.project, t.mr)
-            : t.provider === "codeberg"
-              ? new CodebergPrDiffProvider(
-                  t.owner,
-                  t.repo,
-                  t.pr,
-                  env.credentials.codeberg?.token,
-                )
-              : new LocalGitDiffProvider(
-                  t.root,
-                  effectiveConfig.git?.baseBranch,
-                );
-
+      const diffProvider = (() => {
+        switch (t.provider) {
+          case "github":
+            if (t.kind !== "pr")
+              throw new Error("Review requires a GitHub PR URL");
+            return new GitHubPrDiffProvider(t.owner, t.repo, t.pr);
+          case "gitlab":
+            if (t.kind !== "mr")
+              throw new Error("Review requires a GitLab MR URL");
+            return new GitLabMrDiffProvider(t.group, t.project, t.mr);
+          case "codeberg":
+            if (t.kind !== "pr")
+              throw new Error("Review requires a Codeberg PR URL");
+            return new CodebergPrDiffProvider(
+              t.owner,
+              t.repo,
+              t.pr,
+              env.credentials.codeberg?.token,
+            );
+          case "filesystem":
+            return new LocalGitDiffProvider(
+              t.root,
+              effectiveConfig.git?.baseBranch,
+            );
+        }
+      })();
       // -------------------------------------------------
       // Run Review Workflow
       // -------------------------------------------------

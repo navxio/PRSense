@@ -138,7 +138,7 @@ export const indexCommand = new Command("index")
         metadataRepository: services.metadataRepo,
         config: effectiveConfig,
         credentials: env.credentials,
-        target,
+        target: t,
         force: Boolean(options.force),
         dryRun: Boolean(options.dryRun),
         eventBus,
