@@ -3,6 +3,45 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.4] — 2026-06-19
+
+### Fixed
+
+- **Repo root resolution from subdirectories.** Every CLI command
+  (`review`, `index`, `config inspect`, `doctor`) was deriving the
+  repository root from `process.cwd()` rather than the actual git root.
+  Running from any subdirectory silently fell back to default
+  configuration (`baseBranch: main`), bypassing `prsense.yml` and
+  triggering `git rev-parse` / `git diff` failures against the
+  configured base branch. Root is now resolved via
+  `git rev-parse --show-toplevel`.
+
+### Changed
+
+- **Target classification centralized.** Each command previously
+  duplicated its own URL regex set and path resolution, with subtle
+  drift (e.g. `index` had no Codeberg support; `review` did). All
+  commands now route through a single `classifyTarget` helper that
+  returns a discriminated `ClassifiedTarget` union covering GitHub,
+  GitLab, Codeberg (PR/MR and bare-repo URL forms), and filesystem.
+- `runIndexWorkflow` and `resolveRepositorySource` now consume
+  `ClassifiedTarget` rather than re-parsing a raw target string.
+  URL parsing happens exactly once, at the CLI edge.
+- Review now surfaces a clear error when given a non-PR URL (e.g.
+  `github.com/org/repo` without `/pull/N`), instead of misclassifying
+  it as a local path.
+
+### Internal
+
+- `ClassifiedTarget` lives in `@prsense/core` as a pure domain type;
+  `classifyTarget` (the function, which shells out for repo-root
+  discovery) stays at the CLI edge.
+
+### Notes
+
+- Codeberg indexing dispatch is stubbed pending a follow-up PR; review
+  against Codeberg PRs is unchanged.
+
 ## [0.15.3] — 2026-06-19
 
 ### Fixed

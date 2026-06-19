@@ -1,3 +1,4 @@
+// packages/core/src/IndexedRepository.ts
 export type IndexedRepository = {
   provider: string;
   repository: string;

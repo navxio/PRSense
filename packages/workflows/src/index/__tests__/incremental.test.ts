@@ -38,7 +38,7 @@ describe("Incremental indexing (real DB)", () => {
     overrides: Partial<Parameters<typeof runIndexWorkflow>[0]> = {},
   ) =>
     runIndexWorkflow({
-      target: repo,
+      target: { provider: "filesystem", root: repo },
       config: testConfig(),
       credentials: testCredentials(),
       eventBus: overrides.eventBus ?? new TestEventBus(),

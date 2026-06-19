@@ -20,3 +20,4 @@ export * from "./IndexedRepository.js";
 export * from "./paths.js";
 
 export * from "./llm/EmbeddingClient.js";
+export * from "./repository/target.js";

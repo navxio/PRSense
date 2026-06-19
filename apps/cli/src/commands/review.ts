@@ -18,7 +18,6 @@ import {
   printStats,
   printSignals,
 } from "@prsense/reporters";
-import path from "node:path";
 import {
   LocalGitDiffProvider,
   GitHubPrDiffProvider,
@@ -30,7 +29,7 @@ import { ensureInit } from "./init/ensureInit.js";
 
 import pkg from "../../package.json" with { type: "json" };
 import { buildServices } from "../composition.js";
-import { findRepoRoot } from "../shared/findRepoRoot.js";
+import { classifyTarget } from "../shared/classifyTarget.js";
 
 const PRSENSE_VERSION = pkg.version;
 
@@ -95,33 +94,11 @@ export const reviewCommand = new Command("review")
       // Load Config
       // -------------------------------------------------
 
-      const githubPrMatch = target.match(
-        /github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/,
-      );
-      const gitlabMrMatch = target.match(
-        /gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/merge_requests\/(\d+)/,
-      );
-      const codebergPrMatch = target.match(
-        /codeberg\.org\/([^\/]+)\/([^\/]+)\/pulls\/(\d+)/,
-      );
-
-      const isUrl = githubPrMatch || gitlabMrMatch || codebergPrMatch;
-
-      const repoRoot = isUrl
-        ? path.resolve(target)
-        : findRepoRoot(path.resolve(target));
-
-      const repoProvider = githubPrMatch
-        ? "github"
-        : gitlabMrMatch
-          ? "gitlab"
-          : codebergPrMatch
-            ? "codeberg"
-            : "filesystem";
+      const t = classifyTarget(target);
 
       const env = resolveEnvironment("cli", {
-        root: repoRoot,
-        provider: repoProvider,
+        root: t.root,
+        provider: t.provider,
       });
 
       if (env.issues.some((i) => i.level === "error")) {
@@ -173,7 +150,7 @@ export const reviewCommand = new Command("review")
           await runIndexWorkflow({
             config: effectiveConfig,
             credentials: env.credentials,
-            target,
+            target: t,
             force: false,
             dryRun: false,
             eventBus,
@@ -197,37 +174,32 @@ export const reviewCommand = new Command("review")
 
       console.log("→ Running review...\n");
 
-      let diffProvider;
-
-      if (githubPrMatch) {
-        const [, owner, repo, prNumber] = githubPrMatch;
-        diffProvider = new GitHubPrDiffProvider(
-          owner,
-          repo.replace(".git", ""),
-          prNumber,
-        );
-      } else if (gitlabMrMatch) {
-        const [, group, project, mrNumber] = gitlabMrMatch;
-        diffProvider = new GitLabMrDiffProvider(
-          group,
-          project.replace(".git", ""),
-          mrNumber,
-        );
-      } else if (codebergPrMatch) {
-        const [, owner, repo, prNumber] = codebergPrMatch;
-        diffProvider = new CodebergPrDiffProvider(
-          owner,
-          repo.replace(".git", ""),
-          prNumber,
-          env.credentials.codeberg?.token,
-        );
-      } else {
-        diffProvider = new LocalGitDiffProvider(
-          repoRoot,
-          effectiveConfig.git?.baseBranch,
-        );
-      }
-
+      const diffProvider = (() => {
+        switch (t.provider) {
+          case "github":
+            if (t.kind !== "pr")
+              throw new Error("Review requires a GitHub PR URL");
+            return new GitHubPrDiffProvider(t.owner, t.repo, t.pr);
+          case "gitlab":
+            if (t.kind !== "mr")
+              throw new Error("Review requires a GitLab MR URL");
+            return new GitLabMrDiffProvider(t.group, t.project, t.mr);
+          case "codeberg":
+            if (t.kind !== "pr")
+              throw new Error("Review requires a Codeberg PR URL");
+            return new CodebergPrDiffProvider(
+              t.owner,
+              t.repo,
+              t.pr,
+              env.credentials.codeberg?.token,
+            );
+          case "filesystem":
+            return new LocalGitDiffProvider(
+              t.root,
+              effectiveConfig.git?.baseBranch,
+            );
+        }
+      })();
       // -------------------------------------------------
       // Run Review Workflow
       // -------------------------------------------------

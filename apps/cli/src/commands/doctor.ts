@@ -9,6 +9,7 @@ import { resolveEnvironment } from "@prsense/config";
 
 import { createSpinnerRenderer } from "../ui/spinnerRenderer.js";
 import { eventToCliTask } from "../ui/eventToTask.js";
+import { classifyTarget } from "../shared/classifyTarget.js";
 
 const logLevel = (process.env.PRSENSE_LOG_LEVEL as any) ?? "warn";
 
@@ -43,10 +44,12 @@ export const doctorCommand = new Command("doctor")
     });
 
     try {
+      const t = classifyTarget(".");
       const env = resolveEnvironment("cli", {
-        root: ".",
-        provider: "filesystem",
+        root: t.root,
+        provider: t.provider,
       });
+
       if (env.issues.length > 0) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
