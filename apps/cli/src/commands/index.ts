@@ -25,7 +25,7 @@ import pkg from "../../package.json" with { type: "json" };
 const PRSENSE_VERSION = pkg.version;
 
 export const indexCommand = new Command("index")
-  .argument("[target]", "Path or GitHub/GitLab URL", ".")
+  .argument("[target]", "Path or GitHub/GitLab/Codeberg URL", ".")
   .option("-f, --force", "Rebuild the index from scratch")
   .option("-d, --dry-run", "Show what would be indexed without writing")
   .option("-s, --stats", "Print indexing statistics after completion")
