@@ -28,6 +28,7 @@ type Params = {
   repository: RagChunkRepository; // was: chunks
   metadataRepository: IndexMetadataRepository; // was: metadataRepo
   metadata?: ReviewMetadata; // NEW — PR title/description for the query
+  providers?: ContextProvider[];
 };
 
 type Result = {
@@ -47,27 +48,31 @@ export async function resolveContext(params: Params): Promise<Result> {
     metadata,
   } = params;
 
-  const embedClient =
-    config.embeddings.provider === "openai"
-      ? createOpenAiEmbeddingClient({
-          apiKey: process.env.OPENAI_API_KEY!,
+  let providers: ContextProvider[];
+  if (params.providers) {
+    providers = params.providers;
+  } else {
+    const embedClient =
+      config.embeddings.provider === "openai"
+        ? createOpenAiEmbeddingClient({
+            apiKey: process.env.OPENAI_API_KEY!,
+            model: config.embeddings.model,
+          })
+        : createOllamaEmbeddingClient({ model: config.embeddings.model });
+    providers = [
+      new RagContextProvider({
+        chunks: repository,
+        metadata: metadataRepository,
+        embedClient,
+        embedding: {
+          provider: config.embeddings.provider,
           model: config.embeddings.model,
-        })
-      : createOllamaEmbeddingClient({ model: config.embeddings.model });
-
-  const providers: ContextProvider[] = [
-    new RagContextProvider({
-      chunks: repository,
-      metadata: metadataRepository,
-      embedClient,
-      embedding: {
-        provider: config.embeddings.provider,
-        model: config.embeddings.model,
-      },
-      maxChunks: config.context.maxChunks,
-      ...(metadata ? { prMetadata: metadata } : {}),
-    }),
-  ];
+        },
+        maxChunks: config.context.maxChunks,
+        ...(metadata ? { prMetadata: metadata } : {}),
+      }),
+    ];
+  }
 
   const available: ContextProvider[] = [];
   for (const p of providers) {
