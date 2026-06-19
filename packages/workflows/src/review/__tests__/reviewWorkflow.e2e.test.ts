@@ -2,6 +2,10 @@
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import { CoreEvents, type EventBus } from "@prsense/core";
 import { buildResolvedConfig, RuntimeConfigSchema } from "@prsense/config";
+import { DiffProvider } from "@prsense/core";
+import { LlmClient } from "@prsense/llm";
+import { ResolvedConfig } from "@prsense/config";
+import { ContextProvider } from "@prsense/core";
 
 import { runReviewWorkflow } from "../reviewWorkflow.js";
 import {
@@ -28,6 +32,27 @@ function buildCliConfig() {
     root: "/tmp/test-repo",
     provider: "filesystem",
   });
+}
+
+async function runE2EReview(opts: {
+  diffProvider: DiffProvider;
+  llmClient: LlmClient;
+  contextProviders?: ContextProvider[];
+  eventBus?: TestEventBus;
+  config?: ResolvedConfig;
+}) {
+  const eventBus = opts.eventBus ?? new TestEventBus();
+  const result = await runReviewWorkflow({
+    repository: {} as any,
+    metadataRepository: {} as any,
+    config: (opts.config ?? buildCliConfig()) as any,
+    credentials: {},
+    diffProvider: opts.diffProvider,
+    eventBus,
+    llmClient: opts.llmClient,
+    contextProviders: opts.contextProviders ?? [new MockContextProvider()],
+  });
+  return { result, eventBus };
 }
 
 describe("runReviewWorkflow E2E", () => {
@@ -74,15 +99,10 @@ describe("runReviewWorkflow E2E", () => {
 
     const eventBus = new TestEventBus();
 
-    const result = await runReviewWorkflow({
-      repository: {} as any, // unused — contextProviders is injected
-      metadataRepository: {} as any, // unused — contextProviders is injected
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
+    const { result } = await runE2EReview({
       eventBus,
+      diffProvider,
       llmClient,
-      contextProviders: [new MockContextProvider()],
     });
 
     // Outcome
@@ -148,16 +168,7 @@ describe("runReviewWorkflow E2E", () => {
       }),
     );
 
-    const result = await runReviewWorkflow({
-      repository: {} as any,
-      metadataRepository: {} as any,
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
-      eventBus: new TestEventBus(),
-      llmClient,
-      contextProviders: [new MockContextProvider()],
-    });
+    const { result } = await runE2EReview({ diffProvider, llmClient });
 
     expect(result.outcome).toBe("success");
     expect(result.payload.signals).toHaveLength(1);
@@ -211,16 +222,7 @@ describe("runReviewWorkflow E2E", () => {
       }),
     );
 
-    const result = await runReviewWorkflow({
-      repository: {} as any,
-      metadataRepository: {} as any,
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
-      eventBus: new TestEventBus(),
-      llmClient,
-      contextProviders: [new MockContextProvider()],
-    });
+    const { result } = await runE2EReview({ llmClient, diffProvider });
 
     expect(result.outcome).toBe("success");
     expect(result.payload.signals).toHaveLength(3); // default topSignals = 3
@@ -244,15 +246,10 @@ describe("runReviewWorkflow E2E", () => {
     const contextProvider = new MockContextProvider();
     const isAvailableSpy = jest.spyOn(contextProvider, "isAvailable");
 
-    const result = await runReviewWorkflow({
-      repository: {} as any,
-      metadataRepository: {} as any,
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
-      eventBus: new TestEventBus(),
-      llmClient,
+    const { result } = await runE2EReview({
       contextProviders: [contextProvider],
+      llmClient,
+      diffProvider,
     });
 
     expect(result.outcome).toBe("success");
@@ -286,15 +283,10 @@ describe("runReviewWorkflow E2E", () => {
 
     const eventBus = new TestEventBus();
 
-    const result = await runReviewWorkflow({
-      repository: {} as any,
-      metadataRepository: {} as any,
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
+    const { result } = await runE2EReview({
       eventBus,
       llmClient,
-      contextProviders: [new MockContextProvider()],
+      diffProvider,
     });
 
     // Workflow overall succeeds despite one file failing
@@ -343,17 +335,12 @@ describe("runReviewWorkflow E2E", () => {
 
     const eventBus = new TestEventBus();
 
-    const result = await runReviewWorkflow({
-      repository: {} as any,
-      metadataRepository: {} as any,
-      config: buildCliConfig() as any,
-      credentials: {},
-      diffProvider,
+    const { result } = await runE2EReview({
       eventBus,
-      llmClient,
       contextProviders: [contextProvider],
+      llmClient,
+      diffProvider,
     });
-
     // Review still completes and produces signals
     expect(result.outcome).toBe("success");
     expect(result.payload.signals).toHaveLength(1);
