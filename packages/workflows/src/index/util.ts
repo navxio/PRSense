@@ -9,6 +9,7 @@ import { EventBus, CoreEvents } from "@prsense/core";
 
 import type { IndexPlan, ExecutionPlan } from "./types.js";
 import type { GitBackedRepositorySource } from "@prsense/context";
+import type { CredentialContext } from "@prsense/config";
 import {
   createCharChunker,
   detectKind,
@@ -17,19 +18,33 @@ import {
   GitLabRepositorySource,
   GitHubRepositorySource,
   RefAwareRepositorySource,
+  CodebergRepositorySource,
 } from "@prsense/context";
 
 export function resolveRepositorySource(
   target: ClassifiedTarget,
+  credentials: CredentialContext,
   ref?: string,
 ) {
   switch (target.provider) {
     case "github":
-      return new GitHubRepositorySource(target.owner, target.repo);
+      return new GitHubRepositorySource(
+        target.owner,
+        target.repo,
+        credentials.github?.token,
+      );
     case "gitlab":
-      return new GitLabRepositorySource(target.group, target.project);
+      return new GitLabRepositorySource(
+        target.group,
+        target.project,
+        credentials.gitlab?.token,
+      );
     case "codeberg":
-      throw new Error("Codeberg indexing not yet wired"); // follow-up PR
+      return new CodebergRepositorySource(
+        target.owner,
+        target.repo,
+        credentials.codeberg?.token,
+      );
     case "filesystem": {
       const src = new FileSystemRepositorySource(target.root);
       return ref ? new RefAwareRepositorySource(src, ref) : src;
