@@ -168,4 +168,206 @@ describe("runReviewWorkflow E2E", () => {
     expect(llmClient.calls).toHaveLength(2); // LLM saw both files
     expect(result.payload.totalBeforeCap).toBe(1); // post-confidence-filter count
   });
+
+  it("trims excess signals via the topN cap, keeping highest-severity", async () => {
+    const fileA = makeDiffFile("src/auth.ts");
+    const fileB = makeDiffFile("src/billing.ts");
+
+    const high1 = makeSignal({
+      file: "src/auth.ts",
+      message: "high-1",
+      severity: "high",
+      confidence: 0.9,
+    });
+    const high2 = makeSignal({
+      file: "src/auth.ts",
+      message: "high-2",
+      severity: "high",
+      confidence: 0.9,
+    });
+    const high3 = makeSignal({
+      file: "src/billing.ts",
+      message: "high-3",
+      severity: "high",
+      confidence: 0.9,
+    });
+    const lowDropped = makeSignal({
+      file: "src/billing.ts",
+      message: "low-dropped",
+      severity: "low",
+      confidence: 0.9,
+    });
+
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [fileA, fileB] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient(
+      byFilePath({
+        "src/auth.ts": llmResponseFromSignals([high1, high2]),
+        "src/billing.ts": llmResponseFromSignals([high3, lowDropped]),
+      }),
+    );
+
+    const result = await runReviewWorkflow({
+      repository: {} as any,
+      metadataRepository: {} as any,
+      config: buildCliConfig() as any,
+      credentials: {},
+      diffProvider,
+      eventBus: new TestEventBus(),
+      llmClient,
+      contextProviders: [new MockContextProvider()],
+    });
+
+    expect(result.outcome).toBe("success");
+    expect(result.payload.signals).toHaveLength(3); // default topSignals = 3
+    expect(result.payload.totalBeforeCap).toBe(4);
+    expect(result.payload.signals.map((s) => s.message)).not.toContain(
+      "low-dropped",
+    );
+  });
+
+  it("short-circuits on empty diff without calling the LLM or context provider", async () => {
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient(() => {
+      throw new Error("LLM should not be called for empty diff");
+    });
+
+    const contextProvider = new MockContextProvider();
+    const isAvailableSpy = jest.spyOn(contextProvider, "isAvailable");
+
+    const result = await runReviewWorkflow({
+      repository: {} as any,
+      metadataRepository: {} as any,
+      config: buildCliConfig() as any,
+      credentials: {},
+      diffProvider,
+      eventBus: new TestEventBus(),
+      llmClient,
+      contextProviders: [contextProvider],
+    });
+
+    expect(result.outcome).toBe("success");
+    expect(result.payload.signals).toEqual([]);
+    expect(llmClient.calls).toHaveLength(0);
+    expect(isAvailableSpy).not.toHaveBeenCalled();
+  });
+
+  it("isolates LLM failures per file — other files still produce signals", async () => {
+    const fileA = makeDiffFile("src/auth.ts");
+    const fileB = makeDiffFile("src/billing.ts");
+
+    const survivingSignal = makeSignal({
+      file: "src/billing.ts",
+      message: "Survives the partial failure",
+      confidence: 0.9,
+    });
+
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [fileA, fileB] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient((req) => {
+      if (req.prompt.user.includes("src/auth.ts")) {
+        throw new Error("simulated LLM outage for auth.ts");
+      }
+      return llmResponseFromSignals([survivingSignal]);
+    });
+
+    const eventBus = new TestEventBus();
+
+    const result = await runReviewWorkflow({
+      repository: {} as any,
+      metadataRepository: {} as any,
+      config: buildCliConfig() as any,
+      credentials: {},
+      diffProvider,
+      eventBus,
+      llmClient,
+      contextProviders: [new MockContextProvider()],
+    });
+
+    // Workflow overall succeeds despite one file failing
+    expect(result.outcome).toBe("success");
+
+    // Surviving file's signal made it through
+    expect(result.payload.signals).toHaveLength(1);
+    expect(result.payload.signals[0]?.message).toBe(
+      "Survives the partial failure",
+    );
+
+    // Both files were attempted
+    expect(llmClient.calls).toHaveLength(2);
+
+    // The failure was recorded as an event for the affected file
+    const failureEvent = eventBus.events.find(
+      (e) => e.event === CoreEvents.WorkflowReviewFileReviewFailed,
+    );
+    expect(failureEvent).toBeDefined();
+    expect((failureEvent?.fields as any)?.file).toBe("src/auth.ts");
+  });
+
+  it("runs review without context when no providers are available", async () => {
+    const fileA = makeDiffFile("src/auth.ts");
+
+    const signal = makeSignal({
+      file: "src/auth.ts",
+      message: "Found without context",
+      confidence: 0.9,
+    });
+
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [fileA] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient(
+      byFilePath({
+        "src/auth.ts": llmResponseFromSignals([signal]),
+      }),
+    );
+
+    const contextProvider = new MockContextProvider({ available: false });
+    const getContextSpy = jest.spyOn(contextProvider, "getContextForFile");
+
+    const eventBus = new TestEventBus();
+
+    const result = await runReviewWorkflow({
+      repository: {} as any,
+      metadataRepository: {} as any,
+      config: buildCliConfig() as any,
+      credentials: {},
+      diffProvider,
+      eventBus,
+      llmClient,
+      contextProviders: [contextProvider],
+    });
+
+    // Review still completes and produces signals
+    expect(result.outcome).toBe("success");
+    expect(result.payload.signals).toHaveLength(1);
+    expect(result.payload.signals[0]?.message).toBe("Found without context");
+
+    // LLM was called — workflow didn't short-circuit
+    expect(llmClient.calls).toHaveLength(1);
+
+    // Availability gate skipped retrieval entirely
+    expect(getContextSpy).not.toHaveBeenCalled();
+
+    // Context-available event was NOT emitted
+    expect(eventBus.events.map((e) => e.event)).not.toContain(
+      CoreEvents.WorkflowReviewContextAvailable,
+    );
+  });
 });
