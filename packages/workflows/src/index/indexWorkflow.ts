@@ -1,5 +1,10 @@
 // packages/workflows/src/index/indexWorkflow.ts
-import { CoreEvents, EventBus, ContextChunk } from "@prsense/core";
+import {
+  CoreEvents,
+  EventBus,
+  ContextChunk,
+  ClassifiedTarget,
+} from "@prsense/core";
 import {
   createCompositeChunker,
   IndexMetadataRepository,
@@ -37,7 +42,7 @@ export async function runIndexWorkflow({
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
-  target: string;
+  target: ClassifiedTarget;
   force?: boolean;
   dryRun?: boolean;
   eventBus: EventBus;

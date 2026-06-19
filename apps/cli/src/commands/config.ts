@@ -5,6 +5,7 @@ import {
   stdoutConfigInspectReporter,
   stdoutConfigReporter,
 } from "@prsense/reporters";
+import { classifyTarget } from "../shared/classifyTarget.js";
 
 export const configCommand = new Command("config").description(
   "Inspect and manage PRSense configuration",
@@ -13,10 +14,11 @@ export const configCommand = new Command("config").description(
 configCommand
   .command("inspect")
   .description("Show resolved configuration")
-  .action(async (options) => {
+  .action(async () => {
+    const t = classifyTarget(".");
     const env = resolveEnvironment("cli", {
-      root: ".",
-      provider: "filesystem",
+      root: t.root,
+      provider: t.provider,
     });
 
     if (env.issues.some((i) => i.level === "error")) {
@@ -27,8 +29,7 @@ configCommand
     await stdoutConfigInspectReporter.report({
       config: env.config,
       credentials: env.credentials,
-      issues: env.issues, // include warnings if any
+      issues: env.issues,
     });
-
     process.exit(0);
   });

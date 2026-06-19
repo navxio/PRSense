@@ -59,7 +59,7 @@ PRSense is built around a few core principles:
 - **Self-hosted by default** — run entirely on your own machine, no external services required
 - **Zero-infrastructure** — bundled SQLite + sqlite-vec, no database to provision
 - One-command setup
-- Automatically reads your intent from branch name locally or PR description
+- Automatically reads your intent from branch name locally
 - Pluggable models, or run everything locally via Ollama
 - Auto-indexing by default for context-enriched review
 - Human-in-the-loop decision making
@@ -70,7 +70,6 @@ PRSense is built around a few core principles:
 - Built-in profiling
 - Automatically reads from and writes to local `.env`
 - AST-based chunking for TypeScript (more languages on the roadmap)
-- Deterministic pipeline for identifying cross-file issues
 - Bundled `pre-push` git hook
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
@@ -230,26 +229,40 @@ Placed at the root of your repository. Defines review behavior:
 
 ```yaml
 llm:
-  provider: ollama # ollama | openai | google | anthropic
+  # Review model. Local (ollama) or cloud (openai | google | anthropic).
+  provider: ollama
+  # Provider-specific model name. Must support the provider's chat API.
   model: deepseek-coder-v2
+  # Sampling randomness. Keep low for deterministic, repeatable reviews.
   temperature: 0.1
 
 embeddings:
-  provider: ollama # ollama | openai | google
+  # Embedding provider for RAG. Anthropic not supported (no embeddings API).
+  provider: ollama
+  # Must stay consistent across runs; changing it forces a full re-index.
   model: nomic-embed-text
 
 index:
+  # Character window per chunk. Larger = more context per chunk, fewer chunks.
   chunkSizeChars: 1000
+  # Overlap between adjacent chunks. Preserves continuity across boundaries.
+  # Must be < chunkSizeChars (schema-enforced).
   chunkOverlapChars: 200
 
 review:
+  # Minimum LLM-reported confidence (0–1) for a signal to be emitted.
+  # Higher = stricter, fewer false positives, more false negatives.
   confidenceThreshold: 0.8
+  # Display cap. Generation stays exhaustive; only the top-N are printed.
   topSignals: 3
 
 context:
+  # Max retrieved chunks per changed file (applied per-file since 0.14.0).
+  # Total prompt context scales ~maxChunks × N files.
   maxChunks: 5
 
 git:
+  # Branch to diff against when reviewing local changes.
   baseBranch: main
 ```
 

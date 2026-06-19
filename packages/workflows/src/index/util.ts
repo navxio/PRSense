@@ -1,8 +1,10 @@
 // packages/workflows/src/index/util.ts
 import { execFileSync } from "node:child_process";
-
-import path from "node:path";
-import type { IndexMetadata, ContextChunk } from "@prsense/core";
+import type {
+  IndexMetadata,
+  ContextChunk,
+  ClassifiedTarget,
+} from "@prsense/core";
 import { EventBus, CoreEvents } from "@prsense/core";
 
 import type { IndexPlan, ExecutionPlan } from "./types.js";
@@ -17,41 +19,21 @@ import {
   RefAwareRepositorySource,
 } from "@prsense/context";
 
-export function resolveRepositorySource(target: string, ref?: string) {
-  const isGithub = /github\.com/.test(target);
-  const isGitlab = /gitlab\.com/.test(target);
-
-  if (isGithub) {
-    const match = target.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-
-    if (!match) {
-      throw new Error("Invalid GitHub URL");
+export function resolveRepositorySource(
+  target: ClassifiedTarget,
+  ref?: string,
+) {
+  switch (target.provider) {
+    case "github":
+      return new GitHubRepositorySource(target.owner, target.repo);
+    case "gitlab":
+      return new GitLabRepositorySource(target.group, target.project);
+    case "codeberg":
+      throw new Error("Codeberg indexing not yet wired"); // follow-up PR
+    case "filesystem": {
+      const src = new FileSystemRepositorySource(target.root);
+      return ref ? new RefAwareRepositorySource(src, ref) : src;
     }
-
-    const owner = match[1];
-    const repo = match[2];
-
-    if (!owner || !repo) {
-      throw new Error("Invalid GitHub repository url");
-    }
-
-    return new GitHubRepositorySource(owner, repo.replace(".git", ""));
-  } else if (isGitlab) {
-    const match = target.match(/gitlab\.com\/(.+?)\/([^\/]+)(?:\.git)?$/);
-
-    if (!match) throw new Error("Invalid GitLab URL");
-
-    const owner = match[1];
-    const repo = match[2];
-    if (!owner || !repo) throw new Error("Invalid GitLab repository url");
-    return new GitLabRepositorySource(owner, repo.replace(".git", ""));
-  } else {
-    const absolute = path.resolve(target);
-    let repositorySource = new FileSystemRepositorySource(absolute);
-    if (ref) {
-      return new RefAwareRepositorySource(repositorySource, ref);
-    }
-    return repositorySource;
   }
 }
 

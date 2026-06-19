@@ -1,7 +1,5 @@
 // apps/cli/src/commands/index.ts
 import { Command } from "commander";
-import path from "node:path";
-
 import { runIndexWorkflow, listIndexedRepositories } from "@prsense/workflows";
 import { createPinoLogger, logEvent, LogLevel } from "@prsense/logging";
 import { createEventBus, CoreEvents } from "@prsense/core";
@@ -20,6 +18,7 @@ import {
   stdoutIndexedReposReporter,
 } from "@prsense/reporters";
 import { applyOverrides, buildOverrides } from "../shared/configOverride.js";
+import { classifyTarget } from "../shared/classifyTarget.js";
 
 import pkg from "../../package.json" with { type: "json" };
 
@@ -78,21 +77,10 @@ export const indexCommand = new Command("index")
       /* Determine Repository Provider                     */
       /* ------------------------------------------------- */
 
-      const isGithub = /github\.com/.test(target);
-      const isGitlab = /gitlab\.com/.test(target);
-
-      const repoProvider = isGithub
-        ? "github"
-        : isGitlab
-          ? "gitlab"
-          : "filesystem";
-
-      const repoRoot =
-        repoProvider === "filesystem" ? path.resolve(target) : target;
-
+      const t = classifyTarget(target);
       const env = resolveEnvironment("cli", {
-        root: repoRoot,
-        provider: repoProvider,
+        root: t.root,
+        provider: t.provider,
       });
 
       if (env.issues.some((i) => i.level === "error")) {
@@ -150,7 +138,7 @@ export const indexCommand = new Command("index")
         metadataRepository: services.metadataRepo,
         config: effectiveConfig,
         credentials: env.credentials,
-        target,
+        target: t,
         force: Boolean(options.force),
         dryRun: Boolean(options.dryRun),
         eventBus,

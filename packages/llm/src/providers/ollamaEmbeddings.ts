@@ -1,3 +1,4 @@
+// packages/llm/src/providers/ollamaEmbeddings.ts
 import fetch from "node-fetch";
 import type { EmbeddingClient } from "@prsense/core";
 
@@ -62,6 +63,6 @@ export function createOllamaEmbeddingClient(opts: {
       return results;
     },
     dimension: detectDimension,
-    maxInputChars: 6000,
+    maxInputChars: 3000,
   };
 }
