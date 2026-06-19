@@ -3,6 +3,26 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.3] — 2026-06-19
+
+### Fixed
+
+- `prsense review` from a subdirectory now resolves `prsense.yml` and
+  runs git subprocesses against the repository root rather than the
+  invoking cwd. Previously, running from any subdir silently fell back
+  to defaults (`baseBranch: main`) and emitted `git rev-parse` /
+  `git diff` failures against the configured branch.
+  sending the full context.
+- extract shared helper findRepoRoot
+- reduce ollama embedder's maxInputChars to 3000
+- `maxInputTokens` now mandatory on EmbeddingClient type
+
+### Notes
+
+- `config inspect` and `index` still resolve their root from cwd; fix
+  lands in a follow-up that consolidates target classification into a
+  single shared helper.
+
 ## [0.15.2] — 2026-06-18
 
 ### Changed
