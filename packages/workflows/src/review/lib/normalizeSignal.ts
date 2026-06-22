@@ -1,6 +1,7 @@
+// packages/workflows/src/review/lib/normalizeSignal.ts
 import type { ReviewSignal } from "@prsense/core";
 
-const allowedTypes = ["bug", "risk", "test", "style"] as const;
+const allowedTypes = ["bug", "risk", "test"] as const;
 const allowedSeverity = ["low", "medium", "high"] as const;
 
 export function normalizeSignal(raw: any, index: number): ReviewSignal | null {
