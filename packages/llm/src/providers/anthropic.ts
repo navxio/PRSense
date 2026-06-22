@@ -14,9 +14,7 @@ export function createAnthropicClient(config: {
   model: string;
   temperature?: number;
 }): LlmClient {
-  const client = new Anthropic({
-    apiKey: config.apiKey,
-  });
+  const client = new Anthropic({ apiKey: config.apiKey });
 
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
@@ -28,12 +26,7 @@ export function createAnthropicClient(config: {
           max_tokens: req.maxTokens ?? 4096,
           temperature,
           system: prompt.system,
-          messages: [
-            {
-              role: "user",
-              content: prompt.user,
-            },
-          ],
+          messages: [{ role: "user", content: prompt.user }],
         });
 
         const text = res.content
@@ -42,7 +35,9 @@ export function createAnthropicClient(config: {
           .join("\n");
 
         if (!text) {
-          throw new Error("Claude returned empty response");
+          throw new Error(
+            `Claude returned empty response (stopReason=${res.stop_reason ?? "?"})`,
+          );
         }
 
         const usage: LlmUsage | undefined =
@@ -55,16 +50,15 @@ export function createAnthropicClient(config: {
               }
             : undefined;
 
-        if (usage) {
-          return {
-            text,
-            usage,
-          };
-        }
-
-        return { text };
+        return usage ? { text, usage } : { text };
       } catch (err) {
-        throw new LlmError("Claude request failed", err);
+        const detail =
+          err instanceof Anthropic.APIError
+            ? `${err.status ?? "?"} ${(err as any).error?.error?.type ?? ""} ${(err as any).error?.error?.message ?? err.message}`.trim()
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        throw new LlmError(`Claude request failed: ${detail}`, err);
       }
     },
   };
