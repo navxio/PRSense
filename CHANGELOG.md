@@ -3,6 +3,54 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.2] — 2026-06-22
+
+### Fixed
+
+- **Indexing failed when embedding dimension changed.** Switching
+  embedding providers with `--force` (e.g. ollama → openai) detected
+  the incompatibility but then crashed on insert because the
+  `vec_rag_chunks` virtual table retained its original dimension.
+  `ensureVecTable` now drops and recreates the vec table when the
+  requested dimension differs from the existing one, and clears
+  `rag_chunks` to keep rowids consistent.
+
+- **LLM provider errors were opaque.** All three providers wrapped
+  SDK failures in a generic `"<provider> request failed"` string,
+  discarding status codes, error types, and messages. Errors now
+  surface the underlying detail:
+  - OpenAI: status, error type, code, and message via
+    `OpenAI.APIError`.
+  - Anthropic: status and nested `error.error.{type,message}` via
+    `Anthropic.APIError`.
+  - Google: status, code, and reason read defensively from the
+    SDK's error shape.
+
+- **Empty LLM responses gave no diagnostic.** Gemini and Claude can
+  return empty text for reasons that were silently dropped (safety
+  blocks, max-token finish, recitation filters, stop reasons).
+  Empty-response errors now include `finishReason` /
+  `blockReason` (Gemini) and `stopReason` (Claude).
+
+### Internal
+
+- `runIndexWorkflow` accepts an optional `injectedEmbeddingClient`
+  parameter. When provided, the provider/credentials branch is
+  skipped. Enables dimension-change regression coverage without
+  network calls; matches the existing injection pattern for
+  `chunkRepository` and `metadataRepository`.
+
+### Tests
+
+- Added regression test in `incremental.test.ts` covering
+  force-rebuild across an embedding dimension change (768 → 1536).
+
+### Known follow-ups
+
+- OpenAI's gpt-5 family rejects non-default `temperature` on some
+  models. Tracked separately; the improved error surfacing now
+  makes this immediately diagnosable from logs.
+
 ## [0.16.1] - 2026-06-22
 
 ### Fixed
