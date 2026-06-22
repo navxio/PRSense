@@ -79,13 +79,20 @@ export function openDatabase(path: string): Db {
   return db;
 }
 
-/**
- * Creates the vec0 virtual table for embeddings if it doesn't exist.
- * Idempotent. Dimension is fixed at creation — if you change embedding
- * models with a different dimension, the table must be dropped/rebuilt
- * (the metadata repo's dimension field is how you detect that).
- */
+// drop the existing vec_rag_chunks table
+// and delete everything from rag_chunks
 export function ensureVecTable(db: Db, dimension: number): void {
+  const existing = getVecDimension(db);
+
+  if (existing !== null && existing !== dimension) {
+    // Dimension changed. All existing embeddings are invalid; rag_chunks
+    // rowids would orphan against a fresh vec table. Reset both.
+    db.exec(`
+      DROP TABLE IF EXISTS vec_rag_chunks;
+      DELETE FROM rag_chunks;
+    `);
+  }
+
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS vec_rag_chunks USING vec0(
       embedding float[${dimension}]
