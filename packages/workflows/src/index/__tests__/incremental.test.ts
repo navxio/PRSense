@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import { CoreEvents } from "@prsense/core";
+import { CoreEvents, type EmbeddingClient } from "@prsense/core";
 
 // These tests use .txt fixtures intentionally. Incremental indexing behavior
 // (change detection, chunk insert/delete, rename handling) is orthogonal to
@@ -492,5 +492,79 @@ describe("Incremental indexing (real DB)", () => {
       .at(-1);
 
     expect(planEvent?.fields?.type).toBe("delete-only");
+  });
+});
+
+function fakeEmbeddingClient(dim: number): EmbeddingClient {
+  return {
+    embed: async (texts: string[]) =>
+      texts.map(() => Array.from({ length: dim }, () => 0.1)),
+    dimension: async () => dim,
+    maxInputChars: 4000,
+  };
+}
+
+describe("Rebuild on embedding dimension change", () => {
+  let repo: string;
+  let testDb: TestDb;
+
+  beforeEach(async () => {
+    testDb = createTestDb();
+    repo = await createTestRepo();
+  });
+
+  afterEach(async () => {
+    testDb.close();
+    if (repo) await fs.rm(repo, { recursive: true, force: true });
+  });
+
+  it("force-rebuilds vec table when embedding dimension changes", async () => {
+    await writeFile(repo, "a.txt", "const a = 1;");
+    commitAll(repo, "init");
+
+    // First run: ollama-shaped config (768).
+    await runIndexWorkflow({
+      target: { provider: "filesystem", root: repo },
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(768),
+    });
+
+    expect(testDb.chunksAt("a.txt").length).toBeGreaterThan(0);
+
+    // Second run: openai-shaped config (1536), force rebuild.
+    const openaiConfig = {
+      ...testConfig(),
+      embeddings: { provider: "openai", model: "text-embedding-3-small" },
+    } as ReturnType<typeof testConfig>;
+
+    const eventBus = new TestEventBus();
+    const result = await runIndexWorkflow({
+      target: { provider: "filesystem", root: repo },
+      config: openaiConfig,
+      credentials: {
+        ...testCredentials(),
+        openai: { apiKey: "sk-fake", available: true },
+      },
+      force: true,
+      eventBus,
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(1536),
+    });
+
+    expect(result.outcome).toBe("success");
+    expect(testDb.chunksAt("a.txt").length).toBeGreaterThan(0);
+
+    const rebuild = eventBus.events.find(
+      (e) => e.event === CoreEvents.WorkflowIndexRebuildRequired,
+    );
+    expect(rebuild?.fields?.forced).toBe(true);
   });
 });
