@@ -1,4 +1,4 @@
-// packages/context/src/repository/RepositorySource.ts
+// packages/context/src/repository/GitBackedRepositorySource.ts
 import { RepositoryRevision, RepositoryIdentity } from "@prsense/core";
 
 export interface GitBackedRepositorySource {

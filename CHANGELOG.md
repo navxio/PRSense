@@ -3,6 +3,119 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] — 2026-06-23
+
+### Breaking
+
+- **`retrieveContext` removed from `@prsense/workflows`.** This was a
+  pre-v0.14 leftover from before the `ContextProvider` port landed and
+  had no production callers — only a single test referenced it
+  directly. Downstream consumers who imported it should migrate to
+  `RagContextProvider` from `@prsense/context`, which is the actual
+  production retrieval path.
+
+### Fixed
+
+- `resolveContext` now reads the OpenAI API key from
+  `PRSENSE_OPENAI_API_KEY`, matching the rest of the codebase. It
+  previously read `OPENAI_API_KEY`, which silently fell through to
+  `undefined` for users following the documented setup and caused
+  OpenAI-embedding-backed reviews to fail at the embedding client.
+
+### Notes
+
+- The `contextExclusion` test has been rewritten against
+  `RagContextProvider` and now exercises the same retrieval path
+  production code runs through.
+
+## [0.16.2] — 2026-06-22
+
+### Fixed
+
+- **Indexing failed when embedding dimension changed.** Switching
+  embedding providers with `--force` (e.g. ollama → openai) detected
+  the incompatibility but then crashed on insert because the
+  `vec_rag_chunks` virtual table retained its original dimension.
+  `ensureVecTable` now drops and recreates the vec table when the
+  requested dimension differs from the existing one, and clears
+  `rag_chunks` to keep rowids consistent.
+
+- **LLM provider errors were opaque.** All three providers wrapped
+  SDK failures in a generic `"<provider> request failed"` string,
+  discarding status codes, error types, and messages. Errors now
+  surface the underlying detail:
+  - OpenAI: status, error type, code, and message via
+    `OpenAI.APIError`.
+  - Anthropic: status and nested `error.error.{type,message}` via
+    `Anthropic.APIError`.
+  - Google: status, code, and reason read defensively from the
+    SDK's error shape.
+
+- **Empty LLM responses gave no diagnostic.** Gemini and Claude can
+  return empty text for reasons that were silently dropped (safety
+  blocks, max-token finish, recitation filters, stop reasons).
+  Empty-response errors now include `finishReason` /
+  `blockReason` (Gemini) and `stopReason` (Claude).
+
+### Internal
+
+- `runIndexWorkflow` accepts an optional `injectedEmbeddingClient`
+  parameter. When provided, the provider/credentials branch is
+  skipped. Enables dimension-change regression coverage without
+  network calls; matches the existing injection pattern for
+  `chunkRepository` and `metadataRepository`.
+
+### Tests
+
+- Added regression test in `incremental.test.ts` covering
+  force-rebuild across an embedding dimension change (768 → 1536).
+
+### Known follow-ups
+
+- OpenAI's gpt-5 family rejects non-default `temperature` on some
+  models. Tracked separately; the improved error surfacing now
+  makes this immediately diagnosable from logs.
+
+## [0.16.1] - 2026-06-22
+
+### Fixed
+
+- `ReviewSignal` type consistently defined as 'bug' | 'risk' | 'test'
+
+## [0.16.0] — 2026-06-19
+
+### Added
+
+- **Codeberg indexing.** `prsense index https://codeberg.org/<owner>/<repo>`
+  now clones and indexes Codeberg repositories. Closes the parity gap
+  with `prsense review` against Codeberg PRs introduced in 0.15.0.
+
+### Fixed
+
+- **Private-repo indexing for GitHub and GitLab.** `resolveRepositorySource`
+  was constructing `GitHubRepositorySource` and `GitLabRepositorySource`
+  without passing the configured token, so indexing a private repo by
+  URL failed at clone time despite `PRSENSE_GITHUB_TOKEN` or
+  `PRSENSE_GITLAB_TOKEN` being set. Tokens now thread from
+  `CredentialContext` through to each clone-based source.
+- Codeberg private-repo indexing benefits from the same fix at
+  introduction.
+
+### Internal
+
+- `resolveRepositorySource` now takes `CredentialContext` as a required
+  parameter. Internal API; no impact outside the workflows package.
+
+### Notes
+
+- Self-hosted Forgejo hosts are not yet routed to `CodebergRepositorySource`
+  — `classifyTarget` only matches `codeberg.org`. A `host` parameter or
+  CLI flag is a follow-up.
+- The three clone-based sources duplicate the same shell-out pattern.
+  Collapsing into a single `HttpsCloneRepositorySource` is tracked
+  separately; the existing `execSync` call sites should migrate to
+  `execFileSync` as part of that work.
+
 ## [0.15.4] — 2026-06-19
 
 ### Fixed

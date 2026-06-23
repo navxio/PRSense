@@ -1,10 +1,5 @@
 // packages/core/src/signal/ReviewSignal.ts
-export type ReviewSignalType =
-  | "bug"
-  | "security"
-  | "style"
-  | "design"
-  | "performance";
+export type ReviewSignalType = "bug" | "risk" | "test";
 
 export type ReviewSeverity = "low" | "medium" | "high";
 

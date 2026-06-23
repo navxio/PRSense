@@ -64,7 +64,13 @@ export function createOpenAiClient(config: {
 
         return { text };
       } catch (err) {
-        throw new LlmError("OpenAI request failed", err);
+        const detail =
+          err instanceof OpenAI.APIError
+            ? `${err.status ?? "?"} ${err.type ?? ""} ${err.code ?? ""}: ${err.message}`.trim()
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        throw new LlmError(`OpenAI request failed: ${detail}`, err);
       }
     },
   };

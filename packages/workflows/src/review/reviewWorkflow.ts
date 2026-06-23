@@ -1,5 +1,10 @@
 // packages/workflows/src/review/reviewWorkflow.ts
-import { CoreEvents, type EventBus, type DiffProvider } from "@prsense/core";
+import {
+  CoreEvents,
+  type EventBus,
+  type DiffProvider,
+  type ContextProvider,
+} from "@prsense/core";
 import type { ResolvedConfig, CredentialContext } from "@prsense/config";
 import type { ReviewWorkflowResult } from "./types.js";
 import { loadDiff } from "./steps/loadDiff.js";
@@ -11,6 +16,7 @@ import type {
   IndexMetadataRepository,
   RagChunkRepository,
 } from "@prsense/context";
+import type { LlmClient } from "@prsense/llm";
 
 export async function runReviewWorkflow({
   repository,
@@ -19,6 +25,8 @@ export async function runReviewWorkflow({
   credentials,
   diffProvider,
   eventBus,
+  llmClient: injectedLlmClient,
+  contextProviders,
 }: {
   repository: RagChunkRepository;
   metadataRepository: IndexMetadataRepository;
@@ -26,6 +34,8 @@ export async function runReviewWorkflow({
   credentials: CredentialContext;
   diffProvider: DiffProvider;
   eventBus: EventBus;
+  llmClient?: LlmClient;
+  contextProviders?: ContextProvider[];
 }): Promise<ReviewWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowReviewStarted);
   let diffSummary: { files: string[] } | undefined;
@@ -61,9 +71,11 @@ export async function runReviewWorkflow({
       repository,
       metadataRepository,
       ...(metadata ? { metadata } : {}),
+      ...(contextProviders ? { providers: contextProviders } : {}),
     });
 
-    const llmClient = createLlmClientSafe(config, credentials);
+    const llmClient =
+      injectedLlmClient ?? createLlmClientSafe(config, credentials);
 
     const { allSignals, totalUsage } = await runReview({
       files: diff.files,

@@ -4,6 +4,7 @@ import {
   EventBus,
   ContextChunk,
   ClassifiedTarget,
+  EmbeddingClient,
 } from "@prsense/core";
 import {
   createCompositeChunker,
@@ -39,6 +40,7 @@ export async function runIndexWorkflow({
   ref,
   chunkRepository,
   metadataRepository,
+  injectedEmbeddingClient,
 }: {
   config: ResolvedConfig;
   credentials: CredentialContext;
@@ -50,6 +52,7 @@ export async function runIndexWorkflow({
   ref?: string;
   chunkRepository: RagChunkRepository;
   metadataRepository: IndexMetadataRepository;
+  injectedEmbeddingClient?: EmbeddingClient;
 }): Promise<IndexWorkflowResult> {
   eventBus.emit(CoreEvents.WorkflowIndexStarted);
 
@@ -58,7 +61,7 @@ export async function runIndexWorkflow({
     // Resolve Repository Source
     // -------------------------------------------------
 
-    let repositorySource = resolveRepositorySource(target, ref);
+    let repositorySource = resolveRepositorySource(target, credentials, ref);
 
     // -------------------------------------------------
     // Resolve Identity + Revision
@@ -94,32 +97,8 @@ export async function runIndexWorkflow({
     // Create Embedding Client
     // -------------------------------------------------
 
-    let embeddingClient;
-
-    if (config.embeddings.provider === "openai") {
-      const apiKey = credentials.openai?.apiKey;
-      if (!apiKey) {
-        throw new Error("OpenAI embedding credentials missing");
-      }
-
-      embeddingClient = createOpenAiEmbeddingClient({
-        apiKey,
-        model: config.embeddings.model,
-      });
-    } else if (config.embeddings.provider === "ollama") {
-      embeddingClient = createOllamaEmbeddingClient({
-        model: config.embeddings.model,
-      });
-    } else {
-      const apiKey = credentials.google?.apiKey;
-      if (!apiKey) {
-        throw new Error("Google embedding credentials missing");
-      }
-      embeddingClient = createGoogleEmbeddingClient({
-        apiKey,
-        model: config.embeddings.model,
-      });
-    }
+    let embeddingClient =
+      injectedEmbeddingClient ?? buildEmbeddingClient(config, credentials);
 
     const embeddingDimension = await embeddingClient.dimension();
     eventBus.emit(CoreEvents.WorkflowIndexEmbeddingDimensionDetected, {
@@ -520,5 +499,35 @@ export async function runIndexWorkflow({
         chunksIndexed: 0,
       },
     };
+  }
+}
+
+function buildEmbeddingClient(
+  config: ResolvedConfig,
+  credentials: CredentialContext,
+): EmbeddingClient {
+  if (config.embeddings.provider === "openai") {
+    const apiKey = credentials.openai?.apiKey;
+    if (!apiKey) {
+      throw new Error("OpenAI embedding credentials missing");
+    }
+
+    return createOpenAiEmbeddingClient({
+      apiKey,
+      model: config.embeddings.model,
+    });
+  } else if (config.embeddings.provider === "ollama") {
+    return createOllamaEmbeddingClient({
+      model: config.embeddings.model,
+    });
+  } else {
+    const apiKey = credentials.google?.apiKey;
+    if (!apiKey) {
+      throw new Error("Google embedding credentials missing");
+    }
+    return createGoogleEmbeddingClient({
+      apiKey,
+      model: config.embeddings.model,
+    });
   }
 }

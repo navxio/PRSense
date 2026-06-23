@@ -1,3 +1,4 @@
+// packages/core/src/diff/DiffProvider.ts
 import { UnifiedDiff } from "./Diff.js";
 import { RepositoryIdentity } from "../repository/identity.js";
 export interface DiffProvider {
