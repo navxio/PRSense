@@ -3,6 +3,31 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] — 2026-06-23
+
+### Breaking
+
+- **`retrieveContext` removed from `@prsense/workflows`.** This was a
+  pre-v0.14 leftover from before the `ContextProvider` port landed and
+  had no production callers — only a single test referenced it
+  directly. Downstream consumers who imported it should migrate to
+  `RagContextProvider` from `@prsense/context`, which is the actual
+  production retrieval path.
+
+### Fixed
+
+- `resolveContext` now reads the OpenAI API key from
+  `PRSENSE_OPENAI_API_KEY`, matching the rest of the codebase. It
+  previously read `OPENAI_API_KEY`, which silently fell through to
+  `undefined` for users following the documented setup and caused
+  OpenAI-embedding-backed reviews to fail at the embedding client.
+
+### Notes
+
+- The `contextExclusion` test has been rewritten against
+  `RagContextProvider` and now exercises the same retrieval path
+  production code runs through.
+
 ## [0.16.2] — 2026-06-22
 
 ### Fixed

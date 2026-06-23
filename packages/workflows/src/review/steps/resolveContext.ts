@@ -55,7 +55,7 @@ export async function resolveContext(params: Params): Promise<Result> {
     const embedClient =
       config.embeddings.provider === "openai"
         ? createOpenAiEmbeddingClient({
-            apiKey: process.env.OPENAI_API_KEY!,
+            apiKey: process.env.PRSENSE_OPENAI_API_KEY!,
             model: config.embeddings.model,
           })
         : createOllamaEmbeddingClient({ model: config.embeddings.model });
