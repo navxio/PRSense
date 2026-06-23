@@ -21,7 +21,7 @@ const config: Config = {
 
   moduleFileExtensions: ["ts", "js"],
 
-  roots: ["<rootDir>/packages"],
+  roots: ["<rootDir>/packages", "<rootDir>/apps"],
 
   setupFilesAfterEnv: [
     "<rootDir>/packages/workflows/src/index/__tests__/setup.ts",
@@ -37,4 +37,3 @@ const config: Config = {
 };
 
 export default config;
-

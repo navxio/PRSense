@@ -3,6 +3,31 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] — 2026-06-23
+
+### Fixed
+
+- Review prompt formatting: removed stacked blank lines from
+  conditional metadata sections and stopped wrapping branch names
+  in literal quotes (`JSON.stringify` artifact). No semantic change
+  to the prompt; cleaner input to the LLM.
+
+### Notes
+
+- LLM outputs with `"type": "style"` will now be dropped by the
+  normalizer. In practice this should be rare since the prompt has
+  never instructed the LLM to emit "style".
+- `validateReviewOutput` still only shape-checks the `signals` array.
+  Per-signal schema validation (confidence range, required fields)
+  is a follow-up.
+
+### Fixed
+
+- Review prompt formatting: removed stacked blank lines from
+  conditional metadata sections and stopped wrapping branch names
+  in literal quotes (`JSON.stringify` artifact). No semantic change
+  to the prompt; cleaner input to the LLM.
+
 ## [0.17.0] — 2026-06-23
 
 ### Breaking
