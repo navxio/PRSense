@@ -1,5 +1,7 @@
 // packages/context/src/types.ts
-export interface RepositorySource {
-  listFilest(): Promise<string[]>;
-  readFile(path: string): Promise<string>;
-}
+import { ContextChunk } from "@prsense/core";
+
+export type ResolvedContext = {
+  contextByFile: Map<string, ContextChunk[]>;
+  contextualReviewAvailable: boolean;
+};

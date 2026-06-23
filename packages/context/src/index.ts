@@ -26,3 +26,5 @@ export * from "./symbolGraph/SymbolGraphContextProvider.js";
 
 export * from "./repository/CodebergRepositorySource.js";
 export * from "./diff/CodebergPrDiffProvider.js";
+
+export * from "./types.js";

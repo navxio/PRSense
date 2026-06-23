@@ -13,6 +13,7 @@ import {
   SymbolGraphContextProvider,
   type RagChunkRepository,
   type IndexMetadataRepository,
+  type ResolvedContext,
 } from "@prsense/context";
 import {
   createOpenAiEmbeddingClient,
@@ -20,7 +21,7 @@ import {
 } from "@prsense/llm";
 import type { ReviewMetadata } from "../types.js";
 
-type Params = {
+type ResolveContextParams = {
   config: ResolvedConfig;
   repositoryIdentity: RepositoryIdentity;
   revision: string;
@@ -32,12 +33,9 @@ type Params = {
   providers?: ContextProvider[];
 };
 
-type ResolvedContext = {
-  contextByFile: Map<string, ContextChunk[]>;
-  contextualReviewAvailable: boolean;
-};
-
-export async function resolveContext(params: Params): Promise<ResolvedContext> {
+export async function resolveContext(
+  params: ResolveContextParams,
+): Promise<ResolvedContext> {
   const {
     config,
     repositoryIdentity,
