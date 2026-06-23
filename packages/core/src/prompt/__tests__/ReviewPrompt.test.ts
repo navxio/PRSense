@@ -39,8 +39,7 @@ describe("buildReviewPrompt", () => {
     });
 
     expect(prompt.system).toMatchInlineSnapshot(`
-"
-You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
+"You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
 
 Severity encodes triage:
 - high: will fire on inputs this code actually produces today
@@ -78,22 +77,16 @@ If it is not valid JSON, regenerate it.
 "
 `);
     expect(prompt.user).toMatchInlineSnapshot(`
-"
-## PR Title
+"## PR Title
 Trim user input before length check
-
-
 
 ## PR Description
 Whitespace-only usernames currently authenticate. Fix by trimming first.
 
-
 ## Branch Name
-"fix/auth-trim-whitespace"
-
+fix/auth-trim-whitespace
 
 ## Pull Request Diff
-
 --- a/src/auth.ts
 +++ b/src/auth.ts
 @@ -1,3 +1,3 @@
@@ -103,10 +96,8 @@ Whitespace-only usernames currently authenticate. Fix by trimming first.
  }
 
 ## Retrieved Repository Context
-
 // helpers/validation.ts
-export function isValidUser(s: string) { return s.length > 0; }
-"
+export function isValidUser(s: string) { return s.length > 0; }"
 `);
   });
 
@@ -117,8 +108,7 @@ export function isValidUser(s: string) { return s.length > 0; }
     });
 
     expect(prompt.system).toMatchInlineSnapshot(`
-"
-You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
+"You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
 
 Severity encodes triage:
 - high: will fire on inputs this code actually produces today
@@ -156,13 +146,7 @@ If it is not valid JSON, regenerate it.
 "
 `);
     expect(prompt.user).toMatchInlineSnapshot(`
-"
-
-
-
-
-## Pull Request Diff
-
+"## Pull Request Diff
 --- a/src/auth.ts
 +++ b/src/auth.ts
 @@ -1,3 +1,3 @@
@@ -172,8 +156,6 @@ If it is not valid JSON, regenerate it.
  }
 
 ## Retrieved Repository Context
-
-
 "
 `);
   });
