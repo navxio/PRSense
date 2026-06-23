@@ -1,3 +1,4 @@
+// packages/core/src/prompt/ReviewPrompt.ts
 import type { UnifiedDiff } from "../diff/Diff.js";
 
 export type ReviewPromptInput = {
@@ -14,8 +15,7 @@ export function buildReviewPrompt(input: ReviewPromptInput): {
   system: string;
   user: string;
 } {
-  const system = `
-You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
+  const system = `You are a precision-oriented code review assistant. A human will read your output. Your value is measured by how often a flagged signal causes them to act — not by how many you produce. Missing a minor issue is acceptable. Flagging a non-issue wastes reviewer attention and is worse.
 
 Severity encodes triage:
 - high: will fire on inputs this code actually produces today
@@ -55,19 +55,15 @@ If it is not valid JSON, regenerate it.
   // Convert UnifiedDiff → string
   const diffText = input.diff.files.map((f) => f.patch).join("\n\n");
 
-  const user = `
-${input.metadata?.title ? `## PR Title\n${input.metadata.title}\n\n` : ""}
-
-${input.metadata?.description ? `## PR Description\n${input.metadata.description}\n\n` : ""}
-${input.metadata?.branchName ? `## Branch Name\n${JSON.stringify(input.metadata.branchName)}\n\n` : ""}
-## Pull Request Diff
-
-${diffText}
-
-## Retrieved Repository Context
-
-${input.context}
-`;
+  const parts: string[] = [];
+  if (input.metadata?.title) parts.push(`## PR Title\n${input.metadata.title}`);
+  if (input.metadata?.description)
+    parts.push(`## PR Description\n${input.metadata.description}`);
+  if (input.metadata?.branchName)
+    parts.push(`## Branch Name\n${input.metadata.branchName}`);
+  parts.push(`## Pull Request Diff\n${diffText}`);
+  parts.push(`## Retrieved Repository Context\n${input.context}`);
+  const user = parts.join("\n\n");
 
   return { system, user };
 }
