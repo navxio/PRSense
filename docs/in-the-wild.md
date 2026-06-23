@@ -469,3 +469,51 @@ Both are useful. They require different consumption discipline:
 - A user who treats every smell-driven signal as a clean catch will over-engineer.
 - A user who treats them as false positives will miss the real benefit — code that's durably correct rather than accidentally correct.
 - The right discipline: investigate the mechanism, and even if it's wrong, ask "is the underlying smell pointing at something I can fix cheaply?" Usually the answer is yes.
+
+## 2026-06-23 — Synthesized baseline false positive
+
+**Context:** Deleted `retrieveContext` (pre-v0.14 leftover, zero prod callers)
+and rewrote `contextExclusion.test.ts` against `RagContextProvider`
+directly — the production path post-v0.14's per-file architecture.
+
+**Signal (HIGH, dismissed):**
+
+> The new test now depends on a real embedding client and external
+> credentials, turning a previously isolated unit/integration test into
+> one that will fail in normal test environments without OpenAI/Ollama
+> configured. The removed test path used the local repository directly
+> and did not require network services or API keys.
+
+**Why it's wrong:** The old test called
+`retrieveContext({ config: testConfig(), ... })`, which constructs an
+ollama/openai embedder from the same config and calls `.embed()` on it.
+The runtime dependency is identical — same provider, same model, same
+network call. PRSense fabricated a "previously isolated" baseline that
+never existed.
+
+**Mechanism:** The diff showed the _removal_ of `retrieveContext`'s call
+site but not the body of `retrieveContext` itself (defined in a separate
+file, fully deleted, no longer in the post-state). With no visibility
+into what the removed function actually did, the model had to invent a
+baseline to reason about "what changed" — and invented a cleaner one
+than reality.
+
+**Tag:** `synthesized-baseline` — model confabulates the pre-change state
+of a symbol whose definition is outside the diff in order to frame a
+removal as a regression.
+
+**Not a prompt problem.** The prompt already constrains against this
+("Only report concrete problems introduced by this change"). The model
+violated it because it lacked the information to ground the claim. No
+prompt rule fully fixes a missing-information failure.
+
+**Architectural lever (deferred):** When a diff removes a symbol whose
+definition lives elsewhere in the pre-change tree, optionally pull that
+definition into the per-file context. The model would then have the
+actual baseline to compare against. Symbol-graph work in progress
+(`SymbolGraphContextProvider`) is adjacent but solves the cross-file
+call-site problem, not this one. Worth a follow-up issue.
+
+**Action:** Dismissed signal. Added a comment to the test explaining the
+intentional integration shape. Watching for recurrence before tuning the
+prompt.
