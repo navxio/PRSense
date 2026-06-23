@@ -429,7 +429,7 @@ The result is a system that is flexible without being fragile.
 
 ## Architecture
 
-![architecture](./assets/architecture.png)
+![architecture](./assets/prsense_review_architecture.png)
 
 PRSense follows a hexagonal architecture:
 
