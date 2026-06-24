@@ -41,6 +41,10 @@ export const CoreEvents = {
   WorkflowReviewFileReviewStarted: "workflow.review.file.review.started",
   WorkflowReviewFileReviewFinished: "workflow.review.file.review.finished",
   WorkflowReviewFileReviewFailed: "workflow.review.file.review.failed",
+  WorkflowReviewSymbolGraphProjectsLoaded:
+    "workflow.review.symbol_graph.projects.loaded",
+  WorkflowReviewSymbolGraphReferencesRetrieved:
+    "workflow.review.symbol_graph.references.retrieved",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",
