@@ -12,24 +12,27 @@ import {
   findExportedDeclarations,
   type ExportedDeclaration,
 } from "./ast/findExportedDeclarations.js";
+import { loadProjects, type LoadedProjects } from "./projects/loadProjects.js";
 
 export class SymbolGraphContextProvider implements ContextProvider {
   readonly name = "symbol-graph";
 
   private candidates: Map<string, ExportedDeclaration[]> = new Map();
+  private projectsPromise: Promise<LoadedProjects> | null = null;
 
   constructor(
     private readonly deps: {
       repoRoot: string;
+      baseSha: string;
     },
   ) {}
 
   async isAvailable(input: ContextAvailabilityInput): Promise<boolean> {
+    if (this.deps.baseSha === "unknown" || !this.deps.baseSha) return false;
     this.candidates.clear();
 
     const tsFiles = input.diff.files.filter((f) => isTsFile(f.path));
     if (tsFiles.length === 0) return false;
-
     if (!(await fileExists(join(this.deps.repoRoot, "tsconfig.json")))) {
       return false;
     }
@@ -43,14 +46,13 @@ export class SymbolGraphContextProvider implements ContextProvider {
       try {
         content = await fs.readFile(absPath, "utf8");
       } catch {
-        continue; // deleted or unreadable
+        continue;
       }
 
       const declarations = findExportedDeclarations(file.path, content);
       const overlapping = declarations.filter((d) =>
         someHunkOverlaps(hunks, d.startLine, d.endLine),
       );
-
       if (overlapping.length > 0) {
         this.candidates.set(file.path, overlapping);
       }
@@ -59,7 +61,20 @@ export class SymbolGraphContextProvider implements ContextProvider {
     return this.candidates.size > 0;
   }
 
-  async getContextForFile(_input: ContextInput): Promise<ContextChunk[]> {
+  async getContextForFile(input: ContextInput): Promise<ContextChunk[]> {
+    const fileCandidates = this.candidates.get(input.file.path);
+    if (!fileCandidates || fileCandidates.length === 0) return [];
+
+    // Singleton lazy-load. Concurrent callers all await the same promise.
+    if (!this.projectsPromise) {
+      this.projectsPromise = loadProjects({
+        repoRoot: this.deps.repoRoot,
+        baseSha: this.deps.baseSha,
+      });
+    }
+    const projects = await this.projectsPromise;
+    void projects; // step 6: structural signature diff + reference query
+
     return [];
   }
 }
@@ -82,6 +97,5 @@ function someHunkOverlaps(
   startLine: number,
   endLine: number,
 ): boolean {
-  // Inclusive ranges on both sides; intersection iff ranges overlap.
   return hunks.some((h) => h.startLine <= endLine && startLine <= h.endLine);
 }
