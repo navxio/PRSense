@@ -21,7 +21,7 @@ import {
 } from "@prsense/llm";
 import type { ReviewMetadata } from "../types.js";
 
-type ResolveContextParams = {
+export type ResolveContextParams = {
   config: ResolvedConfig;
   repositoryIdentity: RepositoryIdentity;
   revision: string;

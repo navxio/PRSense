@@ -2,6 +2,7 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import {
+  CoreEvents,
   type ContextAvailabilityInput,
   type ContextChunk,
   type ContextInput,
@@ -13,12 +14,20 @@ import {
   type ExportedDeclaration,
 } from "./ast/findExportedDeclarations.js";
 import { loadProjects, type LoadedProjects } from "./projects/loadProjects.js";
+import {
+  diffSignatures,
+  type TriggeredCandidate,
+} from "./sig/diffSignature.js";
+import { findReferences } from "./refs/findReferences.js";
+import { rankAndCap } from "./refs/rankAndCap.js";
+import { renderChunks, type PerSymbolReferences } from "./refs/renderChunks.js";
 
 export class SymbolGraphContextProvider implements ContextProvider {
   readonly name = "symbol-graph";
 
   private candidates: Map<string, ExportedDeclaration[]> = new Map();
   private projectsPromise: Promise<LoadedProjects> | null = null;
+  private triggeredPromise: Promise<TriggeredCandidate[]> | null = null;
 
   constructor(
     private readonly deps: {
@@ -65,17 +74,81 @@ export class SymbolGraphContextProvider implements ContextProvider {
     const fileCandidates = this.candidates.get(input.file.path);
     if (!fileCandidates || fileCandidates.length === 0) return [];
 
-    // Singleton lazy-load. Concurrent callers all await the same promise.
     if (!this.projectsPromise) {
+      const start = Date.now();
       this.projectsPromise = loadProjects({
         repoRoot: this.deps.repoRoot,
         baseSha: this.deps.baseSha,
+      }).then((projects) => {
+        input.eventBus?.emit(
+          CoreEvents.WorkflowReviewSymbolGraphProjectsLoaded,
+          {
+            headFiles: projects.head.getSourceFiles().length,
+            baseFiles: projects.base.getSourceFiles().length,
+            durationMs: Date.now() - start,
+          },
+        );
+        return projects;
       });
     }
-    const projects = await this.projectsPromise;
-    void projects; // step 6: structural signature diff + reference query
+    if (!this.triggeredPromise) {
+      this.triggeredPromise = this.projectsPromise.then((projects) =>
+        diffSignatures({
+          candidatesByFile: this.candidates,
+          head: projects.head,
+          base: projects.base,
+        }),
+      );
+    }
 
-    return [];
+    const projects = await this.projectsPromise;
+    const triggered = await this.triggeredPromise;
+    const fileTriggered = triggered.filter(
+      (t) => t.filePath === input.file.path,
+    );
+    if (fileTriggered.length === 0) return [];
+
+    const changedFiles = input.diff.files.map((f) => f.path);
+    const perSymbol: PerSymbolReferences[] = [];
+
+    for (const candidate of fileTriggered) {
+      const refs = findReferences({
+        head: projects.head,
+        declarationFile: candidate.filePath,
+        symbolName: candidate.name,
+        isDefaultExport: candidate.kind === "defaultExport",
+        workspaceRoot: this.deps.repoRoot,
+      });
+
+      const ranked = rankAndCap({
+        references: refs,
+        changedFiles,
+        declarationFile: candidate.filePath,
+      });
+
+      input.eventBus?.emit(
+        CoreEvents.WorkflowReviewSymbolGraphReferencesRetrieved,
+        {
+          symbol: candidate.name,
+          file: candidate.filePath,
+          totalRefs: ranked.total,
+          shownRefs: ranked.shown.length,
+        },
+      );
+
+      if (ranked.shown.length > 0) {
+        perSymbol.push({ candidate, references: ranked });
+      }
+    }
+
+    const chunks = renderChunks(perSymbol);
+
+    input.eventBus?.emit(CoreEvents.WorkflowReviewContextRetrieved, {
+      file: input.file.path,
+      chunks: chunks.length,
+    });
+
+    return chunks;
   }
 }
 
