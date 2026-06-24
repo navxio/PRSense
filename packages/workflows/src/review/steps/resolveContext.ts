@@ -25,6 +25,7 @@ type ResolveContextParams = {
   config: ResolvedConfig;
   repositoryIdentity: RepositoryIdentity;
   revision: string;
+  baseRevision: string;
   diff: UnifiedDiff;
   eventBus: EventBus;
   repository: RagChunkRepository; // was: chunks
@@ -71,7 +72,10 @@ export async function resolveContext(
         maxChunks: config.context.maxChunks,
         ...(metadata ? { prMetadata: metadata } : {}),
       }),
-      new SymbolGraphContextProvider({ repoRoot: config.repository.root }),
+      new SymbolGraphContextProvider({
+        repoRoot: config.repository.root,
+        baseSha: params.baseRevision,
+      }),
     ];
   }
 

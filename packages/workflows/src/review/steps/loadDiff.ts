@@ -3,7 +3,7 @@
 import type { DiffProvider } from "@prsense/core";
 
 export async function loadDiff(diffProvider: DiffProvider) {
-  const { diff, revision, repositoryIdentity, metadata } =
+  const { diff, revision, repositoryIdentity, metadata, baseRevision } =
     await diffProvider.load();
 
   const diffSummary = {
@@ -16,5 +16,6 @@ export async function loadDiff(diffProvider: DiffProvider) {
     repositoryIdentity,
     metadata,
     diffSummary,
+    baseRevision,
   };
 }

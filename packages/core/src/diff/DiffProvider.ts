@@ -5,6 +5,7 @@ export interface DiffProvider {
   load(): Promise<{
     diff: UnifiedDiff;
     revision: string;
+    baseRevision: string;
     repositoryIdentity: RepositoryIdentity;
     metadata?: {
       title?: string;
