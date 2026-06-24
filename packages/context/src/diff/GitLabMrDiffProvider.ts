@@ -1,11 +1,8 @@
+// packages/context/src/diff/GitLabMrDiffProvider.ts
 import { Gitlab } from "@gitbeaker/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
 
-import type {
-  DiffProvider,
-  UnifiedDiff,
-  RepositoryIdentity,
-} from "@prsense/core";
+import type { DiffProvider, RepositoryIdentity } from "@prsense/core";
 
 type GitLabChange = {
   old_path: string | null;
@@ -37,6 +34,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
     description?: string;
     revision?: string;
     branchName?: string;
+    baseRevision?: string;
   }> {
     try {
       const mr = await this.api.MergeRequests.show(
@@ -49,12 +47,17 @@ export class GitLabMrDiffProvider implements DiffProvider {
         description?: string;
         revision?: string;
         branchName?: string;
+        baseRevision?: string;
       } = {};
 
       // GitLab returns string | null
       if (mr.title != null) metadata.title = mr.title;
       if (mr.description != null) metadata.description = mr.description;
       if (mr.sha != null) metadata.revision = mr.sha;
+      const diffRefs = mr.diffRefs as { baseSha?: string } | undefined;
+      if (diffRefs?.baseSha != null) {
+        metadata.baseRevision = diffRefs.baseSha;
+      }
       if (typeof mr.source_branch === "string") {
         metadata.branchName = mr.source_branch;
       }
@@ -90,16 +93,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
     return unified;
   }
 
-  async load(): Promise<{
-    diff: UnifiedDiff;
-    revision: string;
-    repositoryIdentity: RepositoryIdentity;
-    metadata?: {
-      title?: string;
-      description?: string;
-      branchName?: string;
-    };
-  }> {
+  async load() {
     const [metadata, diffText] = await Promise.all([
       this.fetchMetadata(),
       this.fetchDiff(),
@@ -113,6 +107,7 @@ export class GitLabMrDiffProvider implements DiffProvider {
     return {
       diff: parseUnifiedDiff(diffText),
       revision: metadata.revision ?? "unknown",
+      baseRevision: metadata.baseRevision ?? "unknown",
       repositoryIdentity: identity,
       metadata: {
         ...(metadata.title !== undefined && { title: metadata.title }),

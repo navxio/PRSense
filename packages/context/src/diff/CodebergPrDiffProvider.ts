@@ -1,17 +1,8 @@
 // packages/context/src/diff/CodebergPrDiffProvider.ts
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
-import type {
-  DiffProvider,
-  UnifiedDiff,
-  RepositoryIdentity,
-} from "@prsense/core";
+import type { DiffProvider } from "@prsense/core";
 
-type LoadResult = {
-  diff: UnifiedDiff;
-  revision: string;
-  repositoryIdentity: RepositoryIdentity;
-  metadata?: { title?: string; description?: string; branchName?: string };
-};
+type LoadResult = Awaited<ReturnType<DiffProvider["load"]>>;
 
 const RETRYABLE = new Set([502, 503, 504]);
 
@@ -19,6 +10,7 @@ type ForgejoPullResponse = {
   title?: string | null;
   body?: string | null;
   head?: { sha?: string; ref?: string };
+  base?: { sha?: string };
 };
 
 export class CodebergPrDiffProvider implements DiffProvider {
@@ -75,6 +67,7 @@ export class CodebergPrDiffProvider implements DiffProvider {
         title: data.title ?? undefined,
         description: data.body ?? undefined,
         revision: data.head?.sha as string | undefined,
+        baseRevision: data.base?.sha as string | undefined,
         branchName: data.head?.ref ?? undefined,
       };
     } catch {
@@ -103,6 +96,7 @@ export class CodebergPrDiffProvider implements DiffProvider {
     return {
       diff: parseUnifiedDiff(diffText),
       revision: metadata.revision ?? "unknown",
+      baseRevision: metadata.baseRevision ?? "unknown",
       repositoryIdentity: {
         provider: "codeberg",
         id: `${this.owner}/${this.repo}`,
