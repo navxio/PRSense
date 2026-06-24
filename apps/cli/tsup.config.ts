@@ -1,3 +1,4 @@
+// apps/cli/tsup.config.ts
 import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -48,5 +49,6 @@ export default defineConfig({
     "ts-morph",
     "better-sqlite3",
     "sqlite-vec",
+    "typescript",
   ],
 });
