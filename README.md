@@ -71,6 +71,7 @@ PRSense is built around a few core principles:
 - Automatically reads from and writes to local `.env`
 - AST-based chunking for TypeScript (more languages on the roadmap)
 - Bundled `pre-push` git hook
+- Deterministic pipeline for identifying cross file issues for typescript(more languages on the roadmap)
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
