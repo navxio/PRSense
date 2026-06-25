@@ -64,10 +64,14 @@ class GitObjectReaderImpl implements GitObjectReader {
 
   // ls-tree is one-shot, no streaming benefit — exec and parse.
   async listTree(sha: string): Promise<TreeEntry[]> {
-    const { stdout } = await execFile("git", ["ls-tree", "-r", "-z", sha], {
-      cwd: this.repoRoot,
-      maxBuffer: 256 * 1024 * 1024,
-    });
+    const { stdout } = await execFile(
+      "git",
+      ["-c", "core.quotepath=false", "ls-tree", "-r", "-z", sha],
+      {
+        cwd: this.repoRoot,
+        maxBuffer: 256 * 1024 * 1024,
+      },
+    );
 
     const entries: TreeEntry[] = [];
     for (const record of stdout.split("\0")) {

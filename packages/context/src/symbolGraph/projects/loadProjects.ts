@@ -83,10 +83,14 @@ async function loadBaseProject(
 // transitively (nested .gitignore, core.excludesFile, etc.) without
 // re-implementing them.
 async function listTrackedTsFiles(repoRoot: string): Promise<string[]> {
-  const { stdout } = await execFile("git", ["ls-files", "-z"], {
-    cwd: repoRoot,
-    maxBuffer: 256 * 1024 * 1024,
-  });
+  const { stdout } = await execFile(
+    "git",
+    ["-c", "core.quotepath=false", "ls-files", "-z"],
+    {
+      cwd: repoRoot,
+      maxBuffer: 256 * 1024 * 1024,
+    },
+  );
   const out: string[] = [];
   for (const rel of stdout.split("\0")) {
     if (!rel || !isTsSourceFile(rel)) continue;
