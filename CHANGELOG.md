@@ -3,6 +3,27 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] — 2026-06-25
+
+### Fixed
+
+- `LocalGitDiffProvider` no longer throws on the clean-tree path when
+  `git merge-base` fails (unborn HEAD, no common ancestor). Falls back
+  to the resolved base branch so diff generation can proceed;
+  symbol-graph degrades cleanly when the fallback is a bare ref rather
+  than a SHA.
+
+- `findExportedDeclarations` now surfaces anonymous `export default
+function () {}` and `export default class {}` declarations under the
+  synthetic name `"default"`. Symbol lookup already used
+  `getDefaultExportSymbol()` for default-kind candidates, so reference
+  queries flow through without further changes.
+
+- `gitObjectReader.listTree` and HEAD enumeration in `loadProjects`
+  invoke git with `-c core.quotepath=false`. Filenames containing
+  non-ASCII bytes now resolve correctly rather than C-quoted, matching
+  existing conventions elsewhere in the codebase.
+
 ## [0.18.0] — 2026-06-25
 
 ### Added
