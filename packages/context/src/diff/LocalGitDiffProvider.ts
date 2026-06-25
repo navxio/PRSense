@@ -33,7 +33,10 @@ export class LocalGitDiffProvider implements DiffProvider {
   async load() {
     const cwd = path.resolve(this.repoRoot);
 
-    let baseBranch;
+    // -------------------------------------------------
+    // Resolve base branch
+    // -------------------------------------------------
+    let baseBranch: string | undefined;
     try {
       baseBranch =
         this.baseBranch ??
@@ -47,14 +50,29 @@ export class LocalGitDiffProvider implements DiffProvider {
     } catch {
       throw new Error("Could not determine base branch");
     }
-
-    // Resolve once; the merge-base IS the conceptual base for both clean
-    // and dirty paths (git diff A...B uses merge-base(A, B) internally).
-    const baseRevision = execSync(`git merge-base ${baseBranch} HEAD`, {
-      cwd,
-      encoding: "utf8",
-    }).trim();
-
+    if (!baseBranch) {
+      throw new Error("Could not determine base branch");
+    }
+    // -------------------------------------------------
+    // Resolve base revision
+    //
+    // Prefer merge-base when both refs exist; on unborn HEAD or no
+    // common ancestor, fall back to the base branch itself so diff
+    // generation can still proceed (symbol-graph will see the
+    // fallback as a bare ref, not a SHA, and skip cleanly).
+    // -------------------------------------------------
+    let baseRevision: string;
+    try {
+      baseRevision = execSync(`git merge-base ${baseBranch} HEAD`, {
+        cwd,
+        encoding: "utf8",
+      }).trim();
+    } catch {
+      baseRevision = baseBranch;
+    }
+    // -------------------------------------------------
+    // Compute diff
+    // -------------------------------------------------
     const hasUncommittedChanges =
       execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim()
         .length > 0;
