@@ -56,15 +56,21 @@ function extract(
   if (!hasModifier(stmt, ts.SyntaxKind.ExportKeyword)) return;
   const isDefault = hasModifier(stmt, ts.SyntaxKind.DefaultKeyword);
 
-  if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+  if (ts.isFunctionDeclaration(stmt)) {
+    // Anonymous default: `export default function () {}`. The declaration
+    // has no name; the export name is "default".
+    const name = stmt.name?.text ?? (isDefault ? "default" : undefined);
+    if (!name) return;
     out.push({
-      name: stmt.name.text,
+      name,
       kind: isDefault ? "defaultExport" : "function",
       ...lineRange(stmt, sf),
     });
-  } else if (ts.isClassDeclaration(stmt) && stmt.name) {
+  } else if (ts.isClassDeclaration(stmt)) {
+    const name = stmt.name?.text ?? (isDefault ? "default" : undefined);
+    if (!name) return;
     out.push({
-      name: stmt.name.text,
+      name,
       kind: isDefault ? "defaultExport" : "class",
       ...lineRange(stmt, sf),
     });
@@ -81,7 +87,6 @@ function extract(
       ...lineRange(stmt, sf),
     });
   } else if (ts.isVariableStatement(stmt)) {
-    // `export const a = 1, b = 2;` — one entry per identifier binding.
     for (const decl of stmt.declarationList.declarations) {
       if (ts.isIdentifier(decl.name)) {
         out.push({
@@ -90,10 +95,8 @@ function extract(
           ...lineRange(stmt, sf),
         });
       }
-      // skip destructuring patterns: `export const { a } = …`
     }
   }
-  // skip: enum, namespace, re-exports (ExportDeclaration), ambient
 }
 
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {

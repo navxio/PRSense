@@ -174,3 +174,29 @@ describe("findExportedDeclarations", () => {
     });
   });
 });
+
+describe("anonymous default exports", () => {
+  it("captures anonymous default function under name 'default'", () => {
+    const result = find("export default function () { return 1; }");
+    expect(result).toEqual([
+      {
+        name: "default",
+        kind: "defaultExport",
+        startLine: 1,
+        endLine: 1,
+      },
+    ]);
+  });
+
+  it("captures anonymous default class under name 'default'", () => {
+    const result = find("export default class { foo() {} }");
+    expect(result).toEqual([
+      {
+        name: "default",
+        kind: "defaultExport",
+        startLine: 1,
+        endLine: 1,
+      },
+    ]);
+  });
+});
