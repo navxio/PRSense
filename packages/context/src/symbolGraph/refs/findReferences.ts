@@ -90,36 +90,32 @@ function findReferencesViaIdentifier(symbol: Symbol): Node[] {
 }
 
 function isCallSite(referenceNode: Node): boolean {
-  // The reference node IS the identifier at the use site. Walk up to
-  // see whether it's the callee of a CallExpression or NewExpression.
   const parent = referenceNode.getParent();
   if (!parent) return false;
+
+  // Direct call: foo() / new Foo()
   if (
-    Node.isCallExpression(parent) &&
+    (Node.isCallExpression(parent) || Node.isNewExpression(parent)) &&
     parent.getExpression() === referenceNode
   ) {
     return true;
   }
-  if (
-    Node.isNewExpression(parent) &&
-    parent.getExpression() === referenceNode
-  ) {
-    return true;
-  }
-  // Property access: foo.bar — the identifier is `foo`, parent is
-  // PropertyAccessExpression. Check grandparent for the call.
-  if (
-    Node.isPropertyAccessExpression(parent) &&
-    parent.getExpression() === referenceNode
-  ) {
+
+  // Property access. Two sub-cases:
+  //   (a) `foo.bar` where foo is what we're tracking: ref node = foo (LHS)
+  //   (b) `foo.bar` where bar is what we're tracking: ref node = bar (name)
+  if (Node.isPropertyAccessExpression(parent)) {
     const grand = parent.getParent();
-    if (
-      grand &&
-      (Node.isCallExpression(grand) || Node.isNewExpression(grand))
-    ) {
-      return grand.getExpression() === parent;
-    }
+    if (!grand) return false;
+    const isCall = Node.isCallExpression(grand) || Node.isNewExpression(grand);
+    if (!isCall || grand.getExpression() !== parent) return false;
+    // Accept either side of the dot.
+    return (
+      parent.getExpression() === referenceNode ||
+      parent.getNameNode() === referenceNode
+    );
   }
+
   return false;
 }
 
