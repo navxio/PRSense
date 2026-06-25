@@ -61,6 +61,7 @@ PRSense is built around a few core principles:
 - One-command setup
 - Automatically reads your intent from branch name locally
 - Pluggable models, or run everything locally via Ollama
+- Stays silent if no issues to be reported
 - Auto-indexing by default for context-enriched review
 - Human-in-the-loop decision making
 - **Diff-first intelligence**, understanding:

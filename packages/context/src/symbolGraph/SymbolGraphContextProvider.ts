@@ -26,6 +26,7 @@ export class SymbolGraphContextProvider implements ContextProvider {
   readonly name = "symbol-graph";
 
   private candidates: Map<string, ExportedDeclaration[]> = new Map();
+  private candidatesRevision: string | null = null;
   private projectsPromise: Promise<LoadedProjects> | null = null;
   private triggeredPromise: Promise<TriggeredCandidate[]> | null = null;
 
@@ -38,7 +39,15 @@ export class SymbolGraphContextProvider implements ContextProvider {
 
   async isAvailable(input: ContextAvailabilityInput): Promise<boolean> {
     if (this.deps.baseSha === "unknown" || !this.deps.baseSha) return false;
+
+    // Cache hit: trust the previous computation for this revision.
+    if (this.candidatesRevision === input.revision) {
+      return this.candidates.size > 0;
+    }
+
+    // Cache miss: recompute.
     this.candidates.clear();
+    this.candidatesRevision = input.revision;
 
     const tsFiles = input.diff.files.filter((f) => isTsFile(f.path));
     if (tsFiles.length === 0) return false;
