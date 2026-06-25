@@ -10,8 +10,10 @@ import {
 import type { ResolvedConfig } from "@prsense/config";
 import {
   RagContextProvider,
+  SymbolGraphContextProvider,
   type RagChunkRepository,
   type IndexMetadataRepository,
+  type ResolvedContext,
 } from "@prsense/context";
 import {
   createOpenAiEmbeddingClient,
@@ -19,10 +21,11 @@ import {
 } from "@prsense/llm";
 import type { ReviewMetadata } from "../types.js";
 
-type Params = {
+export type ResolveContextParams = {
   config: ResolvedConfig;
   repositoryIdentity: RepositoryIdentity;
   revision: string;
+  baseRevision: string;
   diff: UnifiedDiff;
   eventBus: EventBus;
   repository: RagChunkRepository; // was: chunks
@@ -31,12 +34,9 @@ type Params = {
   providers?: ContextProvider[];
 };
 
-type Result = {
-  contextByFile: Map<string, ContextChunk[]>;
-  contextualReviewAvailable: boolean;
-};
-
-export async function resolveContext(params: Params): Promise<Result> {
+export async function resolveContext(
+  params: ResolveContextParams,
+): Promise<ResolvedContext> {
   const {
     config,
     repositoryIdentity,
@@ -59,6 +59,7 @@ export async function resolveContext(params: Params): Promise<Result> {
             model: config.embeddings.model,
           })
         : createOllamaEmbeddingClient({ model: config.embeddings.model });
+
     providers = [
       new RagContextProvider({
         chunks: repository,
@@ -71,12 +72,16 @@ export async function resolveContext(params: Params): Promise<Result> {
         maxChunks: config.context.maxChunks,
         ...(metadata ? { prMetadata: metadata } : {}),
       }),
+      new SymbolGraphContextProvider({
+        repoRoot: config.repository.root,
+        baseSha: params.baseRevision,
+      }),
     ];
   }
 
   const available: ContextProvider[] = [];
   for (const p of providers) {
-    if (await p.isAvailable({ repositoryIdentity, revision, eventBus })) {
+    if (await p.isAvailable({ repositoryIdentity, revision, eventBus, diff })) {
       available.push(p);
     }
   }

@@ -86,6 +86,7 @@ function makeFile(path = "src/auth/session.ts"): DiffFile {
 }
 
 const identity = { provider: "github" as const, id: "owner/repo" };
+const emptyDiff: UnifiedDiff = { files: [] };
 
 describe("RagContextProvider", () => {
   describe("isAvailable", () => {
@@ -95,6 +96,7 @@ describe("RagContextProvider", () => {
         repositoryIdentity: identity,
         revision: "abc123",
         eventBus: new TestEventBus(),
+        diff: emptyDiff,
       });
       expect(result).toBe(true);
     });
@@ -106,6 +108,7 @@ describe("RagContextProvider", () => {
         repositoryIdentity: identity,
         revision: "abc123",
         eventBus,
+        diff: emptyDiff,
       });
       expect(result).toBe(false);
       expect(eventBus.events.map((e) => e.event)).toContain(
@@ -125,6 +128,7 @@ describe("RagContextProvider", () => {
         repositoryIdentity: identity,
         revision: "abc123",
         eventBus: new TestEventBus(),
+        diff: emptyDiff,
       });
       expect(result).toBe(false);
     });
@@ -141,6 +145,7 @@ describe("RagContextProvider", () => {
         repositoryIdentity: identity,
         revision: "abc123",
         eventBus: new TestEventBus(),
+        diff: emptyDiff,
       });
       expect(result).toBe(false);
     });
@@ -157,6 +162,7 @@ describe("RagContextProvider", () => {
         repositoryIdentity: identity,
         revision: "new-sha",
         eventBus,
+        diff: emptyDiff,
       });
       expect(eventBus.events.map((e) => e.event)).toContain(
         CoreEvents.WorkflowReviewIndexOutdated,

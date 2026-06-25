@@ -44,16 +44,16 @@ export async function runReviewWorkflow({
     const {
       diff,
       revision,
+      baseRevision,
       repositoryIdentity,
       metadata,
-      diffSummary: summary,
+      diffSummary,
     } = await loadDiff(diffProvider);
 
     eventBus.emit(CoreEvents.WorkflowReviewDiffLoaded, {
       files: diff.files.length,
-      summary,
+      summary: diffSummary,
     });
-    diffSummary = summary;
 
     if (diff.files.length === 0) {
       return {
@@ -66,6 +66,7 @@ export async function runReviewWorkflow({
       config,
       repositoryIdentity,
       revision,
+      baseRevision,
       diff,
       eventBus,
       repository,

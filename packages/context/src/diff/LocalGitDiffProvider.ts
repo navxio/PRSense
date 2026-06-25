@@ -28,17 +28,12 @@ export class LocalGitDiffProvider implements DiffProvider {
   constructor(
     private readonly repoRoot: string,
     private readonly baseBranch?: string,
-  ) { }
+  ) {}
 
   async load() {
     const cwd = path.resolve(this.repoRoot);
 
-    // -------------------------------------------------
-    // Resolve base branch
-    // -------------------------------------------------
-
     let baseBranch;
-
     try {
       baseBranch =
         this.baseBranch ??
@@ -50,68 +45,47 @@ export class LocalGitDiffProvider implements DiffProvider {
           .split("/")
           .pop();
     } catch {
-      throw new Error("Could not determine base branch")
+      throw new Error("Could not determine base branch");
     }
 
-    // -------------------------------------------------
-    // Compute diff
-    // -------------------------------------------------
+    // Resolve once; the merge-base IS the conceptual base for both clean
+    // and dirty paths (git diff A...B uses merge-base(A, B) internally).
+    const baseRevision = execSync(`git merge-base ${baseBranch} HEAD`, {
+      cwd,
+      encoding: "utf8",
+    }).trim();
 
     const hasUncommittedChanges =
-      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim().length > 0;
+      execSync("git status --porcelain", { cwd, encoding: "utf8" }).trim()
+        .length > 0;
 
     let diffText = "";
-
     if (hasUncommittedChanges) {
-      // FULL current state vs base
-      // Intentional:
-      // When working tree is dirty, we diff from merge-base to include:
-      // - committed branch changes
-      // - staged changes
-      // - unstaged changes
-      // This ensures full PR-style review coverage.
-      const mergeBase = execSync(
-        `git merge-base ${baseBranch} HEAD`,
-        { cwd, encoding: "utf8" }
-      ).trim();
-
-      diffText = execSync(`git diff ${mergeBase}`, {
+      diffText = execSync(`git diff ${baseRevision}`, {
         cwd,
         encoding: "utf8",
       });
     } else {
-      // clean branch diff
-      diffText = execSync(`git diff ${baseBranch}...HEAD`, {
+      diffText = execSync(`git diff ${baseRevision}..HEAD`, {
         cwd,
         encoding: "utf8",
       });
     }
 
-    // -------------------------------------------------
-    // Parse diff
-    // -------------------------------------------------
-
     const diff: UnifiedDiff = parseUnifiedDiff(diffText);
-
-    // -------------------------------------------------
-    // Revision + metadata
-    // -------------------------------------------------
 
     const revision = execSync("git rev-parse HEAD", {
       cwd,
       encoding: "utf8",
     }).trim();
 
-    const identity: RepositoryIdentity = {
-      provider: "filesystem",
-      id: cwd,
-    };
-
+    const identity: RepositoryIdentity = { provider: "filesystem", id: cwd };
     const branchName = getBranchName(cwd);
 
     return {
       diff,
       revision,
+      baseRevision, // NEW
       repositoryIdentity: identity,
       metadata: {
         ...(branchName !== undefined && { branchName }),

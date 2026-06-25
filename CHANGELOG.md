@@ -3,6 +3,90 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] — 2026-06-25
+
+### Added
+
+- **Symbol-graph context provider.** Reviews now surface direct callers
+  of exported declarations whose signatures changed at the type level.
+  Complements RAG: RAG covers semantic relatedness, symbol-graph covers
+  structural dependency. Built on `ts-morph`; two `Project`s are loaded
+  per job (HEAD from the working tree, base from the diff target via
+  `git cat-file --batch` into an in-memory FS) and compared via
+  resolved-type signature strings. Direct callers from the HEAD `Project`
+  are ranked (same-PR > same-package > workspace), capped at 5 per
+  symbol, and rendered as the enclosing statement at each call site.
+  TypeScript only in v1.
+
+- **Sectioned per-file context.** `formatContextForFile` now groups
+  retrieved chunks by provider into `### Direct callers of changed
+symbols` (references) and `### Similar code` (RAG). Sub-grouped by
+  symbol under references; per-symbol truncation marker rendered when
+  the cap fires.
+
+- **Diff-provider `baseRevision`.** All `DiffProvider` implementations
+  (`LocalGit`, `GitHubPr`, `GitLabMr`, `CodebergPr`) now resolve and
+  expose the base SHA alongside `revision`. Required by symbol-graph;
+  available to future providers and reporters.
+
+- **Symbol-graph telemetry events.**
+  - `workflow.review.symbol_graph.projects.loaded` —
+    `{ headFiles, baseFiles, durationMs }`, emitted once per job.
+  - `workflow.review.symbol_graph.references.retrieved` —
+    `{ symbol, file, totalRefs, shownRefs }`, emitted per triggered
+    symbol. `totalRefs > shownRefs` indicates the per-symbol cap fired.
+  - `workflow.review.context.retrieved` now also emitted by the
+    symbol-graph provider, mirroring the RAG contract.
+
+### Changed
+
+- `ContextAvailabilityInput` now carries `diff`. Required by
+  symbol-graph's candidate gate; existing `RagContextProvider` ignores
+  it. Test mocks implementing `ContextProvider.isAvailable` need to
+  accept the new field.
+
+- `DiffProvider.load()` return type extends with required
+  `baseRevision: string`. Where the underlying source cannot resolve a
+  base (e.g. an unborn HEAD on `LocalGitDiffProvider`), the provider
+  emits a `"unknown"` sentinel; `SymbolGraphContextProvider` treats it
+  as unavailable.
+
+- CLI bundle excludes `typescript` and `ts-morph`. Required for ESM
+  bundling correctness; install footprint grows by ~60 MB.
+
+### Fixed
+
+- `findExportedDeclarations` now surfaces anonymous `export default
+function` and `export default class` declarations under the synthetic
+  name `"default"`.
+
+- `gitObjectReader.listTree` and HEAD enumeration in `loadProjects`
+  invoke git with `-c core.quotepath=false`. Filenames containing
+  non-ASCII bytes are now read correctly rather than C-quoted.
+
+- Reference detection in symbol-graph recognises method and namespaced
+  calls (`obj.foo()`, `ns.foo()`). Previously only direct calls and
+  property-access LHS references were treated as call sites.
+
+- `SymbolGraphContextProvider` keys candidate state by revision.
+  Previously, repeated `isAvailable` invocations within one provider
+  instance would clobber state — latent in current usage, broken under
+  any future per-file availability pattern.
+
+- Reference chunks derive `language` metadata from the file path
+  instead of hard-coding `"typescript"`.
+
+### Notes
+
+- Dogfooded on this PR. Symbol-graph closed one bug class cleanly
+  (signature-change-breaks-caller) and surfaced a second related class
+  (interface-change-breaks-implementer) that v1's call-site-only
+  reference filter does not cover. Tracked for v1.1; see
+  `docs/in-the-wild.md`.
+
+- No `prsense.yml` changes. The per-symbol reference cap (5) is fixed
+  in this release; tunability deferred pending dogfooding data.
+
 ## [0.17.1] — 2026-06-23
 
 ### Fixed

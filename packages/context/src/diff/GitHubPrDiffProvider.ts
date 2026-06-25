@@ -1,22 +1,10 @@
+// packages/context/src/diff/GitHubPrDiffProvider.ts
 import { Octokit } from "@octokit/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
 
-import type {
-  DiffProvider,
-  UnifiedDiff,
-  RepositoryIdentity,
-} from "@prsense/core";
+import type { DiffProvider, RepositoryIdentity } from "@prsense/core";
 
-type LoadResult = {
-  diff: UnifiedDiff;
-  revision: string;
-  repositoryIdentity: RepositoryIdentity;
-  metadata?: {
-    title?: string;
-    description?: string;
-    branchName?: string;
-  };
-};
+type LoadResult = Awaited<ReturnType<DiffProvider["load"]>>;
 
 export class GitHubPrDiffProvider implements DiffProvider {
   private readonly octokit: Octokit;
@@ -70,6 +58,7 @@ export class GitHubPrDiffProvider implements DiffProvider {
         description: data.body ?? undefined,
         revision: data.head?.sha,
         branchName: data.head?.ref ?? undefined,
+        baseRevision: data.base?.sha,
       };
     } catch {
       return {};
@@ -111,6 +100,7 @@ export class GitHubPrDiffProvider implements DiffProvider {
     return {
       diff: parseUnifiedDiff(diffText),
       revision: metadata.revision ?? "unknown",
+      baseRevision: metadata.baseRevision ?? "unknown",
       repositoryIdentity: identity,
       metadata: {
         ...(metadata.title !== undefined && { title: metadata.title }),

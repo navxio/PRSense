@@ -61,6 +61,7 @@ PRSense is built around a few core principles:
 - One-command setup
 - Automatically reads your intent from branch name locally
 - Pluggable models, or run everything locally via Ollama
+- Stays silent if no issues to be reported
 - Auto-indexing by default for context-enriched review
 - Human-in-the-loop decision making
 - **Diff-first intelligence**, understanding:
@@ -71,6 +72,7 @@ PRSense is built around a few core principles:
 - Automatically reads from and writes to local `.env`
 - AST-based chunking for TypeScript (more languages on the roadmap)
 - Bundled `pre-push` git hook
+- Deterministic pipeline for identifying cross file issues for typescript(more languages on the roadmap)
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
@@ -429,34 +431,7 @@ The result is a system that is flexible without being fragile.
 
 ## Architecture
 
-          ┌─────────────┐
-          │   Git / PR  │
-          └──────┬──────┘
-                 │
-            [ Diff Input ]
-                 │
-        ┌────────▼────────┐
-        │ Ingestion       │
-        │ (diff + meta)   │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Context Builder │◄──── Repository, files, history
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Review Engine   │
-        │ (LLM + Context) │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Signal Compiler │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │ Reporters       │
-        │ (CLI, others)   │
-        └─────────────────┘
+![architecture](./assets/prsense_review_architecture.png)
 
 PRSense follows a hexagonal architecture:
 
