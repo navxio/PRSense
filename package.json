@@ -26,8 +26,10 @@
     "bench": "pnpm --filter @prsense/bench start",
     "test": "jest --runInBand",
     "publish:check": "pnpm -r build && pnpm -r pack",
-    "publish": "pnpm publish -r --access public --no-git-checks",
-    "test:smoke": "pnpm build && jest cli.smoke"
+    "test:smoke": "pnpm build && jest cli.smoke",
+    "publish": "pnpm --filter @prsense/cli publish --no-git-checks",
+    "prepublishOnly": "pnpm test",
+    "pretest": "pnpm build"
   },
   "keywords": [
     "cli",
