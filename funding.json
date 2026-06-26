@@ -19,12 +19,10 @@
       "name": "PRSense",
       "description": "PRSense (Patch-Review Sense) is an open-source, local-first, self-hosted CLI tool for LLM-powered code review of pull request diffs. It produces high-confidence, grounded review signals that cannot reference files, symbols, or lines absent from the change under review. The architecture is hexagonal: storage backends, LLM providers, and forge integrations are swappable adapters. Storage is embedded SQLite + sqlite-vec, with no external database or container required. Supports OpenAI, Google, Anthropic, and Ollama for review and embeddings; GitHub, GitLab, and Codeberg/Forgejo for forge integration. The per-file review architecture produces an asymmetric failure profile — many false positives, near-zero false negatives — which is load-bearing for its value as a safety net during code review.",
       "webpageUrl": {
-        "url": "https://github.com/navxio/prsense",
-        "wellKnown": "https://github.com/navxio/prsense/raw/main/.well-known/funding-manifest-urls"
+        "url": "https://github.com/navxio/prsense"
       },
       "repositoryUrl": {
-        "url": "https://github.com/navxio/prsense",
-        "wellKnown": "https://github.com/navxio/prsense/raw/main/.well-known/funding-manifest-urls"
+        "url": "https://github.com/navxio/prsense"
       },
       "licenses": ["spdx:Apache-2.0"],
       "tags": [
