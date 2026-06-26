@@ -54,7 +54,7 @@
         "status": "active",
         "name": "v1.0 launch: stabilization and benchmark rerun",
         "description": "Ship PRSense v1.0. Concrete deliverables: (1) rebuild the benchmark harness and rerun against current flagship models (OpenAI, Anthropic, Google) and local Ollama models via together.ai, publishing precision/recall and grounding metrics, (2) patch-based review mode for distributed git workflows (kernel-style mailing-list patch series and stacked PR sequences), (3) raise test coverage on core review and indexing paths to a defensible bar — diff providers, repository sources, the LLM client factory, the symbol-graph provider edge cases, and the review workflow end-to-end, (4) close out the remaining critical stabilization issues blocking launch. Approximately two months of focused full-time work.",
-        "amount": 12000,
+        "amount": 15000,
         "currency": "USD",
         "frequency": "one-time",
         "channels": ["bank-transfer"]
@@ -74,7 +74,7 @@
         "status": "active",
         "name": "PR Replay: calibration on historical merges",
         "description": "Build a replay harness that runs PRSense over a curated corpus of historical merged pull requests across well-known open-source repositories, comparing signals against subsequent revert / hotfix / bugfix commits to derive an empirical precision-recall curve. The output is a public, reproducible benchmark dataset and a calibration loop that closes signal-quality regressions before they ship. Doubles as a discoverability surface for the project. Approximately two months of full-time work.",
-        "amount": 12000,
+        "amount": 18000,
         "currency": "USD",
         "frequency": "one-time",
         "channels": ["bank-transfer"]
