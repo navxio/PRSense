@@ -1,0 +1,117 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "maintainer",
+    "name": "Navdeep Saini",
+    "email": "navdeepio@duck.com",
+    "phone": "",
+    "description": "Solo developer building open-source developer tools. I work on PRSense, a local-first, self-hosted CLI for LLM-powered code review. I write about software engineering at https://inverted-tree.com.",
+    "webpageUrl": {
+      "url": "https://inverted-tree.com",
+      "wellKnown": "https://inverted-tree.com/.well-known/funding-manifest-urls"
+    }
+  },
+  "projects": [
+    {
+      "guid": "prsense",
+      "name": "PRSense",
+      "description": "PRSense (Patch-Review Sense) is an open-source, local-first, self-hosted CLI tool for LLM-powered code review of pull request diffs. It produces high-confidence, grounded review signals that cannot reference files, symbols, or lines absent from the change under review. The architecture is hexagonal: storage backends, LLM providers, and forge integrations are swappable adapters. Storage is embedded SQLite + sqlite-vec, with no external database or container required. Supports OpenAI, Google, Anthropic, and Ollama for review and embeddings; GitHub, GitLab, and Codeberg/Forgejo for forge integration. The per-file review architecture produces an asymmetric failure profile — many false positives, near-zero false negatives — which is load-bearing for its value as a safety net during code review.",
+      "webpageUrl": {
+        "url": "https://github.com/navxio/prsense",
+        "wellKnown": "https://github.com/navxio/prsense/raw/main/.well-known/funding-manifest-urls"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/navxio/prsense",
+        "wellKnown": "https://github.com/navxio/prsense/raw/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": ["spdx:Apache-2.0"],
+      "tags": [
+        "code-review",
+        "patch-review",
+        "developer-tools",
+        "cli",
+        "llm",
+        "ai",
+        "rag",
+        "self-hosted",
+        "local-first",
+        "typescript"
+      ]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "bank-transfer",
+        "type": "bank",
+        "address": "",
+        "description": "Direct bank transfer to a US business account. Wire details shared privately with funders after introduction."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "v1-launch",
+        "status": "active",
+        "name": "v1.0 launch: stabilization and benchmark rerun",
+        "description": "Ship PRSense v1.0. Concrete deliverables: (1) rebuild the benchmark harness and rerun against current flagship models (OpenAI, Anthropic, Google) and local Ollama models via together.ai, publishing precision/recall and grounding metrics, (2) patch-based review mode for distributed git workflows (kernel-style mailing-list patch series and stacked PR sequences), (3) raise test coverage on core review and indexing paths to a defensible bar — diff providers, repository sources, the LLM client factory, the symbol-graph provider edge cases, and the review workflow end-to-end, (4) close out the remaining critical stabilization issues blocking launch. Approximately two months of focused full-time work.",
+        "amount": 12000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["bank-transfer"]
+      },
+      {
+        "guid": "v1-1-signal-quality",
+        "status": "active",
+        "name": "v1.1: cross-file signal quality",
+        "description": "Close the known gaps in the TypeScript symbol-graph pass: heritage relationships (implements / extends), declared-type structural references, and signal calibration to reduce the false-positive rate observed in dogfooding without regressing the false-negative profile. Includes the queued internal refactors (HttpsCloneRepositorySource consolidation, ContextProvider and Reporter contract tests). Approximately two months of full-time work.",
+        "amount": 12000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["bank-transfer"]
+      },
+      {
+        "guid": "pr-replay",
+        "status": "active",
+        "name": "PR Replay: calibration on historical merges",
+        "description": "Build a replay harness that runs PRSense over a curated corpus of historical merged pull requests across well-known open-source repositories, comparing signals against subsequent revert / hotfix / bugfix commits to derive an empirical precision-recall curve. The output is a public, reproducible benchmark dataset and a calibration loop that closes signal-quality regressions before they ship. Doubles as a discoverability surface for the project. Approximately two months of full-time work.",
+        "amount": 12000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["bank-transfer"]
+      },
+      {
+        "guid": "v2-multilang",
+        "status": "active",
+        "name": "v2.0: multi-language support",
+        "description": "Extend PRSense's depth-first (AST chunking) and breadth-first (cross-file symbol graph) review architecture beyond TypeScript. Concrete deliverables: tree-sitter-backed AST chunkers for Python and Java; cross-file symbol-graph context providers for the same languages; a per-language calibration cycle using the PR Replay harness; and a refreshed benchmark covering each language against flagship and local models. Multi-language support is the headline upgrade between v1.x and v2.0. Approximately five months of full-time work.",
+        "amount": 30000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["bank-transfer"]
+      },
+      {
+        "guid": "ongoing-maintenance",
+        "status": "active",
+        "name": "Ongoing maintenance",
+        "description": "Annual support covering security patches, dependency and SDK updates (Octokit, gitbeaker, Forgejo API, LLM provider SDKs), bug triage, and release management. Roughly one month of focused work spread across the year.",
+        "amount": 6000,
+        "currency": "USD",
+        "frequency": "yearly",
+        "channels": ["bank-transfer"]
+      },
+      {
+        "guid": "sponsor-any",
+        "status": "active",
+        "name": "Sponsor any amount",
+        "description": "Any contribution toward continued development is appreciated.",
+        "amount": 0,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["bank-transfer"]
+      }
+    ],
+    "history": []
+  }
+}
