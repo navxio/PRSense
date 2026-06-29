@@ -120,3 +120,26 @@ function getLegacyVecDimension(db: Db): number | null {
   const m = row.sql.match(/float\[(\d+)\]/);
   return m ? Number(m[1]) : null;
 }
+
+/**
+ * Resolves the vec table name for a repository by reading its
+ * recorded embedding dimension from prsense_index_metadata.
+ *
+ * Returns null when the repository has no metadata row — i.e. it
+ * was never successfully indexed. Callers should treat this as
+ * "nothing to do" (no chunks exist, no vec table to query).
+ */
+export function resolveVecTable(
+  db: Db,
+  provider: string,
+  id: string,
+): string | null {
+  const row = db
+    .prepare(
+      `SELECT embedding_dimension FROM prsense_index_metadata
+       WHERE repository_provider = ? AND repository_id = ?`,
+    )
+    .get(provider, id) as { embedding_dimension: number } | undefined;
+  if (!row) return null;
+  return vecTableName(row.embedding_dimension);
+}
