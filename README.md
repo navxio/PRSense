@@ -7,7 +7,7 @@
 </p>
 <h1 align="center">PRSense</h1>
 <p align="center">
-  <sub>High-confidence signals grounded in diff</sub>
+  <sub>High-confidence review signals grounded in diff</sub>
 </p>
 
 <p align="center">
@@ -58,21 +58,21 @@ PRSense is built around a few core principles:
 - **Fast, local-first CLI** for reviewing and analyzing code changes
 - **Self-hosted by default** — run entirely on your own machine, no external services required
 - **Zero-infrastructure** — bundled SQLite + sqlite-vec, no database to provision
-- One-command setup
-- Automatically reads your intent from branch name locally
-- Pluggable models, or run everything locally via Ollama
-- Stays silent if no issues to be reported
-- Auto-indexing by default for context-enriched review
-- Human-in-the-loop decision making
+- **One-command setup**
+- **Automatically reads review intent** from branch name locally
+- **Pluggable models**, or run everything locally via Ollama
+- **Stays silent if no issues to be reported**
+- **Auto-indexing by default** for context-enriched review
+- **Human-in-the-loop** decision making
 - **Diff-first intelligence**, understanding:
   - local changes
   - pull request diffs from GitHub, GitLab, and Codeberg / Forgejo
 - **Pluggable LLM backends** — Ollama, Anthropic, Google, OpenAI
-- Built-in profiling
-- Automatically reads from and writes to local `.env`
+- **Built-in profiling**
+- **Automatically reads from and writes to local `.env`**
 - AST-based chunking for TypeScript (more languages on the roadmap)
-- Bundled `pre-push` git hook
-- Deterministic pipeline for identifying cross file issues for typescript(more languages on the roadmap)
+- **Bundled `pre-push` git hook**
+- Deterministic pipeline for identifying cross file issues for Typescript (more languages on the roadmap)
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
