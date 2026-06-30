@@ -67,29 +67,25 @@ export function openDatabase(path: string): Db {
   return db;
 }
 
-/**
- * One-shot migration: pre-0.16 databases had a single `vec_rag_chunks`
- * table. Rename it to its dimension-scoped name. Idempotent: no-op when
- * the legacy table is absent.
- */
 function migrateLegacyVecTable(db: Db): void {
-  const legacyDim = getLegacyVecDimension(db);
-  if (legacyDim === null) return;
-  const target = vecTableName(legacyDim);
-  // Defensive: if the target somehow already exists, drop the legacy
-  // table rather than failing the rename. Rows are recoverable by
-  // reindexing; a half-migrated DB is not.
-  const targetExists = db
+  const legacy = db
     .prepare(
       `SELECT 1 FROM sqlite_master
-       WHERE type = 'table' AND name = ?`,
+       WHERE type = 'table' AND name = 'vec_rag_chunks'`,
     )
-    .get(target);
-  if (targetExists) {
-    db.exec(`DROP TABLE vec_rag_chunks`);
-    return;
-  }
-  db.exec(`ALTER TABLE vec_rag_chunks RENAME TO ${target}`);
+    .get();
+  if (!legacy) return;
+
+  // vec0 virtual tables can't be safely renamed — ALTER doesn't touch
+  // their shadow tables (_rowids, _chunks, _info), which leaves the
+  // module looking for tables that no longer match. Drop + reindex is
+  // the only safe path. DROP TABLE on a vec0 virtual table cleans up
+  // its shadows correctly.
+  db.exec(`
+    DROP TABLE vec_rag_chunks;
+    DELETE FROM rag_chunks;
+    DELETE FROM prsense_index_metadata;
+  `);
 }
 
 /**
