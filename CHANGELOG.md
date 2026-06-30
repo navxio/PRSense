@@ -3,6 +3,18 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.1] — 2026-06-30
+
+### Fixed
+
+- **OpenAI models that reject an explicit `temperature` no longer crash
+  the review.** Reasoning-family models (e.g. the gpt-5 line) accept only
+  the default temperature and return a 400 otherwise. The OpenAI adapter
+  now detects this specific error, retries the request without
+  `temperature`, and warns once per model that the configured value is
+  being ignored. The rejection is memoized for the rest of the run, so
+  only the first request to such a model pays the retry.
+
 ## [0.19.0] — 2026-06-30
 
 ### Breaking
