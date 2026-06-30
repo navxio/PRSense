@@ -26,11 +26,14 @@ export function createOpenAiClient(config: {
   model: string;
   temperature?: number;
   baseUrl?: string;
+  client?: OpenAI; // injection seam for tests
 }): LlmClient {
-  const client = new OpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseUrl,
-  });
+  const client =
+    config.client ??
+    new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+    });
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
       const { prompt } = req;
