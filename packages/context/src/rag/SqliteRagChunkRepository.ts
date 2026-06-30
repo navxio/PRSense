@@ -237,27 +237,24 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     ensureVecTable(this.db, embeddingDimension);
   }
 
-  /**
-   * Deletes vec rows for this repo across every dim table that exists.
-   * Used by rebuild and full-repo delete, where we can't assume the
-   * repo's current metadata dim matches the dim it was last indexed at.
-   */
   private deleteAllVecRowsForRepo(provider: string, name: string): void {
-    const tables = this.db
-      .prepare(
-        `SELECT name FROM sqlite_master
+    const tables = (
+      this.db
+        .prepare(
+          `SELECT name FROM sqlite_master
          WHERE type = 'table' AND name LIKE 'vec_rag_chunks_%'`,
-      )
-      .all() as Array<{ name: string }>;
+        )
+        .all() as Array<{ name: string }>
+    ).filter((r) => /^vec_rag_chunks_\d+$/.test(r.name));
 
     for (const { name: table } of tables) {
       this.db
         .prepare(
           `DELETE FROM ${table}
-           WHERE rowid IN (
-             SELECT rowid FROM rag_chunks
-             WHERE repo_provider = ? AND repo_name = ?
-           )`,
+         WHERE rowid IN (
+           SELECT rowid FROM rag_chunks
+           WHERE repo_provider = ? AND repo_name = ?
+         )`,
         )
         .run(provider, name);
     }
