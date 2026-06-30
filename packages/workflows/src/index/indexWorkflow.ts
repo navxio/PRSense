@@ -442,7 +442,7 @@ export async function runIndexWorkflow({
               embedding,
             };
           });
-          await chunkRepository.insertChunks(rows);
+          await chunkRepository.insertChunks(rows, embeddingDimension);
           processed += batch.length;
           eventBus.emit(CoreEvents.WorkflowIndexProgress, {
             processed,
