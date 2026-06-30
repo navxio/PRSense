@@ -31,15 +31,25 @@ export interface NearestChunk {
 }
 
 export interface RagChunkRepository {
-  /** Replace all chunks for a repository in a single transaction. */
+  /**
+   * Replace all chunks for a repository in a single transaction.
+   * `dim` is the embedding dimension of the new rows; the repository
+   * may have previously been indexed at a different dimension and
+   * its old vec rows will be cleared regardless.
+   */
   rebuildRepository(
     provider: string,
     name: string,
+    dim: number,
     rows: ChunkRow[],
   ): Promise<void>;
 
-  /** Append chunks. No deletion. */
-  insertChunks(rows: ChunkRow[]): Promise<void>;
+  /**
+   * Append chunks. No deletion. `dim` is the embedding dimension of
+   * the rows being inserted; must match the repository's current
+   * indexed dimension (callers guarantee this).
+   */
+  insertChunks(rows: ChunkRow[], dim: number): Promise<void>;
 
   /** Delete all chunks belonging to (provider, name). */
   deleteByRepository(provider: string, name: string): Promise<void>;

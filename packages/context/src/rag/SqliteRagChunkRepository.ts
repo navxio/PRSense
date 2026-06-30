@@ -1,36 +1,50 @@
 // packages/context/src/rag/SqliteRagChunkRepository.ts
 import type { RagChunkRepository, ChunkRow } from "./RagChunkRepository.js";
 import { Statement } from "better-sqlite3";
-import { ensureVecTable, type Db } from "../db/SqliteDatabase.js";
+import {
+  ensureVecTable,
+  resolveVecTable,
+  vecTableName,
+  type Db,
+} from "../db/SqliteDatabase.js";
 
 function toF32(embedding: number[]): Uint8Array {
-  // sqlite-vec accepts a float[] as the raw bytes of a Float32Array.
   return new Uint8Array(new Float32Array(embedding).buffer);
 }
 
 export class SqliteRagChunkRepository implements RagChunkRepository {
   constructor(private readonly db: Db) {}
+
+  // Prepared statements are cached per dim, since the vec table name
+  // is part of the SQL text. Chunk insert is dim-independent.
   private _insertChunkStmt?: Statement;
-  private _insertVecStmt?: Statement;
+  private readonly _insertVecStmts = new Map<number, Statement>();
 
   private get insertChunkStmt(): Statement {
     return (this._insertChunkStmt ??= this.db.prepare(
       `INSERT INTO rag_chunks (
-       id, repo_provider, repo_owner, repo_name, repo_ref,
-       path, kind, language, content, line_start, line_end
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+         id, repo_provider, repo_owner, repo_name, repo_ref,
+         path, kind, language, content, line_start, line_end
+       ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
     ));
   }
 
-  private get insertVecStmt(): Statement {
-    return (this._insertVecStmt ??= this.db.prepare(
-      `INSERT INTO vec_rag_chunks (rowid, embedding)
-     VALUES (last_insert_rowid(), ?)`,
-    ));
+  private insertVecStmt(dim: number): Statement {
+    let stmt = this._insertVecStmts.get(dim);
+    if (!stmt) {
+      stmt = this.db.prepare(
+        `INSERT INTO ${vecTableName(dim)} (rowid, embedding)
+         VALUES (last_insert_rowid(), ?)`,
+      );
+      this._insertVecStmts.set(dim, stmt);
+    }
+    return stmt;
   }
 
-  // INVARIANT: no other inserts may occur between insertChunkStmt and insertVecStmt on this connection. The vec row depends on SQLite's last_insert_rowid() referring to the chunk row we just inserted.
-  private insertRow(row: ChunkRow): void {
+  // INVARIANT: no other inserts may occur between insertChunkStmt and
+  // insertVecStmt on this connection. The vec row depends on SQLite's
+  // last_insert_rowid() referring to the chunk row we just inserted.
+  private insertRow(row: ChunkRow, dim: number): void {
     const { chunk } = row;
     const sourcePath = chunk.source.kind === "file" ? chunk.source.path : null;
     const contentKind = chunk.metadata?.kind ?? "code";
@@ -49,59 +63,48 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
       chunk.metadata?.lineEnd ?? null,
     );
 
-    this.insertVecStmt.run(toF32(row.embedding));
+    this.insertVecStmt(dim).run(toF32(row.embedding));
   }
 
   async rebuildRepository(
     provider: string,
     name: string,
+    dim: number,
     rows: ChunkRow[],
   ): Promise<void> {
-    const tx = this.db.transaction((rows: ChunkRow[]) => {
-      // Delete vec rows first (they reference rag_chunks rowids).
-      this.db
-        .prepare(
-          `DELETE FROM vec_rag_chunks
-           WHERE rowid IN (
-             SELECT rowid FROM rag_chunks
-             WHERE repo_provider = ? AND repo_name = ?
-           )`,
-        )
-        .run(provider, name);
+    ensureVecTable(this.db, dim);
 
+    // The repo may have previously been indexed at a different dim;
+    // its old vec rows live in a different table. Clean both: the
+    // table for the new dim (if any leftovers) AND any other dim
+    // table that still holds rows for this repo.
+    const tx = this.db.transaction((rows: ChunkRow[]) => {
+      this.deleteAllVecRowsForRepo(provider, name);
       this.db
         .prepare(
           `DELETE FROM rag_chunks
            WHERE repo_provider = ? AND repo_name = ?`,
         )
         .run(provider, name);
-
-      for (const row of rows) this.insertRow(row);
+      for (const row of rows) this.insertRow(row, dim);
     });
 
     tx(rows);
   }
 
-  async insertChunks(rows: ChunkRow[]): Promise<void> {
+  async insertChunks(rows: ChunkRow[], dim: number): Promise<void> {
     if (rows.length === 0) return;
+    ensureVecTable(this.db, dim);
 
     const tx = this.db.transaction((rows: ChunkRow[]) => {
-      for (const row of rows) this.insertRow(row);
+      for (const row of rows) this.insertRow(row, dim);
     });
     tx(rows);
   }
 
   async deleteByRepository(provider: string, name: string): Promise<void> {
     const tx = this.db.transaction(() => {
-      this.db
-        .prepare(
-          `DELETE FROM vec_rag_chunks
-           WHERE rowid IN (
-             SELECT rowid FROM rag_chunks
-             WHERE repo_provider = ? AND repo_name = ?
-           )`,
-        )
-        .run(provider, name);
+      this.deleteAllVecRowsForRepo(provider, name);
       this.db
         .prepare(
           `DELETE FROM rag_chunks WHERE repo_provider = ? AND repo_name = ?`,
@@ -119,17 +122,21 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
     if (paths.length === 0) return;
 
     const placeholders = paths.map(() => "?").join(",");
+    const target = resolveVecTable(this.db, provider, name);
+
     const tx = this.db.transaction(() => {
-      this.db
-        .prepare(
-          `DELETE FROM vec_rag_chunks
-           WHERE rowid IN (
-             SELECT rowid FROM rag_chunks
-             WHERE repo_provider = ? AND repo_name = ?
-               AND path IN (${placeholders})
-           )`,
-        )
-        .run(provider, name, ...paths);
+      if (target) {
+        this.db
+          .prepare(
+            `DELETE FROM ${target}
+             WHERE rowid IN (
+               SELECT rowid FROM rag_chunks
+               WHERE repo_provider = ? AND repo_name = ?
+                 AND path IN (${placeholders})
+             )`,
+          )
+          .run(provider, name, ...paths);
+      }
       this.db
         .prepare(
           `DELETE FROM rag_chunks
@@ -160,12 +167,16 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
       distance: number;
     }>
   > {
+    const target = resolveVecTable(
+      this.db,
+      params.repoProvider,
+      params.repoName,
+    );
+    // No metadata = repo never successfully indexed. Legitimate empty.
+    if (!target) return [];
+
     const limit = Math.max(1, Math.floor(params.limit));
-
     const excludeCount = params.excludePaths?.length ?? 0;
-
-    // sqlite-vec KNN applies `k` BEFORE our metadata filters in the join,
-    // so over-fetch then trim — same strategy as the Postgres version.
     const FETCH_CEILING = 200;
     const k = Math.min(limit + excludeCount, FETCH_CEILING);
 
@@ -201,7 +212,7 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
         c.line_start  AS lineStart,
         c.line_end    AS lineEnd,
         v.distance    AS distance
-      FROM vec_rag_chunks v
+      FROM ${target} v
       JOIN rag_chunks c ON c.rowid = v.rowid
       WHERE v.embedding MATCH @query
         AND k = @k
@@ -224,5 +235,28 @@ export class SqliteRagChunkRepository implements RagChunkRepository {
 
   async ensureSchema(embeddingDimension: number): Promise<void> {
     ensureVecTable(this.db, embeddingDimension);
+  }
+
+  private deleteAllVecRowsForRepo(provider: string, name: string): void {
+    const tables = (
+      this.db
+        .prepare(
+          `SELECT name FROM sqlite_master
+         WHERE type = 'table' AND name LIKE 'vec_rag_chunks_%'`,
+        )
+        .all() as Array<{ name: string }>
+    ).filter((r) => /^vec_rag_chunks_\d+$/.test(r.name));
+
+    for (const { name: table } of tables) {
+      this.db
+        .prepare(
+          `DELETE FROM ${table}
+         WHERE rowid IN (
+           SELECT rowid FROM rag_chunks
+           WHERE repo_provider = ? AND repo_name = ?
+         )`,
+        )
+        .run(provider, name);
+    }
   }
 }

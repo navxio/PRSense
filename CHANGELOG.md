@@ -3,6 +3,61 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] — 2026-06-30
+
+### Breaking
+
+- **Storage migration on first open.** Databases from 0.18.x and
+  earlier are migrated automatically: the legacy `vec_rag_chunks`
+  table is dropped and `rag_chunks` + `prsense_index_metadata` are
+  cleared. All repositories must be reindexed once after upgrading.
+  This is unavoidable — vec0 virtual tables can't be safely renamed
+  (`ALTER TABLE RENAME` doesn't follow their shadow tables), so
+  drop-and-rebuild is the only correct path.
+
+### Added
+
+- **Multiple embedding dimensions in one database.** Repositories
+  indexed under different embedding providers (e.g. Ollama at 768,
+  OpenAI at 1536) now coexist cleanly in a single PRSense database.
+  Previously the global `vec_rag_chunks` table baked one dimension
+  into its schema, making multi-provider use a phantom feature —
+  the second repository's index would either fail or wipe the first.
+
+  Each dimension now gets its own vec0 table (`vec_rag_chunks_<dim>`),
+  created lazily on first use. A repository still has exactly one
+  active dimension at a time; changing it triggers a rebuild for
+  that repository only, leaving other repositories untouched.
+
+### Changed
+
+- `ensureVecTable(dim)` is now purely additive: it creates the
+  dimension-scoped table if missing and never drops. The 0.16.2
+  destructive-rebuild branch collapses out — a dimension change
+  now means a different table, not a reset.
+
+### Internal
+
+- `RagChunkRepository.insertChunks` and `rebuildRepository` now
+  take an explicit `dim` parameter. Other methods resolve dimension
+  internally via `prsense_index_metadata`.
+- New `resolveVecTable(db, provider, id)` helper reads a repository's
+  recorded dimension from metadata and returns its dim-scoped table
+  name. Used by `searchNearest` and `deleteByPaths`.
+- `deleteByRepository` and `rebuildRepository` sweep across all
+  `vec_rag_chunks_<dim>` tables when clearing a repository, since a
+  repo's old vec rows may live in a different dim table than its
+  current metadata points at (e.g. mid-rebuild).
+
+### Tests
+
+- Multi-dimension coexistence: two repositories at 768 and 1536 in
+  the same database; both queryable, neither disturbed.
+- Cross-dimension rebuild: repo at 768 rebuilt at 1536; the old
+  dim table has zero remaining rows for that repo.
+- Legacy migration: pre-0.19 database with `vec_rag_chunks` opens
+  cleanly; legacy table is dropped, chunks and metadata cleared.
+
 ## [0.18.1] — 2026-06-25
 
 ### Fixed

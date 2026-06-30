@@ -1,3 +1,4 @@
+// packages/workflows/src/index/__tests__/incremental.test.ts
 import path from "node:path";
 import fs from "node:fs/promises";
 import { CoreEvents, type EmbeddingClient } from "@prsense/core";
@@ -566,5 +567,127 @@ describe("Rebuild on embedding dimension change", () => {
       (e) => e.event === CoreEvents.WorkflowIndexRebuildRequired,
     );
     expect(rebuild?.fields?.forced).toBe(true);
+  });
+});
+
+describe("Multi-dimension indexing", () => {
+  let testDb: TestDb;
+  let repoA: string;
+  let repoB: string;
+
+  beforeEach(async () => {
+    testDb = createTestDb();
+    repoA = await createTestRepo();
+    repoB = await createTestRepo();
+  });
+
+  afterEach(async () => {
+    testDb.close();
+    if (repoA) await fs.rm(repoA, { recursive: true, force: true });
+    if (repoB) await fs.rm(repoB, { recursive: true, force: true });
+  });
+
+  it("indexes two repos at different dimensions in the same database", async () => {
+    await writeFile(repoA, "a.txt", "alpha content");
+    commitAll(repoA, "init");
+
+    await writeFile(repoB, "b.txt", "beta content");
+    commitAll(repoB, "init");
+
+    // Repo A at 768.
+    const resultA = await runIndexWorkflow({
+      target: { provider: "filesystem", root: repoA },
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(768),
+    });
+    expect(resultA.outcome).toBe("success");
+
+    // Repo B at 1536 — should NOT disturb repo A.
+    const resultB = await runIndexWorkflow({
+      target: { provider: "filesystem", root: repoB },
+      config: {
+        ...testConfig(),
+        embeddings: { provider: "openai", model: "text-embedding-3-small" },
+      },
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(1536),
+    });
+    expect(resultB.outcome).toBe("success");
+
+    // Both repos have chunks; neither was disturbed.
+    const aChunks = testDb.allChunks().filter((c) => c.path === "a.txt");
+    const bChunks = testDb.allChunks().filter((c) => c.path === "b.txt");
+    expect(aChunks.length).toBeGreaterThan(0);
+    expect(bChunks.length).toBeGreaterThan(0);
+
+    // Both dim tables exist.
+    const tables = testDb.db
+      .prepare(
+        `SELECT name FROM sqlite_master
+         WHERE type = 'table' AND name LIKE 'vec_rag_chunks_%'`,
+      )
+      .all() as Array<{ name: string }>;
+    const mainTables = tables
+      .map((t) => t.name)
+      .filter((n) => /^vec_rag_chunks_\d+$/.test(n));
+    expect(mainTables).toContain("vec_rag_chunks_768");
+    expect(mainTables).toContain("vec_rag_chunks_1536");
+  });
+
+  it("clears old-dim vec rows when a repo is rebuilt at a new dim", async () => {
+    const repo = repoA;
+
+    await writeFile(repo, "a.txt", "content");
+    commitAll(repo, "init");
+
+    // Index at 768.
+    await runIndexWorkflow({
+      target: { provider: "filesystem", root: repo },
+      config: testConfig(),
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(768),
+    });
+
+    // Rebuild at 1536.
+    await runIndexWorkflow({
+      target: { provider: "filesystem", root: repo },
+      config: {
+        ...testConfig(),
+        embeddings: { provider: "openai", model: "text-embedding-3-small" },
+      },
+      credentials: testCredentials(),
+      force: true,
+      eventBus: new TestEventBus(),
+      version: "test",
+      chunkRepository: testDb.chunkRepo,
+      metadataRepository: testDb.metadataRepo,
+      injectedEmbeddingClient: fakeEmbeddingClient(1536),
+    });
+
+    // Old 768 table should have zero rows for this repo's chunks.
+    const orphans = testDb.db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM vec_rag_chunks_768 v
+         JOIN rag_chunks c ON c.rowid = v.rowid
+         WHERE c.repo_provider = 'filesystem' AND c.repo_name = ?`,
+      )
+      .get(repo) as { n: number };
+    expect(orphans.n).toBe(0);
   });
 });
