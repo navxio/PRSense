@@ -1,3 +1,4 @@
+// packages/llm/src/providers/ollama.ts
 import fetch from "node-fetch";
 import {
   LlmClient,
@@ -13,13 +14,20 @@ type OllamaResponse = {
   eval_count?: number;
 };
 
+// Local models frequently wrap JSON in a markdown code fence despite the
+// "Return ONLY JSON" instruction. Strip a leading/enclosing fence so the
+// downstream JSON.parse sees raw JSON. No fence -> returned trimmed as-is.
+function stripCodeFence(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/i);
+  if (fenced && fenced[1] !== undefined) return fenced[1].trim();
+  return text.trim();
+}
+
 export function createOllamaClient(config: OllamaConfig): LlmClient {
   const baseUrl = config.baseUrl ?? "http://localhost:11434";
-
   return {
     async generate(req: LlmRequest): Promise<LlmResponse> {
       const { prompt } = req;
-
       const res = await fetch(`${baseUrl}/api/generate`, {
         method: "POST",
         headers: {
@@ -29,13 +37,9 @@ export function createOllamaClient(config: OllamaConfig): LlmClient {
           model: config.model,
           prompt: `
 ${prompt.system}
-
 ### REVIEW INPUT START ###
-
 ${prompt.user}
-
 ### REVIEW INPUT END ###
-
 Remember:
 Return ONLY JSON.
 `,
@@ -46,13 +50,11 @@ Return ONLY JSON.
           },
         }),
       });
-
       if (!res.ok) {
         throw new Error(`Ollama error: ${res.statusText}`);
       }
-
       const json = (await res.json()) as OllamaResponse;
-
+      const text = stripCodeFence(json.response);
       const usage: LlmUsage | undefined =
         json.prompt_eval_count !== undefined && json.eval_count !== undefined
           ? {
@@ -61,16 +63,14 @@ Return ONLY JSON.
               totalTokens: json.prompt_eval_count + json.eval_count,
             }
           : undefined;
-
       if (usage) {
         return {
-          text: json.response,
+          text,
           usage,
         };
       }
-
       return {
-        text: json.response,
+        text,
       };
     },
   };

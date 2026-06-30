@@ -3,6 +3,22 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.2] — 2026-06-30
+
+### Fixed
+
+- **Indexing no longer aborts when an input exceeds a local embedding
+  model's context window.** The Ollama embedding adapter now clamps
+  oversized inputs and, if a request still overflows, retries with a
+  progressively shorter prompt until it fits. Previously a single
+  too-large chunk would fail the entire `prsense index` run — most
+  visibly on large TypeScript repositories with very large generated or
+  type-heavy files.
+- **Reviews using Ollama no longer fail when the model wraps its JSON in
+  a markdown code fence.** Local models frequently return fenced
+  ` ```json ` blocks despite being asked for raw JSON; the Ollama
+  adapter now strips the fence before parsing. Cloud providers were unaffected.```
+
 ## [0.19.1] — 2026-06-30
 
 ### Fixed
@@ -936,3 +952,7 @@ Notes
 • System now assumes repositories are Git-backed and locally accessible
 • Incremental indexing is the default when applicable
 • Foundation laid for future blob-based diffing
+
+```
+
+```
