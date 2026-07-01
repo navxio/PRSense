@@ -19,7 +19,11 @@ class mockAPIError extends Error {
   }
 }
 
-const mockCreate = jest.fn();
+type EmbeddingsCreate = (args: {
+  input: string[];
+}) => Promise<{ data: { embedding: number[] }[] }>;
+
+const mockCreate = jest.fn<EmbeddingsCreate>();
 
 jest.mock("openai", () => {
   const OpenAI: any = jest.fn(() => ({ embeddings: { create: mockCreate } }));
