@@ -1,3 +1,4 @@
+// apps/cli/src/ui/eventToTask.ts
 import { CliTask } from "./tasks.js";
 import { CoreEvents } from "@prsense/core";
 import type { DomainEvent } from "@prsense/core";
@@ -79,15 +80,20 @@ export function eventToCliTask(
       };
     case CoreEvents.WorkflowIndexRebuildRequired: {
       if (!event.fields) return null;
-      const { reason } = event.fields;
-      return {
-        kind: "finish",
-        task: {
-          id: "index",
-          label: reason as string,
-          state: "failed",
-        },
-      };
+      const { reason, forced } = event.fields;
+      // Forced rebuild is informational, not terminal: keep the index task
+      // running so subsequent progress updates render on the same line.
+      // The non-forced case IS terminal (workflow returns failure asking for
+      // --force), so it stays a finish.
+      return forced
+        ? {
+            kind: "update",
+            task: { id: "index", label: reason as string, state: "running" },
+          }
+        : {
+            kind: "finish",
+            task: { id: "index", label: reason as string, state: "failed" },
+          };
     }
 
     case CoreEvents.WorkflowIndexProgress: {
