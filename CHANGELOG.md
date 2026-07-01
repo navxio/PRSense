@@ -3,6 +3,23 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.4] — 2026-07-01
+
+### Fixed
+
+- **Google embedding indexing now handles rate limits gracefully instead
+  of failing the run.** When Gemini reports a per-minute rate limit, the
+  adapter waits the interval the API specifies and retries. A hard quota
+  limit (such as a daily cap or a project spend cap) is now surfaced with
+  a clear message explaining the cause, rather than a raw API error.
+
+### Notes
+
+- `gemini-embedding-001` processes one input per request, so indexing a
+  large repository can exhaust Gemini's free- and Tier-1 request quotas.
+  For large repositories, OpenAI or a local Ollama model is recommended,
+  or a higher Gemini usage tier.
+
 ## [0.19.3] — 2026-07-01
 
 ### Fixed
