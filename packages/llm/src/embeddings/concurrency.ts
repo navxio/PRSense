@@ -6,7 +6,7 @@ export function defaultConcurrency(provider: EmbeddingProvider): number {
     case "openai":
       return 6;
     case "google":
-      return 4; // tighter rate limits in practice
+      return 1; // tighter rate limits in practice
     case "ollama":
       return 1; // serial; one GPU
   }
