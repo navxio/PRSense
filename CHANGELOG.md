@@ -3,6 +3,17 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.3] — 2026-07-01
+
+### Fixed
+
+- **OpenAI embedding indexing no longer fails on large repositories when
+  the account's tokens-per-minute limit is reached.** The adapter now
+  paces embedding requests against a rolling 60-second token budget and,
+  on a rate-limit response, waits the interval the API reports before
+  retrying. The budget calibrates itself to the account's actual limit,
+  so indexing stays within bounds automatically regardless of tier.
+
 ## [0.19.2] — 2026-06-30
 
 ### Fixed
