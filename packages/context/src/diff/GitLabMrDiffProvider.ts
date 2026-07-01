@@ -10,8 +10,11 @@ type GitLabChange = {
   diff: string;
 };
 
+const RETRYABLE = new Set([502, 503, 504]);
+
 export class GitLabMrDiffProvider implements DiffProvider {
   private readonly api: InstanceType<typeof Gitlab>;
+  private cachedLoad?: Promise<Awaited<ReturnType<DiffProvider["load"]>>>;
 
   constructor(
     private readonly group: string,
@@ -29,6 +32,30 @@ export class GitLabMrDiffProvider implements DiffProvider {
     return encodeURIComponent(`${this.group}/${this.project}`);
   }
 
+  private async retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+    let lastError: unknown;
+
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        lastError = err;
+
+        const status =
+          err?.cause?.response?.status ?? err?.response?.status ?? err?.status;
+
+        if (!RETRYABLE.has(status)) {
+          throw err;
+        }
+
+        const delay = 300 * 2 ** i;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    throw lastError;
+  }
+
   private async fetchMetadata(): Promise<{
     title?: string;
     description?: string;
@@ -37,9 +64,8 @@ export class GitLabMrDiffProvider implements DiffProvider {
     baseRevision?: string;
   }> {
     try {
-      const mr = await this.api.MergeRequests.show(
-        this.projectId(),
-        Number(this.mrNumber),
+      const mr = await this.retry(() =>
+        this.api.MergeRequests.show(this.projectId(), Number(this.mrNumber)),
       );
 
       const metadata: {
@@ -69,9 +95,11 @@ export class GitLabMrDiffProvider implements DiffProvider {
   }
 
   private async fetchDiff(): Promise<string> {
-    const res = await this.api.MergeRequests.showChanges(
-      this.projectId(),
-      Number(this.mrNumber),
+    const res = await this.retry(() =>
+      this.api.MergeRequests.showChanges(
+        this.projectId(),
+        Number(this.mrNumber),
+      ),
     );
 
     const changes = (res.changes ?? []) as GitLabChange[];
@@ -94,6 +122,11 @@ export class GitLabMrDiffProvider implements DiffProvider {
   }
 
   async load() {
+    if (!this.cachedLoad) this.cachedLoad = this._load();
+    return this.cachedLoad;
+  }
+
+  private async _load() {
     const [metadata, diffText] = await Promise.all([
       this.fetchMetadata(),
       this.fetchDiff(),
