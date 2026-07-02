@@ -1,147 +1,112 @@
 // packages/context/src/diff/GitLabMrDiffProvider.ts
-import { Gitlab } from "@gitbeaker/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
+import { HttpDiffClient, type AuthHeader } from "./httpDiffClient.js";
+import type { DiffProvider } from "@prsense/core";
 
-import type { DiffProvider, RepositoryIdentity } from "@prsense/core";
+type LoadResult = Awaited<ReturnType<DiffProvider["load"]>>;
 
-type GitLabChange = {
-  old_path: string | null;
-  new_path: string | null;
-  diff: string;
+// Typed boundary against the GitLab REST API. Keys are snake_case as GitLab
+// returns them (no client-side camelization).
+type GitLabMrResponse = {
+  title?: string | null;
+  description?: string | null;
+  sha?: string | null;
+  source_branch?: string | null;
+  diff_refs?: { base_sha?: string | null } | null;
 };
 
-const RETRYABLE = new Set([502, 503, 504]);
+type GitLabChange = {
+  old_path?: string | null;
+  new_path?: string | null;
+  diff?: string;
+};
+
+type GitLabChangesResponse = { changes?: GitLabChange[] };
 
 export class GitLabMrDiffProvider implements DiffProvider {
-  private readonly api: InstanceType<typeof Gitlab>;
-  private cachedLoad?: Promise<Awaited<ReturnType<DiffProvider["load"]>>>;
+  private cachedLoad?: Promise<LoadResult>;
+  private readonly http: HttpDiffClient;
 
   constructor(
     private readonly group: string,
     private readonly project: string,
     private readonly mrNumber: string,
     token?: string,
+    fetchImpl?: typeof fetch,
+    host: string = "gitlab.com",
   ) {
-    this.api = new Gitlab({
-      host: "https://gitlab.com",
-      token,
-    });
+    // Single-encode the "group/project" id exactly once. The SDK used to
+    // double-encode this via its own encoder on top of ours.
+    const auth: AuthHeader = token
+      ? { name: "PRIVATE-TOKEN", value: token }
+      : undefined;
+    this.http = new HttpDiffClient(
+      `https://${host}/api/v4`,
+      auth,
+      fetchImpl ?? fetch,
+    );
   }
 
-  private projectId(): string {
-    return encodeURIComponent(`${this.group}/${this.project}`);
+  private get mrPath(): string {
+    const id = encodeURIComponent(`${this.group}/${this.project}`);
+    return `/projects/${id}/merge_requests/${this.mrNumber}`;
   }
 
-  private async retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
-    let lastError: unknown;
-
-    for (let i = 0; i < attempts; i++) {
-      try {
-        return await fn();
-      } catch (err: any) {
-        lastError = err;
-
-        const status =
-          err?.cause?.response?.status ?? err?.response?.status ?? err?.status;
-
-        if (!RETRYABLE.has(status)) {
-          throw err;
-        }
-
-        const delay = 300 * 2 ** i;
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    throw lastError;
-  }
-
-  private async fetchMetadata(): Promise<{
-    title?: string;
-    description?: string;
-    revision?: string;
-    branchName?: string;
-    baseRevision?: string;
-  }> {
+  private async fetchMetadata() {
     try {
-      const mr = await this.retry(() =>
-        this.api.MergeRequests.show(this.projectId(), Number(this.mrNumber)),
-      );
-
-      const metadata: {
-        title?: string;
-        description?: string;
-        revision?: string;
-        branchName?: string;
-        baseRevision?: string;
-      } = {};
-
-      // GitLab returns string | null
-      if (mr.title != null) metadata.title = mr.title;
-      if (mr.description != null) metadata.description = mr.description;
-      if (mr.sha != null) metadata.revision = mr.sha;
-      const diffRefs = mr.diffRefs as { baseSha?: string } | undefined;
-      if (diffRefs?.baseSha != null) {
-        metadata.baseRevision = diffRefs.baseSha;
-      }
-      if (typeof mr.source_branch === "string") {
-        metadata.branchName = mr.source_branch;
-      }
-
-      return metadata;
+      const res = await this.http.get(this.mrPath);
+      const data = (await res.json()) as GitLabMrResponse;
+      return {
+        title: data.title ?? undefined,
+        description: data.description ?? undefined,
+        revision: data.sha ?? undefined,
+        baseRevision: data.diff_refs?.base_sha ?? undefined,
+        branchName: data.source_branch ?? undefined,
+      };
     } catch {
       return {};
     }
   }
 
   private async fetchDiff(): Promise<string> {
-    const res = await this.retry(() =>
-      this.api.MergeRequests.showChanges(
-        this.projectId(),
-        Number(this.mrNumber),
-      ),
-    );
+    // NOTE: /changes is deprecated (GitLab API v5 removal). Kept for broad
+    // self-hosted compatibility; migrate to /diffs (paginated) in v1.1.
+    const res = await this.http.get(`${this.mrPath}/changes`);
+    const data = (await res.json()) as GitLabChangesResponse;
+    const changes = data.changes ?? [];
 
-    const changes = (res.changes ?? []) as GitLabChange[];
-
-    const unified = changes
-      .map((c: GitLabChange) => {
+    return changes
+      .map((c) => {
         const oldPath = c.old_path ?? c.new_path ?? "unknown";
         const newPath = c.new_path ?? c.old_path ?? "unknown";
-
         return [
           `diff --git a/${oldPath} b/${newPath}`,
           `--- a/${oldPath}`,
           `+++ b/${newPath}`,
-          c.diff,
+          c.diff ?? "",
         ].join("\n");
       })
       .join("\n");
-
-    return unified;
   }
 
-  async load() {
+  async load(): Promise<LoadResult> {
     if (!this.cachedLoad) this.cachedLoad = this._load();
     return this.cachedLoad;
   }
 
-  private async _load() {
+  private async _load(): Promise<LoadResult> {
     const [metadata, diffText] = await Promise.all([
       this.fetchMetadata(),
       this.fetchDiff(),
     ]);
-
-    const identity: RepositoryIdentity = {
-      provider: "gitlab",
-      id: `${this.group}/${this.project}`,
-    };
-
     return {
       diff: parseUnifiedDiff(diffText),
       revision: metadata.revision ?? "unknown",
       baseRevision: metadata.baseRevision ?? "unknown",
-      repositoryIdentity: identity,
+      repositoryIdentity: {
+        provider: "gitlab",
+        id: `${this.group}/${this.project}`,
+      },
       metadata: {
         ...(metadata.title !== undefined && { title: metadata.title }),
         ...(metadata.description !== undefined && {
