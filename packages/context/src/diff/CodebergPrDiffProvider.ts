@@ -1,11 +1,11 @@
 // packages/context/src/diff/CodebergPrDiffProvider.ts
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
+import { HttpDiffClient, type AuthHeader } from "./httpDiffClient.js";
 import type { DiffProvider } from "@prsense/core";
 
 type LoadResult = Awaited<ReturnType<DiffProvider["load"]>>;
 
-const RETRYABLE = new Set([502, 503, 504]);
-
+// Typed boundary against the Forgejo/Gitea API.
 type ForgejoPullResponse = {
   title?: string | null;
   body?: string | null;
@@ -15,59 +15,39 @@ type ForgejoPullResponse = {
 
 export class CodebergPrDiffProvider implements DiffProvider {
   private cachedLoad?: Promise<LoadResult>;
-  private readonly apiBase: string;
+  private readonly http: HttpDiffClient;
 
   constructor(
     private readonly owner: string,
     private readonly repo: string,
     private readonly prNumber: string,
-    private readonly token?: string,
+    token?: string,
     host: string = "codeberg.org",
+    fetchImpl?: typeof fetch,
   ) {
-    this.apiBase = `https://${host}/api/v1`;
+    const auth: AuthHeader = token
+      ? { name: "Authorization", value: `token ${token}` }
+      : undefined;
+    this.http = new HttpDiffClient(
+      `https://${host}/api/v1`,
+      auth,
+      fetchImpl ?? fetch,
+    );
   }
 
-  private async request(
-    path: string,
-    accept = "application/json",
-  ): Promise<Response> {
-    const headers: Record<string, string> = { Accept: accept };
-    if (this.token) headers.Authorization = `token ${this.token}`;
-    return this.retry(() => fetch(`${this.apiBase}${path}`, { headers }));
-  }
-
-  private async retry(
-    fn: () => Promise<Response>,
-    attempts = 4,
-  ): Promise<Response> {
-    let lastError: unknown;
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const res = await fn();
-        if (res.ok) return res;
-        if (!RETRYABLE.has(res.status)) {
-          throw new Error(`Codeberg API ${res.status}: ${await res.text()}`);
-        }
-        lastError = new Error(`Codeberg API ${res.status}`);
-      } catch (err) {
-        lastError = err;
-      }
-      await new Promise((r) => setTimeout(r, 300 * 2 ** i));
-    }
-    throw lastError;
+  private get pullPath(): string {
+    return `/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}`;
   }
 
   private async fetchMetadata() {
     try {
-      const res = await this.request(
-        `/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}`,
-      );
+      const res = await this.http.get(this.pullPath);
       const data = (await res.json()) as ForgejoPullResponse;
       return {
         title: data.title ?? undefined,
         description: data.body ?? undefined,
-        revision: data.head?.sha as string | undefined,
-        baseRevision: data.base?.sha as string | undefined,
+        revision: data.head?.sha,
+        baseRevision: data.base?.sha,
         branchName: data.head?.ref ?? undefined,
       };
     } catch {
@@ -76,10 +56,7 @@ export class CodebergPrDiffProvider implements DiffProvider {
   }
 
   private async fetchDiff(): Promise<string> {
-    const res = await this.request(
-      `/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}.diff`,
-      "text/plain",
-    );
+    const res = await this.http.get(`${this.pullPath}.diff`, "text/plain");
     return res.text();
   }
 

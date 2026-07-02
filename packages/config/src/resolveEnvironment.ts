@@ -3,7 +3,7 @@ import { resolveCredentials } from "./resolveCredentials.js";
 import { validateEnvironment } from "./validateEnvironment.js";
 
 import type { RuntimeEnvironment, RuntimeMode } from "./types.js";
-import { RepositoryProvider } from "packages/core/dist/index.js";
+import { RepositoryProvider } from "@prsense/core";
 
 export function resolveEnvironment(
   mode: RuntimeMode,
