@@ -9,6 +9,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 - GitHub and GitLab diff providers now use `fetch` directly instead of `@octokit/rest` and `@gitbeaker/rest`, dropping both dependencies.
 - Added Claude as contributor
+- Collapsed GitHubRepositorySource/GitLabRepositorySource/CodebergRepositorySource into HttpsCloneRepositorySource; use the githubRepositorySource/gitlabRepositorySource/codebergRepositorySource factories instead.
 
 ### Fixed
 
@@ -18,6 +19,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ### Removed
 
 - Dependencies `@octokit/rest` and `@gitbeaker/rest`.
+- Exports GitHubRepositorySource, GitLabRepositorySource, CodebergRepositorySource.
 
 ## [0.19.5] — 2026-07-01
 
