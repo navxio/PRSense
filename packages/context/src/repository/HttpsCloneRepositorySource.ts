@@ -27,19 +27,25 @@ export class HttpsCloneRepositorySource implements GitBackedRepositorySource {
   constructor(private readonly spec: CloneSpec) {}
 
   private cloneUrl(): string {
-    const { host, owner, repo, token } = this.spec;
-    const auth = token ? `${token}@` : "";
-    return `https://${auth}${host}/${owner}/${repo}.git`;
+    const { host, owner, repo } = this.spec;
+    return `https://${host}/${owner}/${repo}.git`;
   }
 
   private async ensureCloned(): Promise<void> {
     if (this.fsSource) return;
-    const baseTemp = await fs.mkdtemp(path.join(os.tmpdir(), "prsense-"));
-    // execFileSync (not execSync) so the token in the URL is never exposed to
-    // a shell and cannot be broken by special characters.
-    execFileSync("git", ["clone", "--depth", "1", this.cloneUrl(), baseTemp], {
-      stdio: "ignore",
-    });
+    const parent = await fs.mkdtemp(path.join(os.tmpdir(), "prsense-"));
+    const baseTemp = path.join(parent, this.spec.repo);
+    const { token } = this.spec;
+    // Credentials go via an in-memory extra header, never the URL: no
+    // percent-encoding pitfalls and no leak into `ps` / error output.
+    const authArgs = token
+      ? ["-c", `http.extraHeader=Authorization: Bearer ${token}`]
+      : [];
+    execFileSync(
+      "git",
+      [...authArgs, "clone", "--depth", "1", this.cloneUrl(), baseTemp],
+      { stdio: "ignore" },
+    );
     this.tempDir = baseTemp;
     this.fsSource = new FileSystemRepositorySource(baseTemp);
   }
