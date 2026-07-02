@@ -8,6 +8,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ### Changed
 
 - GitHub and GitLab diff providers now use `fetch` directly instead of `@octokit/rest` and `@gitbeaker/rest`, dropping both dependencies.
+- Added Claude as contributor
 
 ### Fixed
 
