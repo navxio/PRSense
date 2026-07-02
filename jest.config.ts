@@ -11,7 +11,6 @@ const config: Config = {
         tsconfig: {
           module: "commonjs",
           moduleResolution: "node",
-          ignoreDeprecations: "6.0",
         },
       },
     ],
