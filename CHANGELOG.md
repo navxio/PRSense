@@ -3,6 +3,20 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.5] — 2026-07-01
+
+### Fixed
+
+- **Spinner no longer stops mid-run during a forced index rebuild.**
+  `prsense review --force` (or any forced `prsense index`) emits a
+  `WorkflowIndexRebuildRequired` event that is informational, not
+  terminal — the CLI was rendering it as a failed/finished task,
+  which stopped the spinner while the rebuild kept running in the
+  background. It now renders as a running task so subsequent
+  progress updates continue on the same line. Non-forced rebuilds
+  (where the workflow actually halts and asks for `--force`) are
+  unaffected.
+
 ## [0.19.4] — 2026-07-01
 
 ### Fixed
