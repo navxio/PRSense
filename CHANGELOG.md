@@ -3,6 +3,21 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- GitHub and GitLab diff providers now use `fetch` directly instead of `@octokit/rest` and `@gitbeaker/rest`, dropping both dependencies.
+
+### Fixed
+
+- GitLab: merge request base revision was always reported as `unknown`.
+- GitLab: merge request paths with a group/project slug were double-encoded, causing 404s.
+
+### Removed
+
+- Dependencies `@octokit/rest` and `@gitbeaker/rest`.
+
 ## [0.19.5] — 2026-07-01
 
 ### Fixed
