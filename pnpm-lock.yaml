@@ -47,9 +47,6 @@ importers:
       '@google/genai':
         specifier: ^2.8.0
         version: 2.8.0
-      '@google/generative-ai':
-        specifier: ^0.24.1
-        version: 0.24.1
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1
@@ -62,15 +59,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
-      got:
-        specifier: ^11.8.6
-        version: 11.8.6
       openai:
         specifier: ^6.16.0
         version: 6.16.0(ws@8.21.0)(zod@4.3.5)
-      pg:
-        specifier: ^8.17.1
-        version: 8.17.1
       pino:
         specifier: ^10.3.0
         version: 10.3.0
