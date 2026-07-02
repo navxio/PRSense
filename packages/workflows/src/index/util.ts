@@ -15,10 +15,10 @@ import {
   detectKind,
   detectLanguage,
   FileSystemRepositorySource,
-  GitLabRepositorySource,
-  GitHubRepositorySource,
   RefAwareRepositorySource,
-  CodebergRepositorySource,
+  githubRepositorySource,
+  gitlabRepositorySource,
+  codebergRepositorySource,
 } from "@prsense/context";
 
 export function resolveRepositorySource(
@@ -28,19 +28,19 @@ export function resolveRepositorySource(
 ) {
   switch (target.provider) {
     case "github":
-      return new GitHubRepositorySource(
+      return githubRepositorySource(
         target.owner,
         target.repo,
         credentials.github?.token,
       );
     case "gitlab":
-      return new GitLabRepositorySource(
+      return gitlabRepositorySource(
         target.group,
         target.project,
         credentials.gitlab?.token,
       );
     case "codeberg":
-      return new CodebergRepositorySource(
+      return codebergRepositorySource(
         target.owner,
         target.repo,
         credentials.codeberg?.token,
