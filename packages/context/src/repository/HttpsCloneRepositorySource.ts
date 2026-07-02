@@ -83,7 +83,7 @@ export const githubRepositorySource = (
     host: "github.com",
     owner,
     repo,
-    token,
+    ...(token !== undefined && { token }),
   });
 
 export const gitlabRepositorySource = (
@@ -96,7 +96,7 @@ export const gitlabRepositorySource = (
     host: "gitlab.com",
     owner: namespace,
     repo,
-    token,
+    ...(token !== undefined && { token }),
   });
 
 export const codebergRepositorySource = (
@@ -110,5 +110,5 @@ export const codebergRepositorySource = (
     host,
     owner,
     repo,
-    token,
+    ...(token !== undefined && { token }),
   });
