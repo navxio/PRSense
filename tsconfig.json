@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
@@ -17,35 +15,16 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "paths": {
-      "@prsense/config": [
-        "packages/config/src"
-      ],
-      "@prsense/core": [
-        "packages/core/src"
-      ],
-      "@prsense/context": [
-        "packages/context/src"
-      ],
-      "@prsense/llm": [
-        "packages/llm/src"
-      ],
-      "@prsense/reporters": [
-        "packages/reporters/src"
-      ],
-      "@prsense/workflows": [
-        "packages/workflows/src"
-      ],
-      "@prsense/preflight": [
-        "packages/preflight/src"
-      ],
-      "@prsense/logging": [
-        "packages/logging/src"
-      ],
-      "@prsense/daemon": [
-        "apps/daemon/src"
-      ]
+      "@prsense/config": ["./packages/config/src"],
+      "@prsense/core": ["./packages/core/src"],
+      "@prsense/context": ["./packages/context/src"],
+      "@prsense/llm": ["./packages/llm/src"],
+      "@prsense/reporters": ["./packages/reporters/src"],
+      "@prsense/workflows": ["./packages/workflows/src"],
+      "@prsense/preflight": ["./packages/preflight/src"],
+      "@prsense/logging": ["./packages/logging/src"],
+      "@prsense/daemon": ["./apps/daemon/src"]
     }
   },
   "files": [],

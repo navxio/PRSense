@@ -1,64 +1,54 @@
 // packages/context/src/diff/GitHubPrDiffProvider.ts
-import { Octokit } from "@octokit/rest";
 import { parseUnifiedDiff } from "./parseUnifiedDiff.js";
-
-import type { DiffProvider, RepositoryIdentity } from "@prsense/core";
+import { HttpDiffClient, type AuthHeader } from "./httpDiffClient.js";
+import type { DiffProvider } from "@prsense/core";
 
 type LoadResult = Awaited<ReturnType<DiffProvider["load"]>>;
 
-export class GitHubPrDiffProvider implements DiffProvider {
-  private readonly octokit: Octokit;
+// Typed boundary against the GitHub REST API. An upstream shape change surfaces
+// here, in one place, rather than scattered through the provider.
+type GitHubPullResponse = {
+  title?: string | null;
+  body?: string | null;
+  head?: { sha?: string; ref?: string };
+  base?: { sha?: string };
+};
 
+export class GitHubPrDiffProvider implements DiffProvider {
   private cachedLoad?: Promise<LoadResult>;
+  private readonly http: HttpDiffClient;
 
   constructor(
     private readonly owner: string,
     private readonly repo: string,
     private readonly prNumber: string,
     token?: string,
+    fetchImpl?: typeof fetch,
   ) {
-    this.octokit = new Octokit({ auth: token });
+    const auth: AuthHeader = token
+      ? { name: "Authorization", value: `Bearer ${token}` }
+      : undefined;
+    this.http = new HttpDiffClient(
+      "https://api.github.com",
+      auth,
+      fetchImpl ?? fetch,
+    );
   }
 
-  private async retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
-    let lastError: unknown;
-
-    for (let i = 0; i < attempts; i++) {
-      try {
-        return await fn();
-      } catch (err: any) {
-        lastError = err;
-
-        const status = err?.status;
-
-        if (![502, 503, 504].includes(status)) {
-          throw err;
-        }
-
-        const delay = 300 * 2 ** i;
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    throw lastError;
+  private get pullPath(): string {
+    return `/repos/${this.owner}/${this.repo}/pulls/${this.prNumber}`;
   }
 
   private async fetchMetadata() {
     try {
-      const { data } = await this.retry(() =>
-        this.octokit.rest.pulls.get({
-          owner: this.owner,
-          repo: this.repo,
-          pull_number: Number(this.prNumber),
-        }),
-      );
-
+      const res = await this.http.get(this.pullPath);
+      const data = (await res.json()) as GitHubPullResponse;
       return {
         title: data.title ?? undefined,
         description: data.body ?? undefined,
         revision: data.head?.sha,
-        branchName: data.head?.ref ?? undefined,
         baseRevision: data.base?.sha,
+        branchName: data.head?.ref ?? undefined,
       };
     } catch {
       return {};
@@ -66,23 +56,15 @@ export class GitHubPrDiffProvider implements DiffProvider {
   }
 
   private async fetchDiff(): Promise<string> {
-    const { data } = await this.retry(() =>
-      this.octokit.rest.pulls.get({
-        owner: this.owner,
-        repo: this.repo,
-        pull_number: Number(this.prNumber),
-        mediaType: { format: "diff" },
-      }),
+    const res = await this.http.get(
+      this.pullPath,
+      "application/vnd.github.v3.diff",
     );
-
-    return data as unknown as string;
+    return res.text();
   }
 
   async load(): Promise<LoadResult> {
-    if (!this.cachedLoad) {
-      this.cachedLoad = this._load();
-    }
-
+    if (!this.cachedLoad) this.cachedLoad = this._load();
     return this.cachedLoad;
   }
 
@@ -91,17 +73,14 @@ export class GitHubPrDiffProvider implements DiffProvider {
       this.fetchMetadata(),
       this.fetchDiff(),
     ]);
-
-    const identity: RepositoryIdentity = {
-      provider: "github",
-      id: `${this.owner}/${this.repo}`,
-    };
-
     return {
       diff: parseUnifiedDiff(diffText),
       revision: metadata.revision ?? "unknown",
       baseRevision: metadata.baseRevision ?? "unknown",
-      repositoryIdentity: identity,
+      repositoryIdentity: {
+        provider: "github",
+        id: `${this.owner}/${this.repo}`,
+      },
       metadata: {
         ...(metadata.title !== undefined && { title: metadata.title }),
         ...(metadata.description !== undefined && {
