@@ -3,12 +3,23 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.20.0] — 2026-07-03
+
+### Added
+
+- **Heritage-aware cross-file review (TypeScript).** When a changed
+  interface or type has implementers, PRSense now surfaces the specific
+  implementing class whose member drifted from the new shape, or that is
+  missing a newly-added member — pointing at the line, not narrating that
+  "callers need updating."
 
 ### Changed
 
+- **Every signal must cite a line.** The reviewer now emits a signal only
+  when it can point to a specific line — in the diff or retrieved context —
+  that visibly exhibits the problem. Eliminates propagation-narration
+  false positives on interface changes.
 - GitHub and GitLab diff providers now use `fetch` directly instead of `@octokit/rest` and `@gitbeaker/rest`, dropping both dependencies.
-- Added Claude as contributor
 - Collapsed GitHubRepositorySource/GitLabRepositorySource/CodebergRepositorySource into HttpsCloneRepositorySource; use the githubRepositorySource/gitlabRepositorySource/codebergRepositorySource factories instead.
 
 ### Fixed
