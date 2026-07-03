@@ -19,6 +19,13 @@ import {
   resetSignalCounter,
 } from "./mocks.js";
 
+class ThrowingDiffProvider implements DiffProvider {
+  constructor(private err = new Error("diff load failed: 500 from remote")) {}
+  async load(): Promise<never> {
+    throw this.err;
+  }
+}
+
 class TestEventBus implements EventBus {
   events: Array<{ event: string; fields?: unknown }> = [];
   emit(event: string, fields?: unknown) {
@@ -356,5 +363,96 @@ describe("runReviewWorkflow E2E", () => {
     expect(eventBus.events.map((e) => e.event)).not.toContain(
       CoreEvents.WorkflowReviewContextAvailable,
     );
+  });
+
+  it("fails the workflow when the diff cannot be loaded", async () => {
+    const llmClient = new MockLlmClient(() => {
+      throw new Error("LLM should not run when diff load fails");
+    });
+    const eventBus = new TestEventBus();
+
+    const { result } = await runE2EReview({
+      eventBus,
+      diffProvider: new ThrowingDiffProvider(),
+      llmClient,
+    });
+
+    expect(result.outcome).toBe("failure");
+    expect(llmClient.calls).toHaveLength(0);
+
+    const events = eventBus.events.map((e) => e.event);
+    expect(events).toContain(CoreEvents.WorkflowReviewStarted);
+    expect(events).toContain(CoreEvents.WorkflowReviewFailed);
+    expect(events).not.toContain(CoreEvents.WorkflowReviewDiffLoaded);
+    expect(events).not.toContain(CoreEvents.WorkflowReviewFinished);
+  });
+
+  it("succeeds with zero signals when every file fails", async () => {
+    const fileA = makeDiffFile("src/auth.ts");
+    const fileB = makeDiffFile("src/billing.ts");
+
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [fileA, fileB] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient(() => {
+      throw new Error("total LLM outage");
+    });
+
+    const eventBus = new TestEventBus();
+    const { result } = await runE2EReview({
+      eventBus,
+      diffProvider,
+      llmClient,
+    });
+
+    expect(result.outcome).toBe("success");
+    expect(result.payload.signals).toEqual([]);
+    expect(result.payload.totalBeforeCap).toBe(0);
+    expect(llmClient.calls).toHaveLength(2);
+
+    const failures = eventBus.events.filter(
+      (e) => e.event === CoreEvents.WorkflowReviewFileReviewFailed,
+    );
+    expect(failures).toHaveLength(2);
+    expect(eventBus.events.map((e) => e.event)).not.toContain(
+      CoreEvents.WorkflowReviewFailed,
+    );
+  });
+
+  it("degrades to context-free review when a context provider throws", async () => {
+    const fileA = makeDiffFile("src/auth.ts");
+    const signal = makeSignal({
+      file: "src/auth.ts",
+      message: "Found despite context failure",
+      confidence: 0.9,
+    });
+
+    const diffProvider = new MockDiffProvider({
+      diff: { files: [fileA] },
+      revision: "abc123",
+      repositoryIdentity: { provider: "filesystem", id: "test-repo" },
+    });
+
+    const llmClient = new MockLlmClient(
+      byFilePath({ "src/auth.ts": llmResponseFromSignals([signal]) }),
+    );
+
+    const contextProvider = new MockContextProvider();
+    jest
+      .spyOn(contextProvider, "getContextForFile")
+      .mockRejectedValue(new Error("context backend unavailable"));
+
+    const { result } = await runE2EReview({
+      contextProviders: [contextProvider],
+      llmClient,
+      diffProvider,
+    });
+
+    expect(result.outcome).toBe("success");
+    expect(result.payload.signals).toHaveLength(1);
+    expect(llmClient.calls).toHaveLength(1);
   });
 });
