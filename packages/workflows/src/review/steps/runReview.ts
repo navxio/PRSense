@@ -73,8 +73,12 @@ export async function runReview({
 
   // --- usage & signal accumulation ---
 
+  let failedFiles = 0;
   for (const result of results) {
-    if (result.outcome === "failure") continue;
+    if (result.outcome === "failure") {
+      failedFiles++;
+      continue;
+    }
     allSignals.push(...result.signals);
 
     if (result.usage) {
@@ -84,5 +88,5 @@ export async function runReview({
     }
   }
 
-  return { allSignals, totalUsage };
+  return { allSignals, totalUsage, failedFiles };
 }

@@ -387,38 +387,36 @@ describe("runReviewWorkflow E2E", () => {
     expect(events).not.toContain(CoreEvents.WorkflowReviewFinished);
   });
 
-  it("succeeds with zero signals when every file fails", async () => {
+  it("fails the workflow when every file fails", async () => {
     const fileA = makeDiffFile("src/auth.ts");
     const fileB = makeDiffFile("src/billing.ts");
-
     const diffProvider = new MockDiffProvider({
       diff: { files: [fileA, fileB] },
       revision: "abc123",
       repositoryIdentity: { provider: "filesystem", id: "test-repo" },
     });
-
     const llmClient = new MockLlmClient(() => {
       throw new Error("total LLM outage");
     });
-
     const eventBus = new TestEventBus();
     const { result } = await runE2EReview({
       eventBus,
       diffProvider,
       llmClient,
     });
-
-    expect(result.outcome).toBe("success");
+    expect(result.outcome).toBe("failure");
     expect(result.payload.signals).toEqual([]);
-    expect(result.payload.totalBeforeCap).toBe(0);
     expect(llmClient.calls).toHaveLength(2);
 
     const failures = eventBus.events.filter(
       (e) => e.event === CoreEvents.WorkflowReviewFileReviewFailed,
     );
     expect(failures).toHaveLength(2);
-    expect(eventBus.events.map((e) => e.event)).not.toContain(
+    expect(eventBus.events.map((e) => e.event)).toContain(
       CoreEvents.WorkflowReviewFailed,
+    );
+    expect(eventBus.events.map((e) => e.event)).not.toContain(
+      CoreEvents.WorkflowReviewFinished,
     );
   });
 

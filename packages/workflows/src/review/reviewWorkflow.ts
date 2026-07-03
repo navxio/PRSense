@@ -78,7 +78,7 @@ export async function runReviewWorkflow({
     const llmClient =
       injectedLlmClient ?? createLlmClientSafe(config, credentials);
 
-    const { allSignals, totalUsage } = await runReview({
+    const { allSignals, totalUsage, failedFiles } = await runReview({
       files: diff.files,
       llmClient,
       contextByFile,
@@ -86,6 +86,10 @@ export async function runReviewWorkflow({
       config,
       eventBus,
     });
+
+    if (failedFiles === diff.files.length) {
+      throw new Error(`All ${failedFiles} file reviews failed`);
+    }
 
     const { signals, totalBeforeCap } = finalizeSignals(
       allSignals,
