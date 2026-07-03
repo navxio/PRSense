@@ -45,6 +45,8 @@ export const CoreEvents = {
     "workflow.review.symbol_graph.projects.loaded",
   WorkflowReviewSymbolGraphReferencesRetrieved:
     "workflow.review.symbol_graph.references.retrieved",
+  WorkflowReviewSymbolGraphHeritageBreaksDetected:
+    "workflow.review.symbol_graph.heritage.breaks_detected",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",

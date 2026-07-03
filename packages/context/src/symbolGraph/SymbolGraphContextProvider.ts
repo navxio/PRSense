@@ -130,6 +130,20 @@ export class SymbolGraphContextProvider implements ContextProvider {
         workspaceRoot: this.deps.repoRoot,
       });
 
+      const heritage = refs.filter((r) => r.refKind === "heritage");
+      if (heritage.length > 0) {
+        const breaks = heritage.flatMap((h) => h.breaks ?? []);
+        input.eventBus?.emit(
+          CoreEvents.WorkflowReviewSymbolGraphHeritageBreaksDetected,
+          {
+            symbol: candidate.name,
+            implementerCount: heritage.length,
+            driftCount: breaks.filter((b) => b.kind === "drift").length,
+            missingCount: breaks.filter((b) => b.kind === "missing").length,
+          },
+        );
+      }
+
       const ranked = rankAndCap({
         references: refs,
         changedFiles,
