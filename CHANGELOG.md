@@ -3,6 +3,13 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.20.1 - 2026-07-03
+
+### Fixed
+
+- A context provider failing mid-review no longer aborts the run — the file is reviewed without that provider's context instead of crashing.
+- Reviews where every file fails now report failure (exit 1) instead of falsely reporting success with no signals.
+
 ## [0.20.0] — 2026-07-03
 
 ### Added
