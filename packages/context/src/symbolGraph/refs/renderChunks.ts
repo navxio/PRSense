@@ -17,7 +17,16 @@ export function renderChunks(perSymbol: PerSymbolReferences[]): ContextChunk[] {
     const truncated = total > shown.length;
 
     shown.forEach((ref, i) => {
-      const content = ref.enclosingStatement.getText();
+      const breakNote = ref.breaks?.length
+        ? ref.breaks
+            .map((b) =>
+              b.kind === "missing"
+                ? `// missing member: ${b.member} (added to ${candidate.name})`
+                : `// stale member: ${b.member} (shape changed on ${candidate.name})`,
+            )
+            .join("\n") + "\n"
+        : "";
+      const content = breakNote + ref.enclosingStatement.getText();
       const chunk: ContextChunk = {
         id: chunkId(candidate.name, ref.filePath, ref.lineStart),
         source: { kind: "file", path: ref.filePath },
@@ -30,6 +39,7 @@ export function renderChunks(perSymbol: PerSymbolReferences[]): ContextChunk[] {
           lineEnd: ref.lineEnd,
           path: ref.filePath,
           kind: ref.isTest ? "test" : "code",
+          refKind: ref.refKind,
           declarationKind: candidate.kind,
           // Truncation marker on the first chunk per symbol only.
           // formatContextForFile reads this off the group head.
