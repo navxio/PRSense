@@ -3,7 +3,8 @@ import type { Symbol } from "ts-morph";
 import { structuralMembers } from "./structuralMembers.js";
 
 export function canonicalSignature(symbol: Symbol): string {
-  const { callSigs, constructSigs, props } = structuralMembers(symbol);
+  const { callSigs, constructSigs, props, typeText } =
+    structuralMembers(symbol);
 
   const parts: string[] = [];
   for (const s of callSigs) parts.push(`call${s}`);
@@ -16,10 +17,7 @@ export function canonicalSignature(symbol: Symbol): string {
   }
 
   if (parts.length === 0) {
-    const decl = symbol.getDeclarations()[0];
-    return decl
-      ? `type:${decl.getType().getText()}`
-      : `missing:${symbol.getName()}`;
+    return typeText ? `type:${typeText}` : `missing:${symbol.getName()}`;
   }
   return parts.join("|");
 }

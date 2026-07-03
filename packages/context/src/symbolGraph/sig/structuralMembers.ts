@@ -5,12 +5,18 @@ export type StructuralMembers = {
   callSigs: string[];
   constructSigs: string[];
   props: Map<string, string>; // name -> `?:type` marker folded in
+  typeText: string;
 };
 
 export function structuralMembers(symbol: Symbol): StructuralMembers {
   const decl = symbol.getDeclarations()[0];
   if (!decl) {
-    return { callSigs: [], constructSigs: [], props: new Map() };
+    return {
+      callSigs: [],
+      constructSigs: [],
+      props: new Map(),
+      typeText: "",
+    };
   }
 
   const isPureType =
@@ -33,7 +39,7 @@ export function structuralMembers(symbol: Symbol): StructuralMembers {
     );
   }
 
-  return { callSigs, constructSigs, props };
+  return { callSigs, constructSigs, props, typeText: type.getText() };
 }
 
 function renderSignature(sig: Signature): string {

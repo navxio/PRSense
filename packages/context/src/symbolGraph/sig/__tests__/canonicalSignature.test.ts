@@ -147,3 +147,13 @@ describe("canonicalSignature", () => {
     });
   });
 });
+
+describe("type parameter constraint rendering", () => {
+  it("does not duplicate the extends clause", () => {
+    const s = sig(
+      "export function foo<T extends string>(x: T): T { return x; }",
+      "foo",
+    );
+    expect(s).not.toContain("extends string extends");
+  });
+});
