@@ -81,8 +81,17 @@ export async function resolveContext(
 
   const available: ContextProvider[] = [];
   for (const p of providers) {
-    if (await p.isAvailable({ repositoryIdentity, revision, eventBus, diff })) {
-      available.push(p);
+    try {
+      if (
+        await p.isAvailable({ repositoryIdentity, revision, eventBus, diff })
+      ) {
+        available.push(p);
+      }
+    } catch (err) {
+      eventBus.emit(CoreEvents.WorkflowReviewContextProviderFailed, {
+        provider: p.name,
+        error: String(err),
+      });
     }
   }
 
@@ -96,14 +105,22 @@ export async function resolveContext(
   for (const file of diff.files) {
     const collected: ContextChunk[] = [];
     for (const p of available) {
-      const result = await p.getContextForFile({
-        file,
-        diff,
-        repositoryIdentity,
-        revision,
-        eventBus,
-      });
-      collected.push(...result);
+      try {
+        const result = await p.getContextForFile({
+          file,
+          diff,
+          repositoryIdentity,
+          revision,
+          eventBus,
+        });
+        collected.push(...result);
+      } catch (err) {
+        eventBus.emit(CoreEvents.WorkflowReviewContextProviderFailed, {
+          provider: p.name,
+          file: file.path,
+          error: String(err),
+        });
+      }
     }
     contextByFile.set(file.path, collected);
   }
