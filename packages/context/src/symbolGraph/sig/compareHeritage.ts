@@ -1,6 +1,6 @@
 // packages/context/src/symbolGraph/sig/compareHeritage.ts
 import type { Symbol } from "ts-morph";
-import { structuralMembers } from "./structuralMembers.js";
+import { instanceMembers } from "./structuralMembers.js";
 
 export type MemberBreak =
   | { kind: "drift"; member: string }
@@ -11,9 +11,9 @@ export function compareHeritage(opts: {
   head: Symbol; // X @ head
   implementer: Symbol; // C @ head
 }): MemberBreak[] {
-  const xBase = structuralMembers(opts.base).props;
-  const xHead = structuralMembers(opts.head).props;
-  const c = structuralMembers(opts.implementer).props;
+  const xBase = instanceMembers(opts.base);
+  const xHead = instanceMembers(opts.head);
+  const c = instanceMembers(opts.implementer);
 
   const out: MemberBreak[] = [];
   for (const [name, headMarker] of xHead) {

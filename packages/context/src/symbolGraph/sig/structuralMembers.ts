@@ -62,3 +62,18 @@ function renderSignature(sig: Signature): string {
   const tp = typeParams.length ? `<${typeParams.join(",")}>` : "";
   return `${tp}(${params.join(",")}):${returnType}`;
 }
+
+export function instanceMembers(symbol: Symbol): Map<string, string> {
+  const decl = symbol.getDeclarations()[0];
+  if (!decl) return new Map();
+  const type = symbol.getDeclaredType(); // instance side for class + interface
+  const props = new Map<string, string>();
+  for (const p of type.getProperties()) {
+    const optional = p.isOptional() ? "?" : "";
+    props.set(
+      p.getName(),
+      `${optional}:${p.getTypeAtLocation(decl).getText()}`,
+    );
+  }
+  return props;
+}
