@@ -1,21 +1,27 @@
 // packages/context/src/symbolGraph/refs/findReferences.ts
 import { Node, type Project, type Symbol } from "ts-morph";
 import { findSymbolInProject } from "../sig/findSymbolInProject.js";
+import { compareHeritage, type MemberBreak } from "../sig/compareHeritage.js";
+
+type RefKind = "call" | "heritage";
 
 export type ReferenceHit = {
-  filePath: string; // workspace-relative
+  filePath: string;
   isTest: boolean;
-  enclosingStatement: Node; // the snippet unit (step 8 renders this)
+  enclosingStatement: Node;
   lineStart: number;
   lineEnd: number;
+  refKind: RefKind;
+  breaks?: MemberBreak[] | undefined; // heritage only
 };
 
 export function findReferences(opts: {
   head: Project;
-  declarationFile: string; // workspace-relative
+  base: Project; // NEW: heritage compare needs X@base
+  declarationFile: string;
   symbolName: string;
   isDefaultExport: boolean;
-  workspaceRoot: string; // absolute, for relativization
+  workspaceRoot: string;
 }): ReferenceHit[] {
   const headSymbol = findSymbolInProject(
     opts.head,
@@ -24,6 +30,13 @@ export function findReferences(opts: {
     opts.isDefaultExport,
   );
   if (!headSymbol) return [];
+
+  const baseSymbol = findSymbolInProject(
+    opts.base,
+    opts.declarationFile,
+    opts.symbolName,
+    opts.isDefaultExport,
+  );
 
   const referenceNodes = safeFindReferences(headSymbol);
 
@@ -36,10 +49,24 @@ export function findReferences(opts: {
 
     const relPath = toWorkspaceRelative(absPath, opts.workspaceRoot);
     if (!relPath) continue;
-    if (relPath === opts.declarationFile) continue; // self-file
-    if (isGeneratedPath(relPath)) continue; // dist, build, .d.ts
+    if (relPath === opts.declarationFile) continue;
+    if (isGeneratedPath(relPath)) continue;
 
-    if (!isCallSite(node)) continue;
+    const refKind = classifyReference(node);
+    if (!refKind) continue;
+
+    let breaks: MemberBreak[] | undefined;
+    if (refKind === "heritage") {
+      if (!baseSymbol) continue; // no base shape to diff against
+      const implementer = resolveImplementer(node);
+      if (!implementer) continue;
+      breaks = compareHeritage({
+        base: baseSymbol,
+        head: headSymbol,
+        implementer,
+      });
+      if (breaks.length === 0) continue; // compare-first: no break, no snippet
+    }
 
     const stmt = enclosingStatement(node);
     if (!stmt) continue;
@@ -47,8 +74,6 @@ export function findReferences(opts: {
     const lineStart = sourceFile.getLineAndColumnAtPos(stmt.getStart()).line;
     const lineEnd = sourceFile.getLineAndColumnAtPos(stmt.getEnd()).line;
 
-    // Dedupe by file+line. Multiple references on one statement
-    // (e.g. `foo(foo())`) collapse into one rendered snippet.
     const key = `${relPath}:${lineStart}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -59,6 +84,8 @@ export function findReferences(opts: {
       enclosingStatement: stmt,
       lineStart,
       lineEnd,
+      refKind,
+      breaks,
     });
   }
 
@@ -148,4 +175,30 @@ function isGeneratedPath(relPath: string): boolean {
 function isTestFile(relPath: string): boolean {
   if (/\.(test|spec)\.[mc]?[jt]sx?$/.test(relPath)) return true;
   return relPath.split("/").some((s) => s === "__tests__");
+}
+
+function classifyReference(node: Node): RefKind | null {
+  if (isCallSite(node)) return "call";
+  if (isHeritageRef(node)) return "heritage";
+  return null;
+}
+
+function isHeritageRef(node: Node): boolean {
+  const parent = node.getParent();
+  if (!parent || !Node.isExpressionWithTypeArguments(parent)) return false;
+  return Node.isHeritageClause(parent.getParent());
+}
+
+function resolveImplementer(node: Node): Symbol | undefined {
+  let current: Node | undefined = node;
+  while (current) {
+    if (
+      Node.isClassDeclaration(current) ||
+      Node.isInterfaceDeclaration(current)
+    ) {
+      return current.getSymbol();
+    }
+    current = current.getParent();
+  }
+  return undefined;
 }

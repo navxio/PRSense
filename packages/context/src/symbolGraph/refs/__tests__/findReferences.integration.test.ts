@@ -15,6 +15,7 @@ describe("findReferences (integration)", () => {
   const find = (symbolName: string, declarationFile = "src/session.ts") =>
     findReferences({
       head: project,
+      base: project,
       declarationFile,
       symbolName,
       isDefaultExport: false,

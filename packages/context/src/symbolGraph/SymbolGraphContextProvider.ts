@@ -123,6 +123,7 @@ export class SymbolGraphContextProvider implements ContextProvider {
     for (const candidate of fileTriggered) {
       const refs = findReferences({
         head: projects.head,
+        base: projects.base,
         declarationFile: candidate.filePath,
         symbolName: candidate.name,
         isDefaultExport: candidate.kind === "defaultExport",

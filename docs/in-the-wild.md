@@ -517,3 +517,27 @@ call-site problem, not this one. Worth a follow-up issue.
 **Action:** Dismissed signal. Added a comment to the test explaining the
 intentional integration shape. Watching for recurrence before tuning the
 prompt.
+
+## 0.20 heritage pass — signature-diff extraction (PR #137)
+
+Reviewer: gpt-5.4, --top-signals 4. Four signals, in-diff only —
+zero cross-file boilerplate, zero heritage narration. Invariant held.
+
+- **TP** `canonicalSignature` zero-member fallback switched to
+  `decl.getType()`, throwing on non-typed decls (export specifiers,
+  namespace exports). Introduced by the `structuralMembers` extraction.
+  Fixed: thread resolved `typeText` out of `structuralMembers`, never
+  re-derive from the decl.
+- **FP** `structuralMembers` "drops param name from signature." True but
+  intended — param-name exclusion is load-bearing (renames must compare
+  equal). Model can't see the design intent.
+- **FP** type-param constraint "duplicated via `tp.getText()`." Model
+  reasoned about AST text; actual path reads constraints off the value
+  type's call signatures via the checker — no duplication. Green test
+  confirms.
+- (snapshot) prompt-change breaks `ReviewPrompt` inline snapshot —
+  expected, updated.
+
+Pattern: both FPs are **AST-vs-checker** — the model guesses raw
+`getText()` on declaration nodes where the code actually goes through
+the type checker. Recurring blind spot; note for prompt tuning later.
