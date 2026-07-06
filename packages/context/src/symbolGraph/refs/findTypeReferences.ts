@@ -1,6 +1,7 @@
 // packages/context/src/symbolGraph/refs/findTypeReferences.ts
 import { Node, Project, SyntaxKind } from "ts-morph";
 import type { TypeReferenceNode } from "ts-morph";
+import { join } from "node:path";
 
 /** Where a type name appears in a type position. */
 export type TypeRefKind = "param" | "return" | "field";
@@ -34,7 +35,7 @@ export function findTypeReferences(
 ): TypeRefHit[] {
   const { head, declarationFile, symbolName, workspaceRoot } = params;
 
-  const decl = head.getSourceFile(declarationFile);
+  const decl = head.getSourceFile(join(workspaceRoot, declarationFile));
   const nameNode = decl
     ?.getExportSymbols()
     .find((s) => s.getName() === symbolName)
@@ -74,10 +75,14 @@ export function findTypeReferences(
  * the outermost type node, then classify by its structural owner.
  */
 function classify(typeRef: TypeReferenceNode): TypeRefKind | undefined {
+  // Ascend through wrapping type nodes (Array<T>, Promise<T>, T[], unions)
+  // to the outermost type node, then classify by its structural owner.
   let node: Node = typeRef;
-  while (Node.isTypeReference(node.getParent() ?? node)) {
-    const parent = node.getParent();
-    if (!parent || !Node.isTypeReference(parent)) break;
+  for (
+    let parent = node.getParent();
+    parent && Node.isTypeNode(parent);
+    parent = node.getParent()
+  ) {
     node = parent;
   }
 
