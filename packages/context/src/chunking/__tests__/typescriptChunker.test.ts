@@ -498,3 +498,81 @@ describe("createTypescriptChunker — options validation", () => {
   });
 });
 
+// Cluster #2: findSplittableBody's remaining exits (bodyless function decl,
+// non-function variable) → line-split fallback.
+// Cluster #4: mergeSmallSiblings' "mixed" label + the targetMin sub-condition.
+// All assertions verified against real chunker output.
+
+describe("createTypescriptChunker — merging", () => {
+  const chunker = createTypescriptChunker();
+
+  it("labels a merged chunk 'mixed' when its symbols span different kinds", () => {
+    const chunks = chunker.chunk({
+      content: `function a() { return 1; }\ninterface B { x: number; }`,
+      source: { kind: "file", path: "mixed.ts" },
+    });
+    const merged = chunks.find(
+      (c) =>
+        c.metadata?.symbols?.includes("a") &&
+        c.metadata?.symbols?.includes("B"),
+    );
+    expect(merged?.metadata?.symbolKind).toBe("mixed");
+  });
+
+  it("merges a below-target buffer forward when the result stays under target max", () => {
+    // Each const sits in [hardMin, targetMin); merged size stays <= targetMax,
+    // so the targetMin sub-condition (not the hardMin one) drives the merge.
+    const tiny = createTypescriptChunker({
+      targetMinChars: 40,
+      targetMaxChars: 150,
+      hardMinChars: 20,
+      hardMaxChars: 200,
+    });
+    const chunks = tiny.chunk({
+      content: `const aa = 111;\nconst bb = 222;\nconst cc = 333;`,
+      source: { kind: "file", path: "tm.ts" },
+    });
+    const merged = chunks.find((c) => c.metadata?.symbols?.includes("aa"));
+    expect(merged?.metadata?.symbols).toEqual(
+      expect.arrayContaining(["aa", "bb", "cc"]),
+    );
+  });
+});
+
+describe("createTypescriptChunker — bodyless oversized declarations", () => {
+  const tiny = () =>
+    createTypescriptChunker({
+      targetMinChars: 40,
+      targetMaxChars: 150,
+      hardMinChars: 20,
+      hardMaxChars: 200,
+    });
+
+  it("line-splits an oversized function declaration that has no body (overload signature)", () => {
+    const params = Array.from({ length: 30 }, (_, i) => `"p${i}"`).join(" | ");
+    const chunks = tiny().chunk({
+      content: `export function f(x: ${params}): void;`,
+      source: { kind: "file", path: "overload.ts" },
+    });
+    expect(chunks.map((c) => c.metadata?.symbolKind)).toContain(
+      "function-partial",
+    );
+    expect(chunks.flatMap((c) => c.metadata?.symbols ?? [])).toContain("f");
+    expect(chunks.map((c) => c.content).join("")).toContain("p29");
+  });
+
+  it("line-splits an oversized variable with a non-function initializer", () => {
+    const props = Array.from({ length: 30 }, (_, i) => `  k${i}: ${i}`).join(
+      ",\n",
+    );
+    const chunks = tiny().chunk({
+      content: `export const big = {\n${props}\n};`,
+      source: { kind: "file", path: "obj.ts" },
+    });
+    expect(chunks.map((c) => c.metadata?.symbolKind)).toContain(
+      "variable-partial",
+    );
+    expect(chunks.flatMap((c) => c.metadata?.symbols ?? [])).toContain("big");
+    expect(chunks.map((c) => c.content).join("")).toContain("k29");
+  });
+});
