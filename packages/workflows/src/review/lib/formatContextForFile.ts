@@ -7,11 +7,10 @@ type Provider = NonNullable<ContextChunk["provider"]>;
 
 const SECTION_LABELS: Record<Provider, string> = {
   references: "### Direct callers of changed symbols",
+  "type-references": "### Type-shape dependents of changed symbols",
   rag: "### Similar code",
 };
-
-// References first: load-bearing evidence gets budget priority.
-const SECTION_ORDER: Provider[] = ["references", "rag"];
+const SECTION_ORDER: Provider[] = ["references", "type-references", "rag"];
 
 export function formatContextForFile(chunks: ContextChunk[]): string {
   if (chunks.length === 0) return "";

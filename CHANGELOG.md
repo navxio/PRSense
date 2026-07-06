@@ -3,6 +3,29 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] — 2026-07-06
+
+### Added
+
+- Symbol graph now tracks **declared-type references**: when you change a
+  type or interface's shape, PRSense surfaces the sites whose parameter,
+  return, or field types depend on it — not just the call sites. This
+  catches the most common breaking change in a React/TSX codebase, where
+  a changed prop interface drifts entirely through type positions that
+  call-graph analysis can't see.
+- Type dependents render in their own review section, ranked and capped
+  separately from value references so a wide interface can't crowd out
+  callers.
+
+### Notes
+
+- Resolves through namespace-qualified types (`api.User`), generic
+  wrappers (`User[]`, `Promise<User>`), interface method/call/construct
+  signatures, and decorated class exports.
+- Anonymous `export default class {}` type dependents are not yet
+  collected. Named exports — including all interfaces and type aliases —
+  are fully covered.
+
 ## 0.20.1 - 2026-07-03
 
 ### Fixed

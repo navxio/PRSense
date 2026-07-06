@@ -49,6 +49,8 @@ export const CoreEvents = {
     "workflow.review.symbol_graph.heritage.breaks_detected",
   WorkflowReviewContextProviderFailed:
     "workflow.review.context_provider.failed",
+  WorkflowReviewSymbolGraphTypeReferencesRetrieved:
+    "workflow.review.symbol_graph.type_references.retrieved",
 
   WorkflowIndexStarted: "workflow.index.started",
   WorkflowIndexFinished: "workflow.index.finished",

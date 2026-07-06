@@ -8,12 +8,14 @@ export type RankedReferences = {
 
 const DEFAULT_CAP = 5;
 
-export function rankAndCap(opts: {
-  references: ReferenceHit[];
+export function rankAndCap<
+  T extends { filePath: string; lineStart: number },
+>(opts: {
+  references: T[];
   changedFiles: string[]; // workspace-relative- from the diff
   declarationFile: string; // for same-package comparison
   cap?: number;
-}): RankedReferences {
+}): { shown: T[]; total: number } {
   const cap = opts.cap ?? DEFAULT_CAP;
   const changedSet = new Set(opts.changedFiles);
   const declPkg = packageOf(opts.declarationFile);

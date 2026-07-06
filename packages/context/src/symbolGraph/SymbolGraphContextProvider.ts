@@ -19,8 +19,15 @@ import {
   type TriggeredCandidate,
 } from "./sig/diffSignature.js";
 import { findReferences } from "./refs/findReferences.js";
+import { findTypeReferences } from "./refs/findTypeReferences.js";
 import { rankAndCap } from "./refs/rankAndCap.js";
 import { renderChunks, type PerSymbolReferences } from "./refs/renderChunks.js";
+import {
+  renderTypeRefChunks,
+  type PerSymbolTypeRefs,
+} from "./refs/renderTypeRefChunks.js";
+
+const TYPE_REF_CAP = 3;
 
 export class SymbolGraphContextProvider implements ContextProvider {
   readonly name = "symbol-graph";
@@ -119,8 +126,10 @@ export class SymbolGraphContextProvider implements ContextProvider {
 
     const changedFiles = input.diff.files.map((f) => f.path);
     const perSymbol: PerSymbolReferences[] = [];
+    const perSymbolTypeRefs: PerSymbolTypeRefs[] = [];
 
     for (const candidate of fileTriggered) {
+      // --- Value references (calls, assignments, heritage) ---
       const refs = findReferences({
         head: projects.head,
         base: projects.base,
@@ -163,13 +172,56 @@ export class SymbolGraphContextProvider implements ContextProvider {
       if (ranked.shown.length > 0) {
         perSymbol.push({ candidate, references: ranked });
       }
+
+      // --- Declared-type references (param / return / field types) ---
+      const typeRefs = findTypeReferences({
+        head: projects.head,
+        declarationFile: candidate.filePath,
+        symbolName: candidate.name,
+        workspaceRoot: this.deps.repoRoot,
+      });
+
+      const rankedTypes = rankAndCap({
+        references: typeRefs,
+        changedFiles,
+        declarationFile: candidate.filePath,
+        cap: TYPE_REF_CAP,
+      });
+
+      input.eventBus?.emit(
+        CoreEvents.WorkflowReviewSymbolGraphTypeReferencesRetrieved,
+        {
+          symbol: candidate.name,
+          file: candidate.filePath,
+          totalTypeRefs: rankedTypes.total,
+          shownTypeRefs: rankedTypes.shown.length,
+          paramCount: typeRefs.filter((r) => r.kind === "param").length,
+          returnCount: typeRefs.filter((r) => r.kind === "return").length,
+          fieldCount: typeRefs.filter((r) => r.kind === "field").length,
+        },
+      );
+
+      if (rankedTypes.shown.length > 0) {
+        perSymbolTypeRefs.push({ candidate, typeRefs: rankedTypes });
+      }
     }
 
-    const chunks = renderChunks(perSymbol);
+    const chunks = [
+      ...renderChunks(perSymbol),
+      ...renderTypeRefChunks(perSymbolTypeRefs),
+    ];
 
     input.eventBus?.emit(CoreEvents.WorkflowReviewContextRetrieved, {
       file: input.file.path,
       chunks: chunks.length,
+      valueRefChunks: perSymbol.reduce(
+        (n, s) => n + s.references.shown.length,
+        0,
+      ),
+      typeRefChunks: perSymbolTypeRefs.reduce(
+        (n, s) => n + s.typeRefs.shown.length,
+        0,
+      ),
     });
 
     return chunks;
