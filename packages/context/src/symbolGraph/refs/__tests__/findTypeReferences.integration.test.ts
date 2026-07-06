@@ -88,6 +88,12 @@ describe("findTypeReferences (integration)", () => {
         "  find(u: User): void;", // @3 method-sig param
         "}",
       ].join("\n"),
+      "src/entity.ts": [
+        "import type { User } from './user.js';",
+        "function Entity() { return (_: unknown) => {}; }",
+        "@Entity()",
+        "export class Account { owner!: User }", // @4 field, decorated class
+      ].join("\n"),
     };
 
     for (const [rel, content] of Object.entries(files)) {
@@ -139,5 +145,9 @@ describe("findTypeReferences (integration)", () => {
   });
   it("grounds interface method-signature refs on the method", () => {
     expect(find().map(key)).toContain("src/repo.ts:3:param");
+  });
+
+  it("resolves the class name past decorators", () => {
+    expect(find().map(key)).toContain("src/entity.ts:4:field");
   });
 });

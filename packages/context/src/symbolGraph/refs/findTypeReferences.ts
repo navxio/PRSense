@@ -42,8 +42,9 @@ export function findTypeReferences(
     ?.getExportSymbols()
     .find((s) => s.getName() === symbolName)
     ?.getDeclarations()[0];
-  const nameNode = declNode?.getFirstDescendantByKind(SyntaxKind.Identifier);
-  if (!declNode || !nameNode) return [];
+  const nameNode =
+    declNode && Node.isNamed(declNode) ? declNode.getNameNode() : undefined;
+  if (!declNode || !nameNode || !Node.isReferenceFindable(nameNode)) return [];
 
   const declSf = declNode.getSourceFile();
   const declStart = declNode.getStart();
@@ -83,16 +84,17 @@ export function findTypeReferences(
     // (interface methods) so those ground on the full method, not the type.
     const enclosing =
       ref.getFirstAncestor(
-        (a) => Node.isPropertyDeclaration(a) || Node.isPropertySignature(a),
+        (a: Node) =>
+          Node.isPropertyDeclaration(a) || Node.isPropertySignature(a),
       ) ??
       ref.getFirstAncestor(
-        (a) =>
+        (a: Node) =>
           Node.isMethodSignature(a) ||
           Node.isMethodDeclaration(a) ||
           Node.isCallSignatureDeclaration(a) ||
           Node.isConstructSignatureDeclaration(a),
       ) ??
-      ref.getFirstAncestor((a) => Node.isStatement(a)) ??
+      ref.getFirstAncestor((a: Node) => Node.isStatement(a)) ??
       ref.getParentOrThrow();
 
     hits.push({
