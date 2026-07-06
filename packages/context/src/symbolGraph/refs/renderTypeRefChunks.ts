@@ -27,7 +27,7 @@ export function renderTypeRefChunks(
     shown.forEach((ref, i) => {
       const note = `// ${LABEL[ref.kind]} depends on ${candidate.name}\n`;
       const chunk: ContextChunk = {
-        id: chunkId(candidate.name, ref.filePath, ref.lineStart),
+        id: chunkId(candidate.name, ref.filePath, ref.lineStart, ref.kind),
         source: { kind: "file", path: ref.filePath },
         content: note + ref.enclosingStatement.getText(),
         provider: "type-references",
@@ -51,11 +51,16 @@ export function renderTypeRefChunks(
   return out;
 }
 
-function chunkId(symbol: string, path: string, line: number): string {
+function chunkId(
+  symbol: string,
+  path: string,
+  line: number,
+  kind: string,
+): string {
   return (
     "sgt-" +
     createHash("sha1")
-      .update(`${symbol}\0${path}\0${line}`)
+      .update(`${symbol}\0${path}\0${line}\0${kind}`)
       .digest("hex")
       .slice(0, 16)
   );
