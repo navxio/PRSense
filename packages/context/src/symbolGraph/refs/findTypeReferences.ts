@@ -38,12 +38,16 @@ export function findTypeReferences(
   const { head, declarationFile, symbolName, workspaceRoot } = params;
 
   const decl = head.getSourceFile(join(workspaceRoot, declarationFile));
-  const nameNode = decl
+  const declNode = decl
     ?.getExportSymbols()
     .find((s) => s.getName() === symbolName)
-    ?.getDeclarations()[0]
-    ?.getFirstDescendantByKind(SyntaxKind.Identifier);
-  if (!nameNode) return [];
+    ?.getDeclarations()[0];
+  const nameNode = declNode?.getFirstDescendantByKind(SyntaxKind.Identifier);
+  if (!declNode || !nameNode) return [];
+
+  const declSf = declNode.getSourceFile();
+  const declStart = declNode.getStart();
+  const declEnd = declNode.getEnd();
 
   const seen = new Set<string>();
   const hits: TypeRefHit[] = [];
@@ -55,8 +59,16 @@ export function findTypeReferences(
     if (!typeRef) continue; // value position (call, new, import) — not ours
 
     const sf = ref.getSourceFile();
+    // Skip the changed type's own declaration node — but keep same-file
+    // consumers (functions/fields in the decl file that use the type).
+    if (
+      sf === declSf &&
+      ref.getStart() >= declStart &&
+      ref.getEnd() <= declEnd
+    ) {
+      continue;
+    }
     const rel = relative(workspaceRoot, sf.getFilePath());
-    if (rel === declarationFile) continue; // self
     if (GENERATED.test(rel)) continue;
 
     const kind = classify(typeRef);

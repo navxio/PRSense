@@ -40,7 +40,9 @@ describe("findTypeReferences (integration)", () => {
     );
 
     const files: Record<string, string> = {
-      "src/user.ts": "export interface User { id: string; name: string }",
+      "src/user.ts":
+        "export interface User { id: string; name: string }\n" +
+        "export function fromUser(u: User): string { return u.id; }",
 
       // param, return, field — the three scoped kinds
       "src/svc.ts": [
@@ -106,10 +108,6 @@ describe("findTypeReferences (integration)", () => {
     expect(k).toContain("src/coll.ts:3:return"); // Promise<User>
   });
 
-  it("excludes the declaration file itself", () => {
-    expect(find().some((h) => h.filePath === "src/user.ts")).toBe(false);
-  });
-
   it("ignores generated output", () => {
     expect(find().some((h) => h.filePath.startsWith("dist/"))).toBe(false);
   });
@@ -126,5 +124,11 @@ describe("findTypeReferences (integration)", () => {
 
   it("classifies namespace-qualified type refs (api.User)", () => {
     expect(find().map(key)).toContain("src/ns.ts:2:param");
+  });
+
+  it("skips the declaration node but keeps same-file consumers", () => {
+    const k = find().map(key);
+    expect(k).toContain("src/user.ts:2:param"); // fromUser consumer
+    expect(k).not.toContain("src/user.ts:1:param"); // interface decl line
   });
 });
