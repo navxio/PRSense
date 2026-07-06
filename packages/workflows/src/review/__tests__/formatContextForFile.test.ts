@@ -85,7 +85,13 @@ describe("formatContextForFile", () => {
       mk("type-references", "typebody"),
       mk("references", "refbody"),
     ]);
-    expect(out.indexOf("refbody")).toBeLessThan(out.indexOf("typebody"));
-    expect(out.indexOf("typebody")).toBeLessThan(out.indexOf("ragbody"));
+    const iRef = out.indexOf("refbody");
+    const iType = out.indexOf("typebody");
+    const iRag = out.indexOf("ragbody");
+    expect(iRef).toBeGreaterThan(-1);
+    expect(iType).toBeGreaterThan(-1);
+    expect(iRag).toBeGreaterThan(-1);
+    expect(iRef).toBeLessThan(iType);
+    expect(iType).toBeLessThan(iRag);
   });
 });
