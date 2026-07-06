@@ -54,7 +54,8 @@ describe("findTypeReferences (integration)", () => {
       "src/coll.ts": [
         "import type { User } from './user.js';",
         "export function many(us: User[]): void { void us; }", // param @2
-        "export async function fetchOne(): Promise<User> { return {} as User; }", // return @3
+        "export async function fetchOne(): Promise<User> { return { id: '', name: '' }; }", // return @3
+        ,
       ].join("\n"),
 
       // value-position use: never a type ref, must be dropped
