@@ -479,6 +479,10 @@ Ensure cloud provider credentials are set, and Ollama is running with the models
 
 PRs welcome.
 
+## Acknowledgements
+
+Many thanks to the contributors of [ts-morph](https://github.com/dsherret/ts-morph) that has made the ts compiler api more accessible than tree-sitter for TypeScript.
+
 ## License
 
 PRSense is licensed under the Apache 2.0 License.
