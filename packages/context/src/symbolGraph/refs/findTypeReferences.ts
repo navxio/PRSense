@@ -138,6 +138,8 @@ function classify(typeRef: TypeReferenceNode): TypeRefKind | undefined {
     Node.isFunctionDeclaration(owner) ||
     Node.isMethodDeclaration(owner) ||
     Node.isMethodSignature(owner) ||
+    Node.isCallSignatureDeclaration(owner) ||
+    Node.isConstructSignatureDeclaration(owner) ||
     Node.isArrowFunction(owner) ||
     Node.isFunctionExpression(owner)
   ) {

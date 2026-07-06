@@ -94,6 +94,13 @@ describe("findTypeReferences (integration)", () => {
         "@Entity()",
         "export class Account { owner!: User }", // @4 field, decorated class
       ].join("\n"),
+      "src/callsig.ts": [
+        "import type { User } from './user.js';",
+        "export interface Factory {",
+        "  (): User;", // @3 call-sig return
+        "  new (): User;", // @4 construct-sig return
+        "}",
+      ].join("\n"),
     };
 
     for (const [rel, content] of Object.entries(files)) {
@@ -141,7 +148,9 @@ describe("findTypeReferences (integration)", () => {
   it("skips the declaration node but keeps same-file consumers", () => {
     const k = find().map(key);
     expect(k).toContain("src/user.ts:2:param"); // fromUser consumer
-    expect(k).not.toContain("src/user.ts:1:param"); // interface decl line
+    expect(
+      find().some((h) => h.filePath === "src/user.ts" && h.lineStart === 1),
+    ).toBe(false);
   });
   it("grounds interface method-signature refs on the method", () => {
     expect(find().map(key)).toContain("src/repo.ts:3:param");
@@ -149,5 +158,11 @@ describe("findTypeReferences (integration)", () => {
 
   it("resolves the class name past decorators", () => {
     expect(find().map(key)).toContain("src/entity.ts:4:field");
+  });
+
+  it("classifies call/construct signature return types", () => {
+    const k = find().map(key);
+    expect(k).toContain("src/callsig.ts:3:return");
+    expect(k).toContain("src/callsig.ts:4:return");
   });
 });
