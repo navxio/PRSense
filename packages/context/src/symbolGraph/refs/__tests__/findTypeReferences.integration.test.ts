@@ -74,6 +74,11 @@ describe("findTypeReferences (integration)", () => {
         "import type { User } from '../src/user.js';",
         "export function g(u: User): void { void u; }",
       ].join("\n"),
+
+      "src/ns.ts": [
+        "import * as api from './user.js';",
+        "export function nsParam(u: api.User): void { void u; }", // @2
+      ].join("\n"),
     };
 
     for (const [rel, content] of Object.entries(files)) {
@@ -116,5 +121,9 @@ describe("findTypeReferences (integration)", () => {
     const t = find().find((h) => h.filePath.includes("__tests__"));
     expect(t).toBeDefined();
     expect(t?.isTest).toBe(true);
+  });
+
+  it("classifies namespace-qualified type refs (api.User)", () => {
+    expect(find().map(key)).toContain("src/ns.ts:2:param");
   });
 });

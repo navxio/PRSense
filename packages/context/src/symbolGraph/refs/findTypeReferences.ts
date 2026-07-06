@@ -49,8 +49,9 @@ export function findTypeReferences(
   const hits: TypeRefHit[] = [];
 
   for (const ref of nameNode.findReferencesAsNodes()) {
-    // Type usage only: the identifier's parent is a TypeReference node.
-    const typeRef = ref.getParentIfKind(SyntaxKind.TypeReference);
+    // Type usage only: resolve the enclosing TypeReference. The ref is
+    // either its direct child (User) or nested in a QualifiedName (api.User).
+    const typeRef = enclosingTypeRef(ref);
     if (!typeRef) continue; // value position (call, new, import) — not ours
 
     const sf = ref.getSourceFile();
@@ -125,4 +126,18 @@ function classify(typeRef: TypeReferenceNode): TypeRefKind | undefined {
 
 function relative(root: string, abs: string): string {
   return abs.startsWith(root + "/") ? abs.slice(root.length + 1) : abs;
+}
+
+/**
+ * Resolve the TypeReference a reference identifier belongs to. Direct child
+ * (User) or nested in a QualifiedName (api.User); anything else is not a
+ * type position.
+ */
+function enclosingTypeRef(ref: Node): TypeReferenceNode | undefined {
+  const parent = ref.getParent();
+  if (Node.isTypeReference(parent)) return parent;
+  if (Node.isQualifiedName(parent)) {
+    return ref.getFirstAncestorByKind(SyntaxKind.TypeReference);
+  }
+  return undefined;
 }
