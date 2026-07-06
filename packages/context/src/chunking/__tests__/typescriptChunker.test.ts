@@ -236,3 +236,172 @@ export default class Service {
     expect(combined).toContain('return "ok"');
   });
 });
+
+// Cluster #1: oversized-declaration splitting paths (subSplitLargeDeclaration,
+// subSplitClassDeclaration, findSplittableBody, splitTextAtLineBoundaries).
+// Reachable only with a small hardMaxChars so ordinary declarations overflow.
+//
+// Every assertion here was verified against the real chunker's output, not the
+// intended behavior. Robust fields only (symbols / symbolKind / content
+// preservation / truncation), so post-split merging can't make them brittle.
+
+describe("createTypescriptChunker — oversized-declaration splitting", () => {
+  // Small enough that a handful of statements overflows, exercising the split
+  // paths. Valid: targetMax(150) <= hardMax(200), hardMin(20) <= targetMin(40).
+  const tiny = () =>
+    createTypescriptChunker({
+      targetMinChars: 40,
+      targetMaxChars: 150,
+      hardMinChars: 20,
+      hardMaxChars: 200,
+    });
+
+  const kinds = (chunks: ReturnType<ReturnType<typeof tiny>["chunk"]>) =>
+    chunks.map((c) => c.metadata?.symbolKind as string | undefined);
+  const allSymbols = (chunks: ReturnType<ReturnType<typeof tiny>["chunk"]>) =>
+    chunks.flatMap((c) => c.metadata?.symbols ?? []);
+  const joined = (chunks: ReturnType<ReturnType<typeof tiny>["chunk"]>) =>
+    chunks.map((c) => c.content).join("");
+  const noTruncation = (chunks: ReturnType<ReturnType<typeof tiny>["chunk"]>) =>
+    chunks.every((c) => !c.content.includes("[truncated]"));
+
+  it("splits an oversized function into a header + body chunks, preserving every statement", () => {
+    const stmts = Array.from(
+      { length: 20 },
+      (_, i) => `  const v${i} = ${i} + 1;`,
+    ).join("\n");
+    const content = `export function big(x) {\n${stmts}\n  return x;\n}`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "big.ts" },
+    });
+
+    // Header + body split both executed.
+    expect(kinds(chunks)).toContain("function-header");
+    expect(kinds(chunks)).toContain("function-body");
+    // Symbol name propagated to the split pieces.
+    expect(allSymbols(chunks)).toContain("big");
+    // Nothing lost across the split boundary: first and last statements survive.
+    expect(joined(chunks)).toContain("v0 =");
+    expect(joined(chunks)).toContain("v19 =");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("line-splits an oversized single body statement without truncation", () => {
+    // One body statement whose text alone exceeds hardMaxChars, forcing the
+    // in-body flush + splitTextAtLineBoundaries branch.
+    const hugeExpr = Array.from({ length: 60 }, (_, i) => `v${i}`).join(" + ");
+    const content = `export function huge() {\n  const r = ${hugeExpr};\n  return r;\n}`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "huge.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("function-header");
+    // The oversized statement is emitted as -partial line-split pieces.
+    expect(kinds(chunks)).toContain("function-partial");
+    expect(allSymbols(chunks)).toContain("huge");
+    expect(joined(chunks)).toContain("v59"); // tail survived the split
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("splits an oversized class on member boundaries, collecting member names", () => {
+    const methods = Array.from(
+      { length: 12 },
+      (_, i) => `  m${i}() { return ${i}; }`,
+    ).join("\n");
+    const content = `export class Svc {\n${methods}\n}`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "svc.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("class-header");
+    expect(kinds(chunks)).toContain("class-members");
+    // Class name + individual member names both recorded.
+    const syms = allSymbols(chunks);
+    expect(syms).toContain("Svc");
+    expect(syms).toContain("m0");
+    expect(syms).toContain("m11");
+    expect(joined(chunks)).toContain("m11()");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("line-splits an oversized single class member, tagging it with the member name", () => {
+    const hugeExpr = Array.from({ length: 60 }, (_, i) => `v${i}`).join(" + ");
+    const content = `export class Big {\n  method() { const r = ${hugeExpr}; return r; }\n}`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "bigmember.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("class-header");
+    expect(kinds(chunks)).toContain("class-member-partial");
+    // Oversized member falls to line-splitting under its own name, not the class.
+    expect(allSymbols(chunks)).toContain("method");
+    expect(joined(chunks)).toContain("v59");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("falls back to line-splitting for a bodyless oversized declaration (type alias)", () => {
+    // No splittable block body → findSplittableBody returns undefined →
+    // splitTextAtLineBoundaries emits -partial chunks, keeping the symbol name.
+    const union = Array.from({ length: 40 }, (_, i) => `"m${i}"`).join(" | ");
+    const content = `export type Big = ${union};`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "union.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("type-partial");
+    expect(allSymbols(chunks)).toContain("Big");
+    expect(joined(chunks)).toContain("m0");
+    expect(joined(chunks)).toContain("m39");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("splits an oversized variable-statement arrow via its function body", () => {
+    // Exercises findSplittableBody's VariableStatement branch: the arrow's block
+    // body is selected and split like a function body.
+    const stmts = Array.from(
+      { length: 20 },
+      (_, i) => `  const v${i} = ${i} + 1;`,
+    ).join("\n");
+    const content = `export const f = (x) => {\n${stmts}\n  return x;\n};`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "arrow.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("variable-header");
+    expect(kinds(chunks)).toContain("variable-body");
+    expect(allSymbols(chunks)).toContain("f");
+    expect(joined(chunks)).toContain("v0 =");
+    expect(joined(chunks)).toContain("v19 =");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+
+  it("line-splits an oversized declaration with an empty body (no body statements)", () => {
+    // Huge signature, `{}` body → bodyStatements.length === 0 branch →
+    // splitTextAtLineBoundaries over the whole declaration.
+    const params = Array.from({ length: 30 }, (_, i) => `"p${i}"`).join(" | ");
+    const content = `export function e(x: ${params}) {}`;
+
+    const chunks = tiny().chunk({
+      content,
+      source: { kind: "file", path: "emptybody.ts" },
+    });
+
+    expect(kinds(chunks)).toContain("function-partial");
+    expect(allSymbols(chunks)).toContain("e");
+    expect(joined(chunks)).toContain("p0");
+    expect(joined(chunks)).toContain("p29");
+    expect(noTruncation(chunks)).toBe(true);
+  });
+});
