@@ -405,3 +405,96 @@ describe("createTypescriptChunker — oversized-declaration splitting", () => {
     expect(noTruncation(chunks)).toBe(true);
   });
 });
+
+// Cluster #3: declaration-kind metadata (getKindLabel / getSymbolName /
+// isExported across every chunkable kind).
+// Cluster #5: constructor options validation.
+// All assertions verified against real chunker output.
+
+describe("createTypescriptChunker — declaration-kind metadata", () => {
+  const chunker = createTypescriptChunker();
+  const meta = (content: string, symbol: string) => {
+    const chunks = chunker.chunk({
+      content,
+      source: { kind: "file", path: "t.ts" },
+    });
+    return chunks.find((c) => c.metadata?.symbols?.includes(symbol))?.metadata;
+  };
+
+  it("labels and names an interface", () => {
+    const m = meta(
+      `export interface I { a: number; b: string; c: boolean; d: number; }`,
+      "I",
+    );
+    expect(m?.symbolKind).toBe("interface");
+    expect(m?.exported).toBe(true);
+  });
+
+  it("labels and names a type alias", () => {
+    const m = meta(
+      `export type T = { a: number; b: string; c: boolean; d: number; };`,
+      "T",
+    );
+    expect(m?.symbolKind).toBe("type");
+    expect(m?.exported).toBe(true);
+  });
+
+  it("labels and names an enum", () => {
+    const m = meta(`export enum E { A, B, C, D, E, F, G, H, I, J }`, "E");
+    expect(m?.symbolKind).toBe("enum");
+    expect(m?.exported).toBe(true);
+  });
+
+  it("labels and names a variable statement via its first declaration", () => {
+    const m = meta(
+      `export const K = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 };`,
+      "K",
+    );
+    expect(m?.symbolKind).toBe("variable");
+    expect(m?.exported).toBe(true);
+  });
+
+  it("reports exported=false for non-exported declarations", () => {
+    const iface = meta(
+      `interface Priv { a: number; b: string; c: boolean; d: number; }`,
+      "Priv",
+    );
+    expect(iface?.exported).toBe(false);
+
+    const en = meta(`enum PrivE { A, B, C, D, E, F, G, H }`, "PrivE");
+    expect(en?.exported).toBe(false);
+  });
+
+  it("emits a top-level expression statement as an unnamed 'expression' chunk", () => {
+    const chunks = chunker.chunk({
+      content: `doThing({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 });`,
+      source: { kind: "file", path: "expr.ts" },
+    });
+    const expr = chunks.find((c) => c.metadata?.symbolKind === "expression");
+    expect(expr).toBeDefined();
+    expect(expr?.metadata?.symbols).toEqual([]);
+    expect(expr?.metadata?.exported).toBe(false);
+  });
+
+  it("names an export-assignment 'default' and marks it exported", () => {
+    // export default <expr>  →  ExportAssignment: symbol "default", exported.
+    const m = meta(`export default 42;`, "default");
+    expect(m?.symbols).toContain("default");
+    expect(m?.exported).toBe(true);
+  });
+});
+
+describe("createTypescriptChunker — options validation", () => {
+  it("rejects targetMaxChars greater than hardMaxChars", () => {
+    expect(() =>
+      createTypescriptChunker({ targetMaxChars: 3000, hardMaxChars: 2000 }),
+    ).toThrow("targetMaxChars must be <= hardMaxChars");
+  });
+
+  it("rejects hardMinChars greater than targetMinChars", () => {
+    expect(() =>
+      createTypescriptChunker({ hardMinChars: 300, targetMinChars: 200 }),
+    ).toThrow("hardMinChars must be <= targetMinChars");
+  });
+});
+
