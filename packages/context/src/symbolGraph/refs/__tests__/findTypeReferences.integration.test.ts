@@ -82,6 +82,12 @@ describe("findTypeReferences (integration)", () => {
         "import * as api from './user.js';",
         "export function nsParam(u: api.User): void { void u; }", // @2
       ].join("\n"),
+      "src/repo.ts": [
+        "import type { User } from './user.js';",
+        "export interface Repo {",
+        "  find(u: User): void;", // @3 method-sig param
+        "}",
+      ].join("\n"),
     };
 
     for (const [rel, content] of Object.entries(files)) {
@@ -130,5 +136,8 @@ describe("findTypeReferences (integration)", () => {
     const k = find().map(key);
     expect(k).toContain("src/user.ts:2:param"); // fromUser consumer
     expect(k).not.toContain("src/user.ts:1:param"); // interface decl line
+  });
+  it("grounds interface method-signature refs on the method", () => {
+    expect(find().map(key)).toContain("src/repo.ts:3:param");
   });
 });

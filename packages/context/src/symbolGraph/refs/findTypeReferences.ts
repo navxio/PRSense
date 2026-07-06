@@ -79,10 +79,18 @@ export function findTypeReferences(
     if (seen.has(key)) continue;
     seen.add(key);
 
-    // Member-first so fields ground on the property line, not the class.
+    // Member-first so fields ground on the property line; then signatures
+    // (interface methods) so those ground on the full method, not the type.
     const enclosing =
       ref.getFirstAncestor(
         (a) => Node.isPropertyDeclaration(a) || Node.isPropertySignature(a),
+      ) ??
+      ref.getFirstAncestor(
+        (a) =>
+          Node.isMethodSignature(a) ||
+          Node.isMethodDeclaration(a) ||
+          Node.isCallSignatureDeclaration(a) ||
+          Node.isConstructSignatureDeclaration(a),
       ) ??
       ref.getFirstAncestor((a) => Node.isStatement(a)) ??
       ref.getParentOrThrow();
