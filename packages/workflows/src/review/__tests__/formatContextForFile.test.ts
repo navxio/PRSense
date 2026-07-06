@@ -60,4 +60,32 @@ describe("formatContextForFile", () => {
     expect(out).toContain("real content");
     expect(out).toContain("// real.ts");
   });
+
+  it("renders the type-references section under its own label", () => {
+    const chunk: ContextChunk = {
+      id: "t1",
+      source: { kind: "file", path: "svc.ts" },
+      content: "greet(u: User)",
+      provider: "type-references",
+    };
+    const out = formatContextForFile([chunk]);
+    expect(out).toContain("### Type-shape dependents of changed symbols");
+    expect(out).toContain("greet(u: User)");
+  });
+
+  it("orders references before type-references before rag", () => {
+    const mk = (p: ContextChunk["provider"], c: string): ContextChunk => ({
+      id: c,
+      source: { kind: "file", path: `${c}.ts` },
+      content: c,
+      provider: p,
+    });
+    const out = formatContextForFile([
+      mk("rag", "ragbody"),
+      mk("type-references", "typebody"),
+      mk("references", "refbody"),
+    ]);
+    expect(out.indexOf("refbody")).toBeLessThan(out.indexOf("typebody"));
+    expect(out.indexOf("typebody")).toBeLessThan(out.indexOf("ragbody"));
+  });
 });

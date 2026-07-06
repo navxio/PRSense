@@ -244,3 +244,139 @@ describe("symbol-graph context (integration)", () => {
     ).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("symbol-graph type references (integration)", () => {
+  let repoRoot: string;
+  let baseSha: string;
+  let headSha: string;
+
+  beforeAll(async () => {
+    repoRoot = await mkdtemp(join(tmpdir(), "sg-type-"));
+    await git(repoRoot, "init", "-q", "--initial-branch=main");
+    await git(repoRoot, "config", "user.email", "test@example.com");
+    await git(repoRoot, "config", "user.name", "test");
+    await git(repoRoot, "config", "commit.gpgsign", "false");
+
+    await writeFile(
+      join(repoRoot, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          target: "ES2022",
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+          strict: true,
+          esModuleInterop: true,
+          skipLibCheck: true,
+        },
+      }),
+    );
+    await writeFile(
+      join(repoRoot, "package.json"),
+      JSON.stringify({ name: "fixture", type: "module" }),
+    );
+    await mkdir(join(repoRoot, "src"), { recursive: true });
+
+    // BASE: User interface + a consumer that takes it as a parameter type.
+    // handler depends on User's *shape*, never calls it — value refs miss it.
+    await writeFile(
+      join(repoRoot, "src/user.ts"),
+      "export interface User { id: string; name: string }\n",
+    );
+    await writeFile(
+      join(repoRoot, "src/handler.ts"),
+      [
+        "import type { User } from './user.js';",
+        "export function greet(u: User): string {",
+        "  return u.name;",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    // non-dependent: mentions User in prose only
+    await writeFile(
+      join(repoRoot, "src/unrelated.ts"),
+      [
+        "// nothing here references the User type",
+        "export function noop(): void {}",
+        "",
+      ].join("\n"),
+    );
+    await git(repoRoot, "add", ".");
+    await git(repoRoot, "commit", "-q", "-m", "base");
+    baseSha = await git(repoRoot, "rev-parse", "HEAD");
+
+    // HEAD: User gains a field → canonicalSignature flips → triggers.
+    await writeFile(
+      join(repoRoot, "src/user.ts"),
+      "export interface User { id: string; name: string; email: string }\n",
+    );
+    await git(repoRoot, "add", ".");
+    await git(repoRoot, "commit", "-q", "-m", "head");
+    headSha = await git(repoRoot, "rev-parse", "HEAD");
+  });
+
+  afterAll(async () => {
+    if (repoRoot) await rm(repoRoot, { recursive: true, force: true });
+  });
+
+  it("surfaces declared-type dependents when an interface shape changes", async () => {
+    const diff: UnifiedDiff = {
+      files: [
+        {
+          path: "src/user.ts",
+          patch: "diff --git unused\n",
+          hunks: [{ startLine: 1, endLine: 1, content: "" }],
+        },
+      ],
+    };
+
+    const eventBus = new TestEventBus();
+    const result = await resolveContext({
+      config: {
+        repository: { root: repoRoot, provider: "filesystem" },
+        embeddings: { provider: "ollama", model: "x" },
+        context: { maxChunks: 5 },
+      } as unknown as ResolveContextParams["config"],
+      repositoryIdentity: { provider: "filesystem", id: repoRoot },
+      revision: headSha,
+      baseRevision: baseSha,
+      diff,
+      eventBus,
+      repository: {} as unknown as ResolveContextParams["repository"],
+      metadataRepository:
+        {} as unknown as ResolveContextParams["metadataRepository"],
+      providers: [
+        new NullRagProvider(),
+        new SymbolGraphContextProvider({ repoRoot, baseSha }),
+      ],
+    });
+
+    const chunks = result.contextByFile.get("src/user.ts") ?? [];
+    const typeChunks = chunks.filter((c) => c.provider === "type-references");
+
+    // 1. The param-type dependent surfaced.
+    expect(typeChunks.length).toBeGreaterThan(0);
+    const paths = new Set(typeChunks.map((c) => c.metadata?.path));
+    expect(paths.has("src/handler.ts")).toBe(true);
+
+    // 2. Non-dependent and self are excluded.
+    expect(paths.has("src/unrelated.ts")).toBe(false);
+    expect(paths.has("src/user.ts")).toBe(false);
+
+    // 3. Classified as a parameter-type ref, grounded on the real signature.
+    const handlerChunk = typeChunks.find(
+      (c) => c.metadata?.path === "src/handler.ts",
+    );
+    expect(handlerChunk?.metadata?.typeRefKind).toBe("param");
+    expect(handlerChunk?.content).toContain("u: User");
+
+    // 4. Debug event fired for User with a param count.
+    const evt = eventBus.events.find(
+      (e) =>
+        e.event === "workflow.review.symbol_graph.type_references.retrieved" &&
+        (e.fields as { symbol?: string })?.symbol === "User",
+    );
+    expect(evt).toBeDefined();
+    expect((evt?.fields as { paramCount?: number })?.paramCount).toBe(1);
+  });
+});
