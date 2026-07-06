@@ -9,8 +9,10 @@ export type TypeRefKind = "param" | "return" | "field";
 export interface TypeRefHit {
   filePath: string;
   lineStart: number;
+  lineEnd: number;
   kind: TypeRefKind;
   isTest: boolean;
+  enclosingStatement: Node;
 }
 
 export interface FindTypeReferencesParams {
@@ -64,7 +66,22 @@ export function findTypeReferences(
     if (seen.has(key)) continue;
     seen.add(key);
 
-    hits.push({ filePath: rel, lineStart, kind, isTest: TEST.test(rel) });
+    // Member-first so fields ground on the property line, not the class.
+    const enclosing =
+      ref.getFirstAncestor(
+        (a) => Node.isPropertyDeclaration(a) || Node.isPropertySignature(a),
+      ) ??
+      ref.getFirstAncestor((a) => Node.isStatement(a)) ??
+      ref.getParentOrThrow();
+
+    hits.push({
+      filePath: rel,
+      lineStart,
+      lineEnd: enclosing.getEndLineNumber(),
+      kind,
+      isTest: TEST.test(rel),
+      enclosingStatement: enclosing,
+    });
   }
 
   return hits;
