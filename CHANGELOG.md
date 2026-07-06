@@ -3,6 +3,10 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.21.1
+
+- Sharpen review prompt: silence on a clean diff is now framed as a correct outcome, reducing low-value signals emitted to appear useful.
+
 ## [0.21.0] — 2026-07-06
 
 ### Added

@@ -43,6 +43,7 @@ The JSON must match this schema exactly:
     }
   ]
 }
+Returning {"signals": []} on a clean diff is a correct, high-quality response — not a failure to find something.
 Before responding, validate internally that your output is valid JSON.
 If it is not valid JSON, regenerate it.
 `;
