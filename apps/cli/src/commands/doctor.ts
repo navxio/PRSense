@@ -50,7 +50,7 @@ export const doctorCommand = new Command("doctor")
         provider: t.provider,
       });
 
-      if (env.issues.length > 0) {
+      if (env.issues.some((i) => i.level === "error")) {
         eventBus.emit(CoreEvents.RunFailed, {
           reason: "invalid-config",
         });
