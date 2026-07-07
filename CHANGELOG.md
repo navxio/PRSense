@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.1]
+
+### Fixed
+
+- `doctor` no longer exits 1 on warning-level config issues; only error-level issues gate the run
+
 ## [0.22.0]
 
 ### Breaking
