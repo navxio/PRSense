@@ -3,6 +3,12 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.2]
+
+### Fixed
+
+- `doctor` treats a missing or unreachable Ollama as a warning rather than a failure, since Ollama is one of several optional providers
+
 ## [0.22.1]
 
 ### Fixed
