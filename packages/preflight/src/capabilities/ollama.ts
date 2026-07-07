@@ -8,7 +8,7 @@ export const ollamaCapability: Capability = {
   id: "ollama",
   description: "Ollama service reachable",
 
-  async check(ctx) {
+  async check() {
     // 1️⃣ Check if ollama binary exists
     try {
       execFileSync("ollama", ["--version"], {
@@ -16,7 +16,7 @@ export const ollamaCapability: Capability = {
       });
     } catch {
       return {
-        kind: "missing",
+        kind: "partial",
         reason: "`ollama` command not found in PATH",
       };
     }
@@ -27,7 +27,7 @@ export const ollamaCapability: Capability = {
       res = await fetch(`${OLLAMA_URL}/api/tags`);
     } catch {
       return {
-        kind: "missing",
+        kind: "partial",
         reason: "Ollama daemon is not running or not reachable",
       };
     }
