@@ -3,6 +3,16 @@
 All notable changes to PRSense are documented here.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0]
+
+### Breaking
+
+- `index --list` is now `index list`
+
+### Added
+
+- `index list` subcommand for listing indexed repositories
+
 ## 0.21.1
 
 - Sharpen review prompt: silence on a clean diff is now framed as a correct outcome, reducing low-value signals emitted to appear useful.

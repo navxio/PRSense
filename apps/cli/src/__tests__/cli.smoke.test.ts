@@ -83,7 +83,7 @@ describe("CLI smoke tests", () => {
   it("index --list runs without indexed repos and exits 0", async () => {
     const repo = await createTestRepo();
     try {
-      const { exitCode } = await runCli(["index", "--list"], { cwd: repo });
+      const { exitCode } = await runCli(["index", "list"], { cwd: repo });
       expect(exitCode).toBe(0);
     } finally {
       await fs.rm(repo, { recursive: true, force: true });
