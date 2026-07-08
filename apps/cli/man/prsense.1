@@ -142,6 +142,7 @@ prsense index — index repository for contextual review
 
 SYNOPSIS
 prsense index [target] [options]
+prsense index list
 
 DESCRIPTION
 
@@ -191,9 +192,6 @@ OPTIONS
 -s, --stats
     Print indexing statistics after completion.
 
--l, --list
-    List indexed repositories and exit.
-
 -c, --chunk-size-chars <n>
     Override chunk size (in characters).
 
@@ -206,7 +204,12 @@ OPTIONS
 -m, --embeddings-model <model>
     Embedding model to use.
 
-OUTPUT (--list)
+SUBCOMMANDS
+
+list
+    List indexed repositories and exit. Takes no target or options.
+
+OUTPUT (list)
 
 Lists indexed repositories with:
 
@@ -236,7 +239,7 @@ prsense index .
 prsense index . --force
 prsense index . --chunk-size-chars 2000
 prsense index . -p openai -m text-embedding-3-large
-prsense index --list
+prsense index list
 prsense index https://github.com/org/repo
 
 ⸻
