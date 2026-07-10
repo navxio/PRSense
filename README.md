@@ -70,9 +70,9 @@ PRSense is built around a few core principles:
 - **Pluggable LLM backends** — Ollama, Anthropic, Google, OpenAI
 - **Built-in profiling**
 - **Automatically reads from and writes to local `.env`**
-- AST-based chunking for TypeScript (more languages on the roadmap)
+- **AST-based chunking for TypeScript** (more languages on the roadmap)
 - **Bundled `pre-push` git hook**
-- Deterministic pipeline for identifying cross file issues for Typescript (more languages on the roadmap)
+- **Deterministic pipeline** for identifying cross file issues for Typescript (more languages on the roadmap)
 - Tested with real-world C, C++, Rust, Go, TypeScript, Python, and Java repositories (see [Benchmarks](#benchmarks) and [Example Signals](docs/raw_signals.md))
 
 ## Requirements
@@ -127,7 +127,7 @@ prsense review https://codeberg.org/owner/repo/pulls/7
 prsense index .
 ```
 
-Builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews.
+Builds a semantic index of the repository to enable contextual (RAG-enhanced) reviews. Automatically decides the embedding dimension according to the provider.
 
 Optional flags:
 
