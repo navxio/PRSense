@@ -18,6 +18,8 @@
   <a href="https://discord.gg/sX3WBw8Zr"><img src="https://img.shields.io/badge/chat-discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
+> **No longer maintained (Nov 2026).** Code stays up for reference. Using the pre-push hook? Run `prsense hook uninstall` in each repo.
+
 **PRSense (Patch-Review Sense) is an open-source, LLM-powered code review engine that surfaces high-confidence review signals from diff.**
 
 > PRSense is experimental software, expect bugs.
